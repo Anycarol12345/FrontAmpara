@@ -12,7 +12,8 @@
     "api:orval": "orval --config orval.config.ts && prettier --write src/gerado --log-level warn",
     "api:generate": "pnpm api:download && pnpm api:orval",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@ampara/config": "workspace:*",
@@ -25,7 +26,8 @@
     "orval": "^8.45.0",
     "prettier": "^3.9.10",
     "react": "^19.3.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "zod": "^4.6.7"
