@@ -7,14 +7,22 @@ const normalizar = (nome: string) => nome.replace(/[_\-.\s]/g, '').toLowerCase()
 /**
  * Coloca os erros 400 da API nos campos do formulário (FE-06).
  * Erros sem campo correspondente (ou que não são de validação) vão para `root.servidor`.
+ * `porCodigo` leva erros de regra a um campo pelo código da API (ex.: Cliente.CpfDuplicado → cpf).
  * Devolve true quando tratou o erro.
  */
 export function aplicarErrosDaApi<T extends FieldValues>(
   erro: unknown,
   setError: UseFormSetError<T>,
   campos: readonly Path<T>[],
+  porCodigo: Partial<Record<string, Path<T>>> = {},
 ): boolean {
   if (!ehApiError(erro)) return false;
+
+  const campoDoCodigo = erro.codigo ? porCodigo[erro.codigo] : undefined;
+  if (campoDoCodigo) {
+    setError(campoDoCodigo, { type: 'servidor', message: erro.message });
+    return true;
+  }
 
   if (!erro.ehValidacao) {
     setError('root.servidor', { type: 'servidor', message: erro.message });

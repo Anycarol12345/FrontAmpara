@@ -16,6 +16,35 @@ export function cpfValido(valor: string) {
   return digito(cpf.slice(0, 9)) === Number(cpf[9]) && digito(cpf.slice(0, 10)) === Number(cpf[10]);
 }
 
+/** Política de senha do ASP.NET Core Identity no backend (AUT-01), também mostrada ao digitar. */
+export const REGRAS_SENHA = [
+  {
+    rotulo: '8 caracteres ou mais',
+    mensagem: 'A senha precisa ter pelo menos 8 caracteres.',
+    teste: (senha: string) => senha.length >= 8,
+  },
+  {
+    rotulo: 'Uma letra minúscula',
+    mensagem: 'A senha precisa ter uma letra minúscula.',
+    teste: (senha: string) => /[a-z]/.test(senha),
+  },
+  {
+    rotulo: 'Uma letra maiúscula',
+    mensagem: 'A senha precisa ter uma letra maiúscula.',
+    teste: (senha: string) => /[A-Z]/.test(senha),
+  },
+  {
+    rotulo: 'Um número',
+    mensagem: 'A senha precisa ter um número.',
+    teste: (senha: string) => /\d/.test(senha),
+  },
+  {
+    rotulo: 'Um símbolo (ex.: @, #, !)',
+    mensagem: 'A senha precisa ter um símbolo (ex.: @, #, !).',
+    teste: (senha: string) => /[^A-Za-z0-9]/.test(senha),
+  },
+];
+
 const obrigatorio = (mensagem: string) => z.string().trim().min(1, mensagem);
 
 export const esquemas = {
@@ -23,7 +52,7 @@ export const esquemas = {
 
   email: obrigatorio('E-mail é obrigatório.').pipe(z.email('E-mail em formato inválido.')),
 
-  cpf: obrigatorio('CPF é obrigatório.').refine(
+  cpf: obrigatorio('CPF não informado ou em formato inválido.').refine(
     cpfValido,
     'CPF não informado ou em formato inválido.',
   ),
@@ -39,20 +68,17 @@ export const esquemas = {
   ),
 
   // Mesma política do ASP.NET Core Identity no backend (AUT-01).
-  senha: z
-    .string()
-    .min(8, 'A senha precisa ter pelo menos 8 caracteres.')
-    .regex(/[a-z]/, 'A senha precisa ter uma letra minúscula.')
-    .regex(/[A-Z]/, 'A senha precisa ter uma letra maiúscula.')
-    .regex(/\d/, 'A senha precisa ter um número.')
-    .regex(/[^A-Za-z0-9]/, 'A senha precisa ter um símbolo (ex.: @, #, !).'),
+  senha: z.string().superRefine((senha, contexto) => {
+    const falha = REGRAS_SENHA.find((regra) => !regra.teste(senha));
+    if (falha) contexto.addIssue({ code: 'custom', message: falha.mensagem });
+  }),
 
   /** dd/mm/aaaa, convertida para aaaa-mm-dd (formato da API). */
   data: obrigatorio('Data é obrigatória.')
     .regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Use o formato dd/mm/aaaa.')
     .transform((valor) => valor.split('/').reverse().join('-'))
     .refine((iso) => {
-      const data = new Date(`${iso}T00:00:00`);
+      const data = new Date(`${iso}T00:00:00Z`);
       return !Number.isNaN(data.getTime()) && data.toISOString().startsWith(iso);
     }, 'Data inválida.'),
 };

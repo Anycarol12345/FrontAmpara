@@ -18,7 +18,7 @@ COPY --from=build /repo/apps/web/dist /usr/share/nginx/html
 # Endereço do backend visto pelo nginx; /api e /hubs são repassados para ele (mesma origem, sem CORS).
 ENV API_UPSTREAM=api:8080 \
     API_URL="" \
-    HUB_URL=/hubs/eventos \
+    HUB_URL=/hubs/notificacoes \
     DOMINIO_BASE=localhost \
     TENANT_PADRAO=""
 

@@ -55,6 +55,20 @@ O `/admin` (plataforma) é aberto sem funerária.
 | `/parceiro`      | portal do terceiro (TERCEIRO)               |
 | `/admin`         | plataforma (ADMIN)                          |
 
+### Landing (apps/landing)
+
+- http://localhost:3000: landing da plataforma e auto-cadastro de funerária (FE-PUB-04).
+- http://demo.localhost:3000: landing da funerária `demo`, com marca, contatos, planos e catálogo vindos da API
+  (FE-PUB-01). Também `/planos` (comparação) e `/planos/{id}` (detalhe).
+- O servidor do Next lê a API em `API_URL_INTERNA` e o navegador chama `/api` na própria landing (mesma origem).
+- Os planos modelo do seed nascem **inativos**: ative-os no painel do gestor (ou `PATCH /gestao/planos/{id}/status`)
+  para aparecerem na landing. As páginas guardam os dados por `REVALIDAR_SEGUNDOS` (padrão 300).
+
+### Links dos e-mails
+
+O backend manda links para `/login`, `/definir-senha`, `/redefinir-senha` e `/confirmar-email` no `apps/web`
+(seção `Identidade:Links` do appsettings). Essas rotas existem e usam o `?token=` do link.
+
 ## Comandos
 
 | Comando             | O que faz                                                |
@@ -105,7 +119,7 @@ API_UPSTREAM=host.docker.internal:5080 docker compose up --build
 | Serviço | Endereço              | Variáveis                                                             |
 | ------- | --------------------- | --------------------------------------------------------------------- |
 | web     | http://localhost:8080 | `API_UPSTREAM`, `API_URL`, `HUB_URL`, `DOMINIO_BASE`, `TENANT_PADRAO` |
-| landing | http://localhost:3000 | build args `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`               |
+| landing | http://localhost:3000 | `API_URL_INTERNA`, `DOMINIO_BASE`, `APP_URL`                          |
 
 Quando o CI do backend publicar a imagem da API (INF-15), `docker compose --profile api up --build`
 sobe também a API e o PostgreSQL (`API_IMAGE`, `SEED_ADMIN_SENHA`, `SEED_SENHA_DEMO`).
@@ -128,7 +142,7 @@ pnpm --filter @ampara/landing dev
 | App       | Arquivo local | Variáveis                                                                   |
 | --------- | ------------- | --------------------------------------------------------------------------- |
 | `web`     | `.env`        | `VITE_API_URL`, `VITE_API_PROXY`, `VITE_DOMINIO_BASE`, `VITE_TENANT_PADRAO` |
-| `landing` | `.env.local`  | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`                                |
+| `landing` | `.env.local`  | `API_URL_INTERNA`, `DOMINIO_BASE`, `APP_URL` (lidas só no servidor)         |
 
 - Os arquivos `.env.example` são versionados; os `.env` reais não.
 - Tudo que começa com `VITE_` ou `NEXT_PUBLIC_` vai para o navegador. **Nunca coloque segredos aí.**

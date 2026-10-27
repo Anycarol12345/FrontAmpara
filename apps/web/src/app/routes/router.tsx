@@ -1,11 +1,16 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import {
+  ConfirmarEmailPage,
   LoginClientePage,
   LoginEquipePage,
   MinhasFunerariasPage,
+  PrimeiroAcessoPage,
+  RecuperarSenhaPage,
+  RedefinirSenhaPage,
   RotaProtegida,
 } from '@/features/auth';
 import { NaoEncontradoPage, TelaCarregando } from '@/shared/components/PaginaErro';
+import { IrParaLogin } from './IrParaLogin';
 import { ClienteLayout } from '../layouts/ClienteLayout';
 import { PainelLayout } from '../layouts/PainelLayout';
 
@@ -29,6 +34,17 @@ export const router = createBrowserRouter([
       { path: '/', element: <Navigate to="/entrar" replace /> },
       { path: '/entrar', element: <LoginClientePage /> },
       { path: '/equipe/entrar', element: <LoginEquipePage /> },
+      // Links enviados por e-mail pelo backend (LinksIdentidade): /login, /definir-senha,
+      // /redefinir-senha e /confirmar-email (FE-PUB-03).
+      { path: '/login', element: <IrParaLogin /> },
+      { path: '/recuperar-senha', element: <RecuperarSenhaPage /> },
+      { path: '/redefinir-senha', element: <RedefinirSenhaPage /> },
+      { path: '/definir-senha', element: <PrimeiroAcessoPage /> },
+      { path: '/confirmar-email', element: <ConfirmarEmailPage /> },
+      {
+        path: '/cadastro/concluido',
+        lazy: pagina(() => import('@/features/clientes'), 'CadastroConcluidoPage'),
+      },
       {
         path: '/cadastro',
         lazy: pagina(() => import('@/features/clientes'), 'CadastroPage'),

@@ -9,7 +9,7 @@ json() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
 cat > /usr/share/nginx/html/config.js <<CONFIG
 window.__AMPARA_CONFIG__ = {
   apiUrl: "$(json "${API_URL:-}")",
-  hubUrl: "$(json "${HUB_URL:-/hubs/eventos}")",
+  hubUrl: "$(json "${HUB_URL:-/hubs/notificacoes}")",
   dominioBase: "$(json "${DOMINIO_BASE:-localhost}")",
   tenantPadrao: "$(json "${TENANT_PADRAO:-}")"
 };

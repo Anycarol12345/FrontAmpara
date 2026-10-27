@@ -21,7 +21,7 @@ export const env = {
   /** Origem da API. Vazio = mesma origem: o Vite (dev) e o nginx (Docker) repassam /api ao backend. */
   apiUrl: ler('apiUrl', import.meta.env.VITE_API_URL, ''),
   /** Endereço do hub do SignalR (FE-08). */
-  hubUrl: ler('hubUrl', import.meta.env.VITE_HUB_URL, '/hubs/eventos'),
+  hubUrl: ler('hubUrl', import.meta.env.VITE_HUB_URL, '/hubs/notificacoes'),
   /** Domínio da plataforma. A funerária é o subdomínio dele (ex.: demo.localhost). */
   dominioBase: ler('dominioBase', import.meta.env.VITE_DOMINIO_BASE, 'localhost'),
   /** Funerária usada quando o endereço não tem subdomínio (ex.: localhost em desenvolvimento). */
