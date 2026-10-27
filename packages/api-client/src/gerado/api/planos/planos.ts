@@ -31,6 +31,7 @@ import type {
 } from '../../modelos';
 
 import { requisicao } from '../../../http/requisicao';
+import type { ErrorType, BodyType } from '../../../http/requisicao';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -71,7 +72,7 @@ export const getListarPlanosQueryKey = () => {
 
 export const getListarPlanosQueryOptions = <
   TData = Awaited<ReturnType<typeof listarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(options?: {
   query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPlanos>>, TError, TData>>;
   request?: SecondParameter<typeof requisicao>;
@@ -91,11 +92,11 @@ export const getListarPlanosQueryOptions = <
 };
 
 export type ListarPlanosQueryResult = NonNullable<Awaited<ReturnType<typeof listarPlanos>>>;
-export type ListarPlanosQueryError = ProblemDetails;
+export type ListarPlanosQueryError = ErrorType<ProblemDetails>;
 
 export function useListarPlanos<
   TData = Awaited<ReturnType<typeof listarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPlanos>>, TError, TData>> &
@@ -113,7 +114,7 @@ export function useListarPlanos<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useListarPlanos<
   TData = Awaited<ReturnType<typeof listarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPlanos>>, TError, TData>> &
@@ -131,7 +132,7 @@ export function useListarPlanos<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useListarPlanos<
   TData = Awaited<ReturnType<typeof listarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPlanos>>, TError, TData>>;
@@ -145,7 +146,7 @@ export function useListarPlanos<
 
 export function useListarPlanos<
   TData = Awaited<ReturnType<typeof listarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listarPlanos>>, TError, TData>>;
@@ -185,7 +186,7 @@ export const getObterPlanoQueryKey = (id: string) => {
 
 export const getObterPlanoQueryOptions = <
   TData = Awaited<ReturnType<typeof obterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options?: {
@@ -211,11 +212,11 @@ export const getObterPlanoQueryOptions = <
 };
 
 export type ObterPlanoQueryResult = NonNullable<Awaited<ReturnType<typeof obterPlano>>>;
-export type ObterPlanoQueryError = ProblemDetails;
+export type ObterPlanoQueryError = ErrorType<ProblemDetails>;
 
 export function useObterPlano<
   TData = Awaited<ReturnType<typeof obterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options: {
@@ -234,7 +235,7 @@ export function useObterPlano<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useObterPlano<
   TData = Awaited<ReturnType<typeof obterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options?: {
@@ -253,7 +254,7 @@ export function useObterPlano<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useObterPlano<
   TData = Awaited<ReturnType<typeof obterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options?: {
@@ -268,7 +269,7 @@ export function useObterPlano<
 
 export function useObterPlano<
   TData = Awaited<ReturnType<typeof obterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options?: {
@@ -308,7 +309,7 @@ export const getGestaoListarPlanosQueryKey = () => {
 
 export const getGestaoListarPlanosQueryOptions = <
   TData = Awaited<ReturnType<typeof gestaoListarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(options?: {
   query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof gestaoListarPlanos>>, TError, TData>>;
   request?: SecondParameter<typeof requisicao>;
@@ -330,11 +331,11 @@ export const getGestaoListarPlanosQueryOptions = <
 export type GestaoListarPlanosQueryResult = NonNullable<
   Awaited<ReturnType<typeof gestaoListarPlanos>>
 >;
-export type GestaoListarPlanosQueryError = ProblemDetails;
+export type GestaoListarPlanosQueryError = ErrorType<ProblemDetails>;
 
 export function useGestaoListarPlanos<
   TData = Awaited<ReturnType<typeof gestaoListarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof gestaoListarPlanos>>, TError, TData>> &
@@ -352,7 +353,7 @@ export function useGestaoListarPlanos<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGestaoListarPlanos<
   TData = Awaited<ReturnType<typeof gestaoListarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<
@@ -372,7 +373,7 @@ export function useGestaoListarPlanos<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGestaoListarPlanos<
   TData = Awaited<ReturnType<typeof gestaoListarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof gestaoListarPlanos>>, TError, TData>>;
@@ -386,7 +387,7 @@ export function useGestaoListarPlanos<
 
 export function useGestaoListarPlanos<
   TData = Awaited<ReturnType<typeof gestaoListarPlanos>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof gestaoListarPlanos>>, TError, TData>>;
@@ -444,7 +445,7 @@ export const criarPlano = async (
 export const getCriarPlanoMutationKey = () => ['criarPlano'] as const;
 
 export const getCriarPlanoMutationOptions = <
-  TError = HttpValidationProblemDetails | ProblemDetails,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -480,15 +481,15 @@ export const getCriarPlanoMutationOptions = <
 };
 
 export type CriarPlanoMutationResult = NonNullable<Awaited<ReturnType<typeof criarPlano>>>;
-export type CriarPlanoMutationBody = PlanoRequest;
-export type CriarPlanoMutationError = HttpValidationProblemDetails | ProblemDetails;
-export type CriarPlanoMutationVariables = { data: PlanoRequest };
+export type CriarPlanoMutationBody = BodyType<PlanoRequest>;
+export type CriarPlanoMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CriarPlanoMutationVariables = { data: BodyType<PlanoRequest> };
 
 /**
  * @summary Cria um plano
  */
 export const useCriarPlano = <
-  TError = HttpValidationProblemDetails | ProblemDetails,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
   TContext = unknown,
 >(
   options?: {
@@ -532,7 +533,7 @@ export const getGestaoObterPlanoQueryKey = (id: string) => {
 
 export const getGestaoObterPlanoQueryOptions = <
   TData = Awaited<ReturnType<typeof gestaoObterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options?: {
@@ -558,11 +559,11 @@ export const getGestaoObterPlanoQueryOptions = <
 };
 
 export type GestaoObterPlanoQueryResult = NonNullable<Awaited<ReturnType<typeof gestaoObterPlano>>>;
-export type GestaoObterPlanoQueryError = ProblemDetails;
+export type GestaoObterPlanoQueryError = ErrorType<ProblemDetails>;
 
 export function useGestaoObterPlano<
   TData = Awaited<ReturnType<typeof gestaoObterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options: {
@@ -581,7 +582,7 @@ export function useGestaoObterPlano<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGestaoObterPlano<
   TData = Awaited<ReturnType<typeof gestaoObterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options?: {
@@ -600,7 +601,7 @@ export function useGestaoObterPlano<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useGestaoObterPlano<
   TData = Awaited<ReturnType<typeof gestaoObterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options?: {
@@ -615,7 +616,7 @@ export function useGestaoObterPlano<
 
 export function useGestaoObterPlano<
   TData = Awaited<ReturnType<typeof gestaoObterPlano>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   id: string,
   options?: {
@@ -675,7 +676,7 @@ export const atualizarPlano = async (
 export const getAtualizarPlanoMutationKey = () => ['atualizarPlano'] as const;
 
 export const getAtualizarPlanoMutationOptions = <
-  TError = HttpValidationProblemDetails | ProblemDetails,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -711,15 +712,15 @@ export const getAtualizarPlanoMutationOptions = <
 };
 
 export type AtualizarPlanoMutationResult = NonNullable<Awaited<ReturnType<typeof atualizarPlano>>>;
-export type AtualizarPlanoMutationBody = PlanoRequest;
-export type AtualizarPlanoMutationError = HttpValidationProblemDetails | ProblemDetails;
-export type AtualizarPlanoMutationVariables = { id: string; data: PlanoRequest };
+export type AtualizarPlanoMutationBody = BodyType<PlanoRequest>;
+export type AtualizarPlanoMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AtualizarPlanoMutationVariables = { id: string; data: BodyType<PlanoRequest> };
 
 /**
  * @summary Edita um plano. Novo valor vale só para novos contratos
  */
 export const useAtualizarPlano = <
-  TError = HttpValidationProblemDetails | ProblemDetails,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
   TContext = unknown,
 >(
   options?: {
@@ -782,7 +783,7 @@ export const alterarStatusPlano = async (
 export const getAlterarStatusPlanoMutationKey = () => ['alterarStatusPlano'] as const;
 
 export const getAlterarStatusPlanoMutationOptions = <
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -820,14 +821,17 @@ export const getAlterarStatusPlanoMutationOptions = <
 export type AlterarStatusPlanoMutationResult = NonNullable<
   Awaited<ReturnType<typeof alterarStatusPlano>>
 >;
-export type AlterarStatusPlanoMutationBody = AlterarStatusPlanoRequest;
-export type AlterarStatusPlanoMutationError = ProblemDetails;
-export type AlterarStatusPlanoMutationVariables = { id: string; data: AlterarStatusPlanoRequest };
+export type AlterarStatusPlanoMutationBody = BodyType<AlterarStatusPlanoRequest>;
+export type AlterarStatusPlanoMutationError = ErrorType<ProblemDetails>;
+export type AlterarStatusPlanoMutationVariables = {
+  id: string;
+  data: BodyType<AlterarStatusPlanoRequest>;
+};
 
 /**
  * @summary Ativa ou desativa um plano
  */
-export const useAlterarStatusPlano = <TError = ProblemDetails, TContext = unknown>(
+export const useAlterarStatusPlano = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof alterarStatusPlano>>,

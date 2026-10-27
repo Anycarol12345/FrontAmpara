@@ -5,6 +5,7 @@ type ProblemDetails = {
   detail?: string;
   code?: string;
   traceId?: string;
+  trace_id?: string;
   errors?: Record<string, string[]>;
 };
 
@@ -23,7 +24,8 @@ export class ApiError extends Error {
     this.status = status;
     this.titulo = corpo.title ?? '';
     this.codigo = corpo.code;
-    this.traceId = corpo.traceId;
+    // O backend serializa as extensões em snake_case (trace_id); o traceId às vezes também vem.
+    this.traceId = corpo.trace_id ?? corpo.traceId;
     this.erros = corpo.errors ?? {};
   }
 

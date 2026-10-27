@@ -75,3 +75,8 @@ async function paraErro(resposta: Response) {
 }
 
 export default requisicao;
+
+// Tipos lidos pelo Orval: todo erro dos hooks gerados é um ApiError, e o corpo segue o tipo do OpenAPI.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export type ErrorType<_Erro> = ApiError;
+export type BodyType<Corpo> = Corpo;

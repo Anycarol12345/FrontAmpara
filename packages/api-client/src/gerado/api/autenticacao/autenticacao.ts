@@ -29,6 +29,7 @@ import type {
 } from '../../modelos';
 
 import { requisicao } from '../../../http/requisicao';
+import type { ErrorType, BodyType } from '../../../http/requisicao';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -89,7 +90,7 @@ export const login = async (
 export const getLoginMutationKey = () => ['login'] as const;
 
 export const getLoginMutationOptions = <
-  TError = HttpValidationProblemDetails | ProblemDetails,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -124,15 +125,15 @@ export const getLoginMutationOptions = <
 };
 
 export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>;
-export type LoginMutationBody = LoginRequest;
-export type LoginMutationError = HttpValidationProblemDetails | ProblemDetails;
-export type LoginMutationVariables = { data: LoginRequest };
+export type LoginMutationBody = BodyType<LoginRequest>;
+export type LoginMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type LoginMutationVariables = { data: BodyType<LoginRequest> };
 
 /**
  * @summary Entra na funerária do endereço acessado (ou na plataforma, para o ADMIN)
  */
 export const useLogin = <
-  TError = HttpValidationProblemDetails | ProblemDetails,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
   TContext = unknown,
 >(
   options?: {
@@ -172,7 +173,7 @@ export const renovarSessao = async (
 export const getRenovarSessaoMutationKey = () => ['renovarSessao'] as const;
 
 export const getRenovarSessaoMutationOptions = <
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<Awaited<ReturnType<typeof renovarSessao>>, TError, void, TContext>;
@@ -194,12 +195,12 @@ export const getRenovarSessaoMutationOptions = <
 
 export type RenovarSessaoMutationResult = NonNullable<Awaited<ReturnType<typeof renovarSessao>>>;
 
-export type RenovarSessaoMutationError = ProblemDetails;
+export type RenovarSessaoMutationError = ErrorType<ProblemDetails>;
 
 /**
  * @summary Troca o refresh token do cookie por um access token novo
  */
-export const useRenovarSessao = <TError = ProblemDetails, TContext = unknown>(
+export const useRenovarSessao = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof renovarSessao>>,
@@ -229,7 +230,10 @@ export const logout = async (options?: Parameters<typeof requisicao>[1]): Promis
 
 export const getLogoutMutationKey = () => ['logout'] as const;
 
-export const getLogoutMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+export const getLogoutMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
   mutation?: UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError, void, TContext>;
   request?: SecondParameter<typeof requisicao>;
 }): UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError, void, TContext> => {
@@ -249,12 +253,12 @@ export const getLogoutMutationOptions = <TError = unknown, TContext = unknown>(o
 
 export type LogoutMutationResult = NonNullable<Awaited<ReturnType<typeof logout>>>;
 
-export type LogoutMutationError = unknown;
+export type LogoutMutationError = ErrorType<unknown>;
 
 /**
  * @summary Encerra a sessão e revoga o refresh token
  */
-export const useLogout = <TError = unknown, TContext = unknown>(
+export const useLogout = <TError = ErrorType<unknown>, TContext = unknown>(
   options?: {
     mutation?: UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError, void, TContext>;
     request?: SecondParameter<typeof requisicao>;
@@ -285,7 +289,7 @@ export const getMinhasFunerariasQueryKey = () => {
 
 export const getMinhasFunerariasQueryOptions = <
   TData = Awaited<ReturnType<typeof minhasFunerarias>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(options?: {
   query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof minhasFunerarias>>, TError, TData>>;
   request?: SecondParameter<typeof requisicao>;
@@ -305,11 +309,11 @@ export const getMinhasFunerariasQueryOptions = <
 };
 
 export type MinhasFunerariasQueryResult = NonNullable<Awaited<ReturnType<typeof minhasFunerarias>>>;
-export type MinhasFunerariasQueryError = ProblemDetails;
+export type MinhasFunerariasQueryError = ErrorType<ProblemDetails>;
 
 export function useMinhasFunerarias<
   TData = Awaited<ReturnType<typeof minhasFunerarias>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options: {
     query: Partial<UseQueryOptions<Awaited<ReturnType<typeof minhasFunerarias>>, TError, TData>> &
@@ -327,7 +331,7 @@ export function useMinhasFunerarias<
 ): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useMinhasFunerarias<
   TData = Awaited<ReturnType<typeof minhasFunerarias>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof minhasFunerarias>>, TError, TData>> &
@@ -345,7 +349,7 @@ export function useMinhasFunerarias<
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 export function useMinhasFunerarias<
   TData = Awaited<ReturnType<typeof minhasFunerarias>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof minhasFunerarias>>, TError, TData>>;
@@ -359,7 +363,7 @@ export function useMinhasFunerarias<
 
 export function useMinhasFunerarias<
   TData = Awaited<ReturnType<typeof minhasFunerarias>>,
-  TError = ProblemDetails,
+  TError = ErrorType<ProblemDetails>,
 >(
   options?: {
     query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof minhasFunerarias>>, TError, TData>>;

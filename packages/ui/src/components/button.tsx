@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { LoaderCircle } from 'lucide-react';
 import { Slot } from 'radix-ui';
 import type { ComponentProps } from 'react';
 import { cn } from '../lib/utils';
@@ -28,11 +29,40 @@ const buttonVariants = cva(
 );
 
 type ButtonProps = ComponentProps<'button'> &
-  VariantProps<typeof buttonVariants> & { asChild?: boolean };
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+    /** Mostra o indicador e bloqueia novos cliques (evita envio duplicado, FE-06). */
+    carregando?: boolean;
+  };
 
-function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  carregando = false,
+  disabled,
+  children,
+  ...props
+}: ButtonProps) {
   const Comp = asChild ? Slot.Root : 'button';
-  return <Comp className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+  return (
+    <Comp
+      className={cn(buttonVariants({ variant, size }), className)}
+      disabled={disabled || carregando}
+      aria-busy={carregando || undefined}
+      {...props}
+    >
+      {carregando && !asChild ? (
+        <>
+          <LoaderCircle className="animate-spin" aria-hidden />
+          {children}
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
+  );
 }
 
 export { Button, buttonVariants };
