@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { NOME_PERFIL, useAuth } from '@/features/auth';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '@/shared/components/StatCard';
 
@@ -77,11 +78,14 @@ const PRIORIDADES = [
 ];
 
 export function VisaoGeralPage() {
+  const { usuario } = useAuth();
+  const primeiroNome = usuario?.nome.split(' ')[0] ?? '';
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        sobretitulo="Funcionário · Painel"
-        titulo={`${saudacao()}, Ana`}
+        sobretitulo={`${usuario ? NOME_PERFIL[usuario.perfil] : ''} · Painel`}
+        titulo={`${saudacao()}, ${primeiroNome}`}
         descricao="Aqui está um resumo dos atendimentos e atividades da sua equipe."
         acoes={
           <>

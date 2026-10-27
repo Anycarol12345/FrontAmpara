@@ -4,17 +4,21 @@ import { Input } from '@ampara/ui/components/input';
 import { Label } from '@ampara/ui/components/label';
 import { Separator } from '@ampara/ui/components/separator';
 import { ArrowRight } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { Controller } from 'react-hook-form';
 import { Link } from 'react-router';
 import { AuthAtendimento, AuthSplitLayout } from '@/shared/components/AuthSplitLayout';
+import { Campo, ErroFormulario } from '@/shared/components/Campo';
 import { Eyebrow } from '@/shared/components/Eyebrow';
 import { PasswordInput } from '@/shared/components/PasswordInput';
+import { useFormularioLogin } from '../hooks/useFormularioLogin';
 
 export function LoginClientePage() {
-  function entrar(evento: FormEvent<HTMLFormElement>) {
-    evento.preventDefault();
-    // A chamada a POST /auth/login entra no FE-07.
-  }
+  const { formulario, enviar } = useFormularioLogin(true);
+  const {
+    register,
+    control,
+    formState: { errors, isSubmitting },
+  } = formulario;
 
   return (
     <AuthSplitLayout
@@ -38,26 +42,42 @@ export function LoginClientePage() {
         Acesse seu espaço para acompanhar seu plano, consultar documentos e falar com a Ampara.
       </p>
 
-      <form onSubmit={entrar} className="mt-7 flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="login" className="text-xs">
-            E-mail ou CPF
-          </Label>
-          <Input id="login" autoComplete="username" placeholder="voce@email.com" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="senha" className="text-xs">
-            Senha
-          </Label>
+      <form onSubmit={enviar} noValidate className="mt-7 flex flex-col gap-4">
+        <ErroFormulario mensagem={errors.root?.servidor?.message} />
+        {/* O protótipo prevê "E-mail ou CPF"; por enquanto o backend aceita só o e-mail (AUT-02). */}
+        <Campo
+          id="email"
+          label="E-mail ou CPF"
+          labelClassName="text-xs"
+          erro={errors.email?.message}
+        >
+          <Input
+            type="email"
+            autoComplete="username"
+            placeholder="voce@email.com"
+            {...register('email')}
+          />
+        </Campo>
+        <Campo id="senha" label="Senha" labelClassName="text-xs" erro={errors.senha?.message}>
           <PasswordInput
-            id="senha"
             autoComplete="current-password"
             placeholder="Digite sua senha"
+            {...register('senha')}
           />
-        </div>
+        </Campo>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Checkbox id="lembrar" defaultChecked />
+            <Controller
+              control={control}
+              name="lembrar"
+              render={({ field }) => (
+                <Checkbox
+                  id="lembrar"
+                  checked={field.value}
+                  onCheckedChange={(marcado) => field.onChange(marcado === true)}
+                />
+              )}
+            />
             <Label htmlFor="lembrar" className="text-xs font-normal text-muted-foreground">
               Lembrar de mim
             </Label>
@@ -66,7 +86,7 @@ export function LoginClientePage() {
             Esqueci minha senha
           </Link>
         </div>
-        <Button type="submit" className="mt-1 h-11 w-full">
+        <Button type="submit" className="mt-1 h-11 w-full" carregando={isSubmitting}>
           Entrar na minha conta <ArrowRight />
         </Button>
       </form>

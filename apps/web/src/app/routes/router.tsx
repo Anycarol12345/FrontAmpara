@@ -1,27 +1,101 @@
 import { createBrowserRouter, Navigate } from 'react-router';
-import { LoginClientePage, LoginEquipePage } from '@/features/auth';
-import { CadastroPage } from '@/features/clientes';
-import { InicioPage } from '@/features/contratos';
-import { VisaoGeralPage } from '@/features/relatorios';
+import {
+  LoginClientePage,
+  LoginEquipePage,
+  MinhasFunerariasPage,
+  RotaProtegida,
+} from '@/features/auth';
+import { NaoEncontradoPage, TelaCarregando } from '@/shared/components/PaginaErro';
 import { ClienteLayout } from '../layouts/ClienteLayout';
 import { PainelLayout } from '../layouts/PainelLayout';
-import { NaoEncontradoPage } from './NaoEncontradoPage';
 
-// Rotas do FE-03. As áreas /parceiro e /admin entram nos próximos cards.
+// As páginas das áreas são carregadas sob demanda: cada perfil baixa só o código que usa (FE-03).
+const pagina =
+  <T,>(carregar: () => Promise<T>, nome: keyof T) =>
+  async () => ({ Component: (await carregar())[nome] as React.ComponentType });
+
+/**
+ * Rotas do FE-03:
+ * /entrar, /cadastro, /equipe/entrar  acesso (público)
+ * /minha-conta                        área do cliente (CLIENTE)
+ * /painel                             área da funerária (FUNERARIA e FUNCIONARIO)
+ * /parceiro                           portal do terceiro (TERCEIRO)
+ * /admin                              plataforma (ADMIN)
+ */
 export const router = createBrowserRouter([
-  { path: '/', element: <Navigate to="/entrar" replace /> },
-  { path: '/entrar', element: <LoginClientePage /> },
-  { path: '/cadastro', element: <CadastroPage /> },
-  { path: '/equipe/entrar', element: <LoginEquipePage /> },
   {
-    path: '/minha-conta',
-    element: <ClienteLayout />,
-    children: [{ index: true, element: <InicioPage /> }],
+    HydrateFallback: TelaCarregando,
+    children: [
+      { path: '/', element: <Navigate to="/entrar" replace /> },
+      { path: '/entrar', element: <LoginClientePage /> },
+      { path: '/equipe/entrar', element: <LoginEquipePage /> },
+      {
+        path: '/cadastro',
+        lazy: pagina(() => import('@/features/clientes'), 'CadastroPage'),
+      },
+      {
+        path: '/minhas-funerarias',
+        element: <RotaProtegida perfis={['CLIENTE']} />,
+        children: [{ index: true, element: <MinhasFunerariasPage /> }],
+      },
+      {
+        path: '/minha-conta',
+        element: <RotaProtegida perfis={['CLIENTE']} />,
+        children: [
+          {
+            element: <ClienteLayout />,
+            children: [
+              { index: true, lazy: pagina(() => import('@/features/contratos'), 'InicioPage') },
+            ],
+          },
+        ],
+      },
+      {
+        path: '/painel',
+        element: <RotaProtegida perfis={['FUNERARIA', 'FUNCIONARIO']} />,
+        children: [
+          {
+            element: <PainelLayout />,
+            children: [
+              {
+                index: true,
+                lazy: pagina(() => import('@/features/relatorios'), 'VisaoGeralPage'),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: '/parceiro',
+        element: <RotaProtegida perfis={['TERCEIRO']} />,
+        children: [
+          {
+            element: <PainelLayout />,
+            children: [
+              {
+                index: true,
+                lazy: pagina(() => import('@/features/terceiros'), 'InicioParceiroPage'),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: '/admin',
+        element: <RotaProtegida perfis={['ADMIN']} />,
+        children: [
+          {
+            element: <PainelLayout />,
+            children: [
+              {
+                index: true,
+                lazy: pagina(() => import('@/features/plataforma'), 'PainelPlataformaPage'),
+              },
+            ],
+          },
+        ],
+      },
+      { path: '*', element: <NaoEncontradoPage /> },
+    ],
   },
-  {
-    path: '/painel',
-    element: <PainelLayout />,
-    children: [{ index: true, element: <VisaoGeralPage /> }],
-  },
-  { path: '*', element: <NaoEncontradoPage /> },
 ]);

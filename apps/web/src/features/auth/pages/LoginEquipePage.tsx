@@ -4,37 +4,42 @@ import { Input } from '@ampara/ui/components/input';
 import { Label } from '@ampara/ui/components/label';
 import { Separator } from '@ampara/ui/components/separator';
 import { ArrowRight } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Controller } from 'react-hook-form';
 import { Link } from 'react-router';
 import { AuthSplitLayout } from '@/shared/components/AuthSplitLayout';
+import { Campo, ErroFormulario } from '@/shared/components/Campo';
 import { Eyebrow } from '@/shared/components/Eyebrow';
 import { PasswordInput } from '@/shared/components/PasswordInput';
+import { useFormularioLogin } from '../hooks/useFormularioLogin';
 
+// Usuários da funerária de demonstração criados pelo seed do backend (INF-16).
+// O perfil "Consultor" ainda não existe no backend (DEC-11).
 const PERFIS_DEMO = [
   {
     nome: 'Funcionário',
     descricao: 'Atendimentos, agenda e documentos',
-    email: 'funcionario@ampara.com.br',
+    email: 'funcionario@demo.localhost',
   },
   {
     nome: 'Consultor',
     descricao: 'Oportunidades, propostas e metas',
-    email: 'consultor@ampara.com.br',
+    email: 'consultor@demo.localhost',
   },
   {
     nome: 'Administrador',
     descricao: 'Equipe, relatórios e fornecedores',
-    email: 'administrador@ampara.com.br',
+    email: 'gestor@demo.localhost',
   },
 ];
 
 export function LoginEquipePage() {
-  const [email, setEmail] = useState('');
-
-  function entrar(evento: FormEvent<HTMLFormElement>) {
-    evento.preventDefault();
-    // A chamada a POST /auth/login entra no FE-07.
-  }
+  const { formulario, enviar } = useFormularioLogin(false);
+  const {
+    register,
+    control,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = formulario;
 
   return (
     <AuthSplitLayout
@@ -58,31 +63,38 @@ export function LoginEquipePage() {
         Use seu e-mail corporativo da Ampara. Você entra direto no painel do seu perfil.
       </p>
 
-      <form onSubmit={entrar} className="mt-7 flex flex-col gap-5">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">E-mail corporativo</Label>
+      <form onSubmit={enviar} noValidate className="mt-7 flex flex-col gap-5">
+        <ErroFormulario mensagem={errors.root?.servidor?.message} />
+        <Campo id="email" label="E-mail corporativo" erro={errors.email?.message}>
           <Input
-            id="email"
             type="email"
             autoComplete="username"
             placeholder="nome@ampara.com.br"
             className="h-12 rounded-xl"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            {...register('email')}
           />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="senha">Senha</Label>
+        </Campo>
+        <Campo id="senha" label="Senha" erro={errors.senha?.message}>
           <PasswordInput
-            id="senha"
             autoComplete="current-password"
             placeholder="Digite sua senha"
             className="h-12 rounded-xl"
+            {...register('senha')}
           />
-        </div>
+        </Campo>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Checkbox id="lembrar" />
+            <Controller
+              control={control}
+              name="lembrar"
+              render={({ field }) => (
+                <Checkbox
+                  id="lembrar"
+                  checked={field.value}
+                  onCheckedChange={(marcado) => field.onChange(marcado === true)}
+                />
+              )}
+            />
             <Label htmlFor="lembrar" className="font-normal text-muted-foreground">
               Lembrar de mim
             </Label>
@@ -91,7 +103,13 @@ export function LoginEquipePage() {
             Esqueci minha senha
           </Link>
         </div>
-        <Button type="submit" variant="brand" size="lg" className="mt-1 w-full">
+        <Button
+          type="submit"
+          variant="brand"
+          size="lg"
+          className="mt-1 w-full"
+          carregando={isSubmitting}
+        >
           Entrar no portal <ArrowRight />
         </Button>
       </form>
@@ -100,15 +118,15 @@ export function LoginEquipePage() {
 
       <Eyebrow className="mt-6">Acesso de demonstração</Eyebrow>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-        Protótipo: escolha um perfil para entrar direto, ou use qualquer senha com um e-mail da
-        equipe.
+        Escolha um perfil para preencher o e-mail da funerária de demonstração e informe a senha
+        definida no backend.
       </p>
       <div className="mt-4 grid grid-cols-3 gap-3">
         {PERFIS_DEMO.map((perfil) => (
           <button
             key={perfil.nome}
             type="button"
-            onClick={() => setEmail(perfil.email)}
+            onClick={() => setValue('email', perfil.email, { shouldValidate: true })}
             className="rounded-xl border border-border/70 bg-card p-4 text-left transition-colors hover:border-ring/40"
           >
             <span className="block text-sm font-bold">{perfil.nome}</span>

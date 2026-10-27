@@ -3,6 +3,7 @@ import { Button } from '@ampara/ui/components/button';
 import { Card } from '@ampara/ui/components/card';
 import { CalendarDays, FileText, Phone, ShieldCheck, Wallet, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
+import { useAuth } from '@/features/auth';
 import { PageHeader } from '@/shared/components/PageHeader';
 
 // Dados fixos do protótipo. Passam a vir da API com os contratos (CON-01) e as faturas (COB-02).
@@ -60,11 +61,14 @@ const PAGAMENTOS: { descricao: string; data: string; valor: string; pago: boolea
 ];
 
 export function InicioPage() {
+  const { usuario } = useAuth();
+  const primeiroNome = usuario?.nome.split(' ')[0] ?? '';
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
         sobretitulo="Área do cliente"
-        titulo="Olá, Mariana"
+        titulo={`Olá, ${primeiroNome}`}
         descricao="Acompanhe seu plano e encontre ajuda quando precisar."
         acoes={
           <Button>
