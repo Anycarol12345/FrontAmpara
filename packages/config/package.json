@@ -1,0 +1,33 @@
+{
+  "name": "@ampara/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./eslint/packages": "./eslint/packages.js",
+    "./tsconfig/base": "./typescript/base.json",
+    "./tsconfig/react": "./typescript/react.json",
+    "./tsconfig/node": "./typescript/node.json",
+    "./prettier": "./prettier/index.js",
+    "./eslint": "./eslint/index.js",
+    "./eslint/react": "./eslint/react.js",
+    "./eslint/boundaries": "./eslint/boundaries.js"
+  },
+  "files": [
+    "typescript",
+    "eslint",
+    "prettier"
+  ],
+  "dependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "typescript-eslint": "^8.72.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

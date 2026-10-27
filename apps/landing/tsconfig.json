@@ -1,0 +1,12 @@
+{
+  "extends": "@ampara/config/tsconfig/react",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "src", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
