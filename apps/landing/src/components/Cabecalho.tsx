@@ -1,24 +1,33 @@
 import { Button } from '@ampara/ui/components/button';
 import { Logo } from '@ampara/ui/components/logo';
-import { env } from '@/lib/env';
 import { Container } from './Container';
 
-const LINKS = [
-  { rotulo: 'Início', href: '#inicio' },
-  { rotulo: 'Planos', href: '#planos' },
-  { rotulo: 'Personalizar', href: '#personalizar' },
-  { rotulo: 'Como funciona', href: '#como-funciona' },
-];
+type Link = { rotulo: string; href: string };
 
-export function Cabecalho() {
+type CabecalhoProps = {
+  /** Nome da funerária. Sem nome, mostra a marca Ampara (landing da plataforma). */
+  nome?: string;
+  logoUrl?: string | null;
+  navegacao: Link[];
+  entrar: Link;
+  acao: Link;
+};
+
+export function Cabecalho({ nome, logoUrl, navegacao, entrar, acao }: CabecalhoProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-border/60 bg-surface/90 backdrop-blur">
-      <Container className="flex h-[88px] items-center justify-between">
-        <a href="#inicio" aria-label="Ampara, início">
-          <Logo font="serif" className="text-xl text-primary" />
+      <Container className="flex h-[88px] items-center justify-between gap-6">
+        <a href="/" aria-label={`${nome ?? 'Ampara'}, início`} className="flex items-center gap-3">
+          {logoUrl ? (
+            // Logo servido pela API, com tamanho variável: <img> simples em vez do next/image.
+            <img src={logoUrl} alt="" className="h-9 w-auto" />
+          ) : nome ? null : (
+            <Logo font="serif" className="text-xl text-primary" />
+          )}
+          {nome && <span className="font-serif text-xl text-primary">{nome}</span>}
         </a>
         <nav className="hidden items-center gap-10 md:flex">
-          {LINKS.map((link) => (
+          {navegacao.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -29,11 +38,11 @@ export function Cabecalho() {
           ))}
         </nav>
         <div className="flex items-center gap-6">
-          <a href={`${env.appUrl}/entrar`} className="text-sm text-foreground hover:underline">
-            Entrar
+          <a href={entrar.href} className="text-sm text-foreground hover:underline">
+            {entrar.rotulo}
           </a>
           <Button asChild>
-            <a href={`${env.appUrl}/cadastro`}>Criar meu perfil</a>
+            <a href={acao.href}>{acao.rotulo}</a>
           </Button>
         </div>
       </Container>

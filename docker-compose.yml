@@ -23,15 +23,21 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
 
+  # Landing das funerárias (demo.localhost:3000) e da plataforma (localhost:3000).
   landing:
     build:
       context: .
       dockerfile: apps/landing/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8080
-        NEXT_PUBLIC_APP_URL: http://localhost:8080
+        API_URL_INTERNA: http://${API_UPSTREAM:-api:8080}
     ports:
       - '3000:3000'
+    environment:
+      API_URL_INTERNA: http://${API_UPSTREAM:-api:8080}
+      DOMINIO_BASE: ${DOMINIO_BASE:-localhost}
+      APP_URL: http://localhost:8080
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   # Versão do backend fixada em packages/api-client/backend.json (INF-21).
   api:

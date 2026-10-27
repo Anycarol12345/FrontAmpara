@@ -1,5 +1,6 @@
 'use client';
 
+import type { ItemResponse } from '@ampara/api-client';
 import { Button } from '@ampara/ui/components/button';
 import { cn } from '@ampara/ui/lib/utils';
 import {
@@ -11,68 +12,40 @@ import {
   Music,
   Sparkles,
   Truck,
+  type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
-import { env } from '@/lib/env';
+import { numero, real } from '@/lib/formatar';
 import { Container, SectionHeading } from './Container';
 
-// Catálogo modelo (FUN-01). Na landing de cada funerária virá do catálogo dela.
-const ITENS = [
-  {
-    id: 'coroa',
-    nome: 'Coroa de flores',
-    descricao: 'Flores do campo, rosas ou lírios.',
-    preco: 280,
-    icone: Flower,
-  },
-  {
-    id: 'arranjos',
-    nome: 'Flores naturais',
-    descricao: 'Arranjos para a sala e a urna, em tons claros.',
-    preco: 420,
-    icone: Flower2,
-  },
-  {
-    id: 'cerimonia',
-    nome: 'Cerimônia',
-    descricao: 'Celebração religiosa ou ecumênica.',
-    preco: 1200,
-    icone: Church,
-  },
-  {
-    id: 'translado',
-    nome: 'Translado',
-    descricao: 'Transporte com cuidado até o destino.',
-    preco: 650,
-    icone: Truck,
-  },
-  {
-    id: 'album',
-    nome: 'Álbum de memórias',
-    descricao: 'Fotos e mensagens da família reunidas em um livro.',
-    preco: 380,
-    icone: BookHeart,
-  },
-  {
-    id: 'musica',
-    nome: 'Homenagem musical',
-    descricao: 'Músicos ao vivo ou a trilha que a família escolher.',
-    preco: 750,
-    icone: Music,
-  },
+// Ícone pelo nome do item do catálogo; o catálogo é de cada funerária (DEC-07).
+const ICONES: [RegExp, LucideIcon][] = [
+  [/coroa/i, Flower],
+  [/flor|arranjo/i, Flower2],
+  [/cerim|missa|culto|ora[cç]/i, Church],
+  [/transl|transp|carro/i, Truck],
+  [/[aá]lbum|livro|mem[oó]r/i, BookHeart],
+  [/m[uú]sic|coral/i, Music],
 ];
+const iconeDo = (nome: string) => ICONES.find(([regra]) => regra.test(nome))?.[1] ?? Sparkles;
 
-const SELECAO_INICIAL = ['coroa', 'arranjos', 'album'];
-const PRECO_BASE = 1720;
+type PersonalizacaoProps = {
+  itens: ItemResponse[];
+  /** Endereço para salvar as escolhas (cadastro no apps/web). */
+  linkSalvar: string;
+};
 
-const real = (valor: number) =>
-  valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+/** Itens do catálogo da funerária, com total estimado das escolhas (FE-PUB-01, FUN-01). */
+export function Personalizacao({ itens, linkSalvar }: PersonalizacaoProps) {
+  const visiveis = itens.filter((item) => item.ativo).slice(0, 6);
+  const [selecionados, setSelecionados] = useState<string[]>(() =>
+    visiveis.slice(0, 3).map((item) => item.id_item),
+  );
 
-export function Personalizacao() {
-  const [selecionados, setSelecionados] = useState<string[]>(SELECAO_INICIAL);
+  if (visiveis.length === 0) return null;
 
-  const escolhidos = ITENS.filter((item) => selecionados.includes(item.id));
-  const total = PRECO_BASE + escolhidos.reduce((soma, item) => soma + item.preco, 0);
+  const escolhidos = visiveis.filter((item) => selecionados.includes(item.id_item));
+  const total = escolhidos.reduce((soma, item) => soma + numero(item.preco), 0);
 
   function alternar(id: string) {
     setSelecionados((atual) =>
@@ -92,14 +65,15 @@ export function Personalizacao() {
 
         <div className="mx-auto mt-14 grid gap-6 lg:grid-cols-[1fr_1fr_400px]">
           <div className="grid gap-4 sm:grid-cols-2 lg:col-span-2">
-            {ITENS.map(({ id, nome, descricao, preco, icone: Icone }) => {
-              const ativo = selecionados.includes(id);
+            {visiveis.map((item) => {
+              const Icone = iconeDo(item.nome);
+              const ativo = selecionados.includes(item.id_item);
               return (
                 <button
-                  key={id}
+                  key={item.id_item}
                   type="button"
                   aria-pressed={ativo}
-                  onClick={() => alternar(id)}
+                  onClick={() => alternar(item.id_item)}
                   className={cn(
                     'flex flex-col rounded-xl border-2 bg-white p-6 text-left transition-colors',
                     ativo
@@ -118,11 +92,11 @@ export function Personalizacao() {
                       )}
                     />
                   </span>
-                  <span className="mt-5 font-serif text-2xl text-primary">{nome}</span>
+                  <span className="mt-5 font-serif text-2xl text-primary">{item.nome}</span>
                   <span className="mt-1 flex items-end justify-between gap-4">
-                    <span className="text-xs text-muted-foreground">{descricao}</span>
+                    <span className="text-xs text-muted-foreground">{item.descricao}</span>
                     <span className="shrink-0 text-[11px] font-semibold text-primary">
-                      + {real(preco)}
+                      + {real(item.preco, 0)}
                     </span>
                   </span>
                 </button>
@@ -142,14 +116,13 @@ export function Personalizacao() {
             </div>
 
             <ul className="mt-5 flex flex-col gap-2 border-t border-white/10 pt-5 text-[11px]">
-              <li className="flex justify-between text-white/80">
-                <span>Plano Acolher (base)</span>
-                <span>{real(PRECO_BASE)}</span>
-              </li>
+              {escolhidos.length === 0 && (
+                <li className="text-white/60">Escolha os itens ao lado.</li>
+              )}
               {escolhidos.map((item) => (
-                <li key={item.id} className="flex justify-between text-white/80">
+                <li key={item.id_item} className="flex justify-between text-white/80">
                   <span>{item.nome}</span>
-                  <span>{real(item.preco)}</span>
+                  <span>{real(item.preco, 0)}</span>
                 </li>
               ))}
             </ul>
@@ -157,7 +130,7 @@ export function Personalizacao() {
             <div className="mt-5 flex items-end justify-between border-t border-white/10 pt-5">
               <div>
                 <p className="text-[10px] text-white/60">Total estimado</p>
-                <p className="font-serif text-5xl/none">{real(total)}</p>
+                <p className="font-serif text-5xl/none">{real(total, 0)}</p>
               </div>
               <span className="text-[10px] text-white/60">à vista</span>
             </div>
@@ -166,7 +139,7 @@ export function Personalizacao() {
               className="mt-6 w-full bg-linear-to-r from-accent to-[#d4b16c] text-accent-foreground hover:opacity-90"
               asChild
             >
-              <a href={`${env.appUrl}/cadastro`}>
+              <a href={linkSalvar}>
                 Salvar escolhas <ArrowRight />
               </a>
             </Button>

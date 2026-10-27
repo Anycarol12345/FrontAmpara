@@ -12,13 +12,13 @@ export function Hero() {
   return (
     <section id="inicio" className="relative overflow-hidden">
       <Ceu />
-      <Container className="relative flex min-h-[1110px] flex-col justify-center py-24">
+      <Container className="relative flex min-h-[680px] flex-col justify-center py-24 xl:min-h-[1110px]">
         <div className="max-w-[860px]">
           <span className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-white/70 px-3.5 py-1.5 text-xs text-muted-foreground">
             <Sparkles className="size-3.5" />
             Cuidado do planejamento à memória
           </span>
-          <h1 className="mt-7 max-w-[740px] font-serif text-[90px]/[1.05] tracking-tight text-primary">
+          <h1 className="mt-7 max-w-[740px] font-serif text-6xl/[1.05] md:text-[90px]/[1.05] tracking-tight text-primary">
             Planejar também é uma forma de <em>cuidar</em>
           </h1>
           <p className="mt-8 max-w-[560px] text-lg leading-relaxed text-muted-foreground">
