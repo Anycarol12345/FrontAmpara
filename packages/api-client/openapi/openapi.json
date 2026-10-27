@@ -2,6 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Funerária Online API",
+    "description": "Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.",
     "version": "v1"
   },
   "servers": [
@@ -10,12 +11,391 @@
     }
   ],
   "paths": {
+    "/api/v1/gestao/funcionarios": {
+      "post": {
+        "tags": ["Equipe da funerária"],
+        "summary": "Cadastra um funcionário ou consultor e envia o convite por e-mail",
+        "description": "Perfil: FUNCIONARIO (padrão) ou CONSULTOR. Quem ainda não tem conta recebe o link para definir a senha; quem já tem conta na plataforma recebe o aviso de acesso.",
+        "operationId": "CadastrarFuncionario",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CadastrarFuncionarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembroEquipeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/usuarios": {
+      "get": {
+        "tags": ["Equipe da funerária"],
+        "summary": "Equipe da funerária, por perfil, status (ATIVO ou INATIVO) e nome ou e-mail",
+        "operationId": "ListarEquipe",
+        "parameters": [
+          {
+            "name": "perfil",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "busca",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaResultOfMembroEquipeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/usuarios/{id}/status": {
+      "patch": {
+        "tags": ["Equipe da funerária"],
+        "summary": "Ativa ou desativa o acesso à funerária",
+        "description": "Desativar encerra as sessões desta funerária; a conta continua valendo nas outras. O gestor não desativa o próprio acesso nem o último gestor ativo.",
+        "operationId": "AlterarStatusMembro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlterarStatusMembroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/usuarios/{id}/perfil": {
+      "patch": {
+        "tags": ["Equipe da funerária"],
+        "summary": "Troca o perfil: FUNERARIA, FUNCIONARIO ou CONSULTOR",
+        "description": "Vale a partir da próxima renovação da sessão. O último gestor ativo não pode ser rebaixado.",
+        "operationId": "AlterarPerfilMembro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlterarPerfilMembroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "tags": ["Autenticação"],
         "summary": "Entra na funerária do endereço acessado (ou na plataforma, para o ADMIN)",
         "description": "Devolve o access token no corpo e o refresh token em cookie httpOnly.",
         "operationId": "Login",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -76,6 +456,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -85,6 +475,17 @@
         "tags": ["Autenticação"],
         "summary": "Troca o refresh token do cookie por um access token novo",
         "operationId": "RenovarSessao",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -124,9 +525,290 @@
         "tags": ["Autenticação"],
         "summary": "Encerra a sessão e revoga o refresh token",
         "operationId": "Logout",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
         "responses": {
           "204": {
             "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/definir-senha": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Define a senha pelo link do convite e confirma o e-mail",
+        "description": "O token vem no link enviado por e-mail. Vale uma vez e expira (TEN-02, AUT-07).",
+        "operationId": "DefinirSenha",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirSenhaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/esqueci-senha": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Envia o link para redefinir a senha",
+        "description": "Responde 204 sempre, mesmo se o e-mail não tiver conta, para não revelar quem é cadastrado. O link vai para quem pode entrar no endereço acessado (AUT-05).",
+        "operationId": "EsqueciSenha",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EsqueciSenhaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/redefinir-senha": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Troca a senha pelo link do \"esqueci minha senha\"",
+        "description": "O token vale uma vez e expira. A troca encerra as sessões abertas (AUT-05).",
+        "operationId": "RedefinirSenha",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirSenhaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/confirmar-email": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Confirma o e-mail pelo link enviado após o cadastro",
+        "description": "O token vale uma vez e expira (AUT-05).",
+        "operationId": "ConfirmarEmail",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmarEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/senha": {
+      "put": {
+        "tags": ["Autenticação"],
+        "summary": "O usuário logado troca a própria senha",
+        "description": "Confere a senha atual e encerra todas as sessões da conta (AUT-06).",
+        "operationId": "AlterarSenha",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlterarSenhaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Locked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -136,6 +818,17 @@
         "tags": ["Autenticação"],
         "summary": "Funerárias em que o usuário tem vínculo ativo",
         "operationId": "MinhasFunerarias",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -163,11 +856,255 @@
         }
       }
     },
+    "/api/v1/tenant/configuracoes": {
+      "get": {
+        "tags": ["Configurações da funerária"],
+        "summary": "Identidade visual da funerária do endereço acessado",
+        "operationId": "IdentidadeVisual",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentidadeVisualResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/funerarias/{slug}/logo": {
+      "get": {
+        "tags": ["Configurações da funerária"],
+        "summary": "Logo da funerária, para telas e e-mails",
+        "operationId": "LogoFuneraria",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/funerarias": {
+      "post": {
+        "tags": ["Funerárias"],
+        "summary": "Auto-cadastro de funerária pela landing",
+        "description": "A funerária nasce PENDENTE e o gestor recebe por e-mail o link para definir a senha.",
+        "operationId": "AutoCadastroFuneraria",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CadastrarFunerariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunerariaCadastradaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clientes": {
+      "post": {
+        "tags": ["Clientes"],
+        "summary": "Cadastra o cliente titular na funerária do endereço acessado",
+        "description": "Cria a conta com a senha informada. Se o e-mail já tiver conta na plataforma (cliente de outra funerária), a senha precisa ser a dessa conta e só o vínculo com esta funerária é criado.",
+        "operationId": "CadastrarCliente",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CadastrarClienteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/planos": {
       "get": {
         "tags": ["Planos"],
         "summary": "Lista os planos ativos da funerária",
         "operationId": "ListarPlanos",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -209,6 +1146,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
           }
         ],
         "responses": {
@@ -235,12 +1181,247 @@
         }
       }
     },
-    "/api/v1/gestao/planos": {
+    "/api/v1/catalogo": {
       "get": {
-        "tags": ["Planos"],
-        "summary": "Lista todos os planos da funerária, ativos e inativos",
-        "operationId": "GestaoListarPlanos",
+        "tags": ["Catálogo"],
+        "summary": "Itens ativos do catálogo da funerária, por categoria (id)",
+        "operationId": "ListarCatalogo",
+        "parameters": [
+          {
+            "name": "categoria",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogo/categorias": {
+      "get": {
+        "tags": ["Catálogo"],
+        "summary": "Categorias ativas do catálogo, na ordem definida pela funerária",
+        "operationId": "ListarCategoriasCatalogo",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoriaResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalogo/{id}": {
+      "get": {
+        "tags": ["Catálogo"],
+        "summary": "Detalhe de um item ativo do catálogo",
+        "operationId": "ObterItemCatalogo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/funerarias/{slug}/catalogo/{id}/imagem": {
+      "get": {
+        "tags": ["Catálogo"],
+        "summary": "Imagem de um item do catálogo, para telas e e-mails",
+        "operationId": "ImagemItemCatalogo",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contratos": {
+      "post": {
+        "tags": ["Contratos"],
+        "summary": "O cliente logado contrata um plano para si e, se quiser, para os seus dependentes",
+        "description": "Coberturas: TITULAR, TITULAR_E_DEPENDENTES ou SOMENTE_DEPENDENTES (se o plano permitir). O contrato começa A_PAGAR e é ativado com o pagamento da primeira cobrança.",
+        "operationId": "Contratar",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContratarRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContratoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -261,6 +1442,1532 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Contratos"],
+        "summary": "Contratos do cliente logado, do mais recente para o mais antigo",
+        "operationId": "MeusContratos",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContratoResumoResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/contratos": {
+      "post": {
+        "tags": ["Contratos"],
+        "summary": "A equipe da funerária cria o contrato de um cliente",
+        "operationId": "ContratarParaCliente",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContratarParaClienteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContratoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Contratos"],
+        "summary": "Busca contratos da funerária por status, plano e CPF do titular",
+        "description": "Ordenação: ordenarPor = data_contratacao (padrão, mais recentes primeiro), valor_total, status ou plano; direcao = asc ou desc.",
+        "operationId": "BuscarContratos",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id_plano",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cpf",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "ordenarPor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "direcao",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaResultOfContratoResumoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contratos/{id}": {
+      "get": {
+        "tags": ["Contratos"],
+        "summary": "Detalhe do contrato com plano e pessoas cobertas",
+        "description": "A equipe vê qualquer contrato da funerária; o cliente, só os próprios (os outros dão 404).",
+        "operationId": "ObterContrato",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContratoDetalheResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/configuracoes": {
+      "get": {
+        "tags": ["Configurações da funerária"],
+        "summary": "Configurações completas da funerária",
+        "operationId": "ObterConfiguracoes",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfiguracoesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Configurações da funerária"],
+        "summary": "Atualiza identidade visual e parâmetros. Valem para novos contratos e próximas faturas",
+        "operationId": "AtualizarConfiguracoes",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarConfiguracoesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/configuracoes/logo": {
+      "post": {
+        "tags": ["Configurações da funerária"],
+        "summary": "Envia o logo (campo \"arquivo\"): PNG, JPEG ou WEBP de até 2 MB",
+        "description": "Substitui o logo atual. O tipo é conferido pelo conteúdo do arquivo, não pela extensão.",
+        "operationId": "EnviarLogo",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "arquivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Configurações da funerária"],
+        "summary": "Remove o logo",
+        "operationId": "RemoverLogo",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tenants": {
+      "post": {
+        "tags": ["Funerárias"],
+        "summary": "ADMIN cadastra uma funerária",
+        "operationId": "CadastrarFuneraria",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CadastrarFunerariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunerariaCadastradaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Funerárias"],
+        "summary": "Lista as funerárias da plataforma",
+        "description": "Ordenação: ordenarPor = nome_fantasia (padrão), slug, status ou criada_em; direcao = asc ou desc.",
+        "operationId": "ListarFunerarias",
+        "parameters": [
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "busca",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/StatusFuneraria"
+            }
+          },
+          {
+            "name": "ordenarPor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "direcao",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaResultOfFunerariaListaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/tenants/{id}/status": {
+      "patch": {
+        "tags": ["Funerárias"],
+        "summary": "Aprova, suspende ou reativa uma funerária",
+        "operationId": "AlterarStatusFuneraria",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlterarStatusFunerariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clientes/me": {
+      "get": {
+        "tags": ["Clientes"],
+        "summary": "Dados do cliente logado",
+        "operationId": "ObterMeusDados",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Clientes"],
+        "summary": "Atualiza os dados do cliente logado. CPF, data de nascimento e e-mail não mudam aqui",
+        "operationId": "AtualizarMeusDados",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarMeusDadosRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/clientes": {
+      "get": {
+        "tags": ["Clientes"],
+        "summary": "Busca clientes da funerária por nome ou CPF",
+        "description": "Ordenação: ordenarPor = nome (padrão), cpf, cidade ou cadastrado_em; direcao = asc ou desc.",
+        "operationId": "BuscarClientes",
+        "parameters": [
+          {
+            "name": "nome",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cpf",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "ordenarPor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "direcao",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaResultOfClienteResumoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/clientes/{id}": {
+      "get": {
+        "tags": ["Clientes"],
+        "summary": "Detalhe do cliente com os dependentes",
+        "operationId": "ObterClienteGestao",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteDetalheResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dependentes": {
+      "post": {
+        "tags": ["Dependentes"],
+        "summary": "Cadastra um dependente do titular logado",
+        "operationId": "CadastrarDependente",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CadastrarDependenteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DependenteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Dependentes"],
+        "summary": "Lista os dependentes do titular logado",
+        "operationId": "ListarDependentes",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DependenteResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dependentes/{id}": {
+      "get": {
+        "tags": ["Dependentes"],
+        "summary": "Detalhe de um dependente do titular logado",
+        "operationId": "ObterDependente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DependenteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Dependentes"],
+        "summary": "Edita um dependente do titular logado. O CPF não muda",
+        "operationId": "AtualizarDependente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarDependenteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DependenteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Dependentes"],
+        "summary": "Remove um dependente (remoção lógica). Não é permitido com contrato ativo",
+        "operationId": "RemoverDependente",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/planos": {
+      "get": {
+        "tags": ["Planos"],
+        "summary": "Lista todos os planos da funerária, ativos e inativos",
+        "operationId": "GestaoListarPlanos",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
           "200": {
             "description": "OK",
             "content": {
@@ -273,24 +2980,7 @@
                 }
               }
             }
-          }
-        }
-      },
-      "post": {
-        "tags": ["Planos"],
-        "summary": "Cria um plano",
-        "operationId": "CriarPlano",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlanoRequest"
-              }
-            }
           },
-          "required": true
-        },
-        "responses": {
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -310,7 +3000,35 @@
                 }
               }
             }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Planos"],
+        "summary": "Cria um plano",
+        "operationId": "CriarPlano",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanoRequest"
+              }
+            }
           },
+          "required": true
+        },
+        "responses": {
           "201": {
             "description": "Created",
             "content": {
@@ -327,6 +3045,26 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -358,9 +3096,28 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
           }
         ],
         "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanoResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -377,16 +3134,6 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlanoResponse"
                 }
               }
             }
@@ -416,6 +3163,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
           }
         ],
         "requestBody": {
@@ -429,6 +3185,19 @@
           "required": true
         },
         "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -445,19 +3214,6 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "No Content"
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -499,6 +3255,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
           }
         ],
         "requestBody": {
@@ -512,6 +3277,9 @@
           "required": true
         },
         "responses": {
+          "204": {
+            "description": "No Content"
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -532,8 +3300,1735 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/planos/{id}/coberturas": {
+      "put": {
+        "tags": ["Planos"],
+        "summary": "Define os itens do catálogo que o plano cobre, trocando a lista inteira",
+        "description": "Cada item precisa estar ativo no catálogo. Lista vazia remove as coberturas (PLA-02).",
+        "operationId": "DefinirCoberturasPlano",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirCoberturasRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
           "204": {
             "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo": {
+      "get": {
+        "tags": ["Catálogo"],
+        "summary": "Todos os itens do catálogo, ativos e inativos, com estoque",
+        "operationId": "ListarCatalogoGestao",
+        "parameters": [
+          {
+            "name": "categoria",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Catálogo"],
+        "summary": "Cria um item do catálogo",
+        "operationId": "CriarItemCatalogo",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo/categorias": {
+      "get": {
+        "tags": ["Catálogo"],
+        "summary": "Todas as categorias, ativas e inativas",
+        "operationId": "ListarCategoriasGestao",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoriaResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Catálogo"],
+        "summary": "Cria uma categoria",
+        "operationId": "CriarCategoria",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo/categorias/{id}": {
+      "put": {
+        "tags": ["Catálogo"],
+        "summary": "Altera nome e ordem da categoria",
+        "operationId": "AtualizarCategoria",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo/categorias/{id}/status": {
+      "patch": {
+        "tags": ["Catálogo"],
+        "summary": "Ativa ou desativa a categoria; os itens dela somem do catálogo do cliente",
+        "operationId": "AlterarStatusCategoria",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo/{id}": {
+      "put": {
+        "tags": ["Catálogo"],
+        "summary": "Altera o item. O preço novo não muda funerais e orçamentos já aprovados",
+        "operationId": "AtualizarItemCatalogo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo/{id}/status": {
+      "patch": {
+        "tags": ["Catálogo"],
+        "summary": "Ativa ou desativa o item",
+        "operationId": "AlterarStatusItemCatalogo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo/{id}/imagem": {
+      "post": {
+        "tags": ["Catálogo"],
+        "summary": "Envia a imagem do item (campo \"arquivo\"): PNG, JPEG ou WEBP de até 5 MB",
+        "operationId": "EnviarImagemItemCatalogo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "arquivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo/{id}/variacoes": {
+      "post": {
+        "tags": ["Catálogo"],
+        "summary": "Adiciona uma variação ao item (ex.: urna em mogno)",
+        "operationId": "AdicionarVariacao",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VariacaoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/catalogo/{id}/variacoes/{idVariacao}/status": {
+      "patch": {
+        "tags": ["Catálogo"],
+        "summary": "Ativa ou desativa uma variação",
+        "operationId": "AlterarStatusVariacao",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "idVariacao",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terceiros/me": {
+      "get": {
+        "tags": ["Portal do terceiro"],
+        "summary": "Cadastro do terceiro logado nesta funerária",
+        "operationId": "MeuCadastroTerceiro",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerceiroResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terceiros/atribuicoes": {
+      "get": {
+        "tags": ["Portal do terceiro"],
+        "summary": "Translados, certidões e pedidos atribuídos ao terceiro logado, numa lista só",
+        "description": "Status: PENDENTE, ACEITA, RECUSADA, EXPIRADA (pendente com o prazo vencido), CONCLUIDA ou CANCELADA.",
+        "operationId": "MinhasAtribuicoes",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AtribuicaoResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terceiros/atribuicoes/{id}/aceite": {
+      "post": {
+        "tags": ["Portal do terceiro"],
+        "summary": "Aceita o serviço atribuído",
+        "operationId": "AceitarAtribuicao",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtribuicaoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terceiros/atribuicoes/{id}/recusa": {
+      "post": {
+        "tags": ["Portal do terceiro"],
+        "summary": "Recusa o serviço atribuído, com o motivo",
+        "operationId": "RecusarAtribuicao",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecusarAtribuicaoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtribuicaoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/terceiros": {
+      "post": {
+        "tags": ["Terceiros"],
+        "summary": "Cadastra um parceiro (FROTA, CARTORIO_DESPACHANTE ou FORNECEDOR) e envia o convite",
+        "description": "Quem ainda não tem conta recebe o link para definir a senha; quem já tem conta na plataforma só ganha o acesso a esta funerária. Começa CONVIDADO e passa a ATIVO quando a conta tem senha.",
+        "operationId": "CadastrarTerceiro",
+        "parameters": [
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CadastrarTerceiroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerceiroResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Terceiros"],
+        "summary": "Terceiros da funerária, por tipo e status",
+        "operationId": "ListarTerceiros",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaResultOfTerceiroResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/terceiros/{id}": {
+      "get": {
+        "tags": ["Terceiros"],
+        "summary": "Detalhe do terceiro",
+        "operationId": "ObterTerceiro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerceiroResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Terceiros"],
+        "summary": "Altera os dados do terceiro (tipo e e-mail não mudam)",
+        "operationId": "AtualizarTerceiro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarTerceiroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerceiroResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/gestao/terceiros/{id}/status": {
+      "patch": {
+        "tags": ["Terceiros"],
+        "summary": "Ativa ou desativa o terceiro nesta funerária",
+        "description": "Desativar não apaga o histórico, tira o acesso a esta funerária e impede novas atribuições.",
+        "operationId": "AlterarStatusTerceiro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Tenant",
+            "in": "header",
+            "description": "Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "demo"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlterarStatusTerceiroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found",
@@ -551,6 +5046,61 @@
   },
   "components": {
     "schemas": {
+      "AlterarPerfilMembroRequest": {
+        "required": ["perfil"],
+        "type": "object",
+        "properties": {
+          "perfil": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PerfilVinculo"
+              }
+            ]
+          }
+        }
+      },
+      "AlterarSenhaRequest": {
+        "required": ["senha_atual", "nova_senha"],
+        "type": "object",
+        "properties": {
+          "senha_atual": {
+            "type": ["null", "string"]
+          },
+          "nova_senha": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Corpo de PUT /auth/senha."
+      },
+      "AlterarStatusFunerariaRequest": {
+        "required": ["status"],
+        "type": "object",
+        "properties": {
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StatusFuneraria"
+              }
+            ]
+          }
+        },
+        "description": "Corpo de PATCH /admin/tenants/{id}/status."
+      },
+      "AlterarStatusMembroRequest": {
+        "required": ["ativo"],
+        "type": "object",
+        "properties": {
+          "ativo": {
+            "type": ["null", "boolean"]
+          }
+        }
+      },
       "AlterarStatusPlanoRequest": {
         "required": ["ativo"],
         "type": "object",
@@ -560,6 +5110,613 @@
           }
         },
         "description": "Corpo de PATCH /gestao/planos/{id}/status."
+      },
+      "AlterarStatusTerceiroRequest": {
+        "required": ["ativo"],
+        "type": "object",
+        "properties": {
+          "ativo": {
+            "type": ["null", "boolean"]
+          }
+        }
+      },
+      "AreaAtuacao": {
+        "type": "object",
+        "properties": {
+          "ufs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cidades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CidadeAtendida"
+            }
+          }
+        },
+        "description": "Onde o parceiro atende: UFs inteiras e/ou cidades. Gravada em jsonb."
+      },
+      "AtribuicaoResponse": {
+        "required": [
+          "id_atribuicao",
+          "tipo",
+          "id_origem",
+          "status",
+          "prazo_aceite",
+          "respondida_em",
+          "motivo_recusa",
+          "resumo"
+        ],
+        "type": "object",
+        "properties": {
+          "id_atribuicao": {
+            "type": "string",
+            "description": "Atribuição.",
+            "format": "uuid"
+          },
+          "tipo": {
+            "description": "TRANSLADO, CERTIDAO ou PEDIDO.",
+            "$ref": "#/components/schemas/TipoAtribuicao"
+          },
+          "id_origem": {
+            "type": "string",
+            "description": "Registro no módulo de origem, usado nos endpoints de cada serviço (TRA-04, CER-04, FUN-09).",
+            "format": "uuid"
+          },
+          "status": {
+            "description": "Status atual; pendente com prazo vencido aparece como EXPIRADA.",
+            "$ref": "#/components/schemas/StatusAtribuicao"
+          },
+          "prazo_aceite": {
+            "type": "string",
+            "description": "Até quando dá para aceitar ou recusar.",
+            "format": "date-time"
+          },
+          "respondida_em": {
+            "type": ["null", "string"],
+            "description": "Quando o terceiro respondeu.",
+            "format": "date-time"
+          },
+          "motivo_recusa": {
+            "type": ["null", "string"],
+            "description": "Motivo informado na recusa."
+          },
+          "resumo": {
+            "description": "Só os dados que o terceiro pode ver, conforme o tipo de serviço.",
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "AtualizarConfiguracoesRequest": {
+        "required": ["identidade_visual", "parametros"],
+        "type": "object",
+        "properties": {
+          "identidade_visual": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IdentidadeVisual"
+              }
+            ]
+          },
+          "parametros": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ParametrosFuneraria"
+              }
+            ]
+          }
+        },
+        "description": "Corpo de PUT /gestao/configuracoes (TEN-03)."
+      },
+      "AtualizarDependenteRequest": {
+        "required": ["nome", "data_nascimento", "parentesco", "telefone", "email"],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "data_nascimento": {
+            "type": ["null", "string"]
+          },
+          "parentesco": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Corpo de PUT /dependentes/{id} (CLI-02). O CPF não é alterado."
+      },
+      "AtualizarMeusDadosRequest": {
+        "required": ["nome", "telefone", "endereco", "cep", "cidade", "estado"],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "endereco": {
+            "type": ["null", "string"]
+          },
+          "cep": {
+            "type": ["null", "string"]
+          },
+          "cidade": {
+            "type": ["null", "string"]
+          },
+          "estado": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Corpo de PUT /clientes/me (CLI-01). CPF, data de nascimento e e-mail não são alterados aqui."
+      },
+      "AtualizarTerceiroRequest": {
+        "required": [
+          "nome_razao_social",
+          "cpf_cnpj",
+          "telefone",
+          "area_atuacao",
+          "categorias_atendidas"
+        ],
+        "type": "object",
+        "properties": {
+          "nome_razao_social": {
+            "type": ["null", "string"]
+          },
+          "cpf_cnpj": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "area_atuacao": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AreaAtuacao"
+              }
+            ]
+          },
+          "categorias_atendidas": {
+            "type": ["null", "array"],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "CadastrarClienteRequest": {
+        "required": [
+          "nome",
+          "cpf",
+          "data_nascimento",
+          "telefone",
+          "email",
+          "senha",
+          "endereco",
+          "cep",
+          "cidade",
+          "estado"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "cpf": {
+            "type": ["null", "string"]
+          },
+          "data_nascimento": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": ["null", "string"]
+          },
+          "senha": {
+            "type": ["null", "string"]
+          },
+          "endereco": {
+            "type": ["null", "string"]
+          },
+          "cep": {
+            "type": ["null", "string"]
+          },
+          "cidade": {
+            "type": ["null", "string"]
+          },
+          "estado": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Corpo de POST /clientes, igual ao exemplo do card Criar Cliente."
+      },
+      "CadastrarDependenteRequest": {
+        "required": ["nome", "cpf", "data_nascimento", "parentesco", "telefone", "email"],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "cpf": {
+            "type": ["null", "string"]
+          },
+          "data_nascimento": {
+            "type": ["null", "string"]
+          },
+          "parentesco": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Corpo de POST /dependentes, igual ao exemplo do card Criar Dependente. Não aceita id_cliente."
+      },
+      "CadastrarFuncionarioRequest": {
+        "required": ["nome", "cpf", "email", "cargo", "telefone", "perfil"],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "cpf": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": ["null", "string"]
+          },
+          "cargo": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "perfil": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PerfilVinculo"
+              }
+            ]
+          }
+        },
+        "description": "Corpo de POST /gestao/funcionarios. Campos opcionais para a validação devolver as mensagens."
+      },
+      "CadastrarFunerariaRequest": {
+        "required": [
+          "nome_fantasia",
+          "razao_social",
+          "cnpj",
+          "slug",
+          "email_contato",
+          "telefone",
+          "gestor"
+        ],
+        "type": "object",
+        "properties": {
+          "nome_fantasia": {
+            "type": ["null", "string"]
+          },
+          "razao_social": {
+            "type": ["null", "string"]
+          },
+          "cnpj": {
+            "type": ["null", "string"]
+          },
+          "slug": {
+            "type": ["null", "string"]
+          },
+          "email_contato": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "gestor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GestorRequest"
+              }
+            ]
+          }
+        },
+        "description": "Corpo de POST /onboarding/funerarias e POST /admin/tenants (TEN-02)."
+      },
+      "CadastrarTerceiroRequest": {
+        "required": [
+          "tipo",
+          "email",
+          "nome_razao_social",
+          "cpf_cnpj",
+          "telefone",
+          "area_atuacao",
+          "categorias_atendidas"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TipoTerceiro"
+              }
+            ]
+          },
+          "email": {
+            "type": ["null", "string"]
+          },
+          "nome_razao_social": {
+            "type": ["null", "string"]
+          },
+          "cpf_cnpj": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "area_atuacao": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AreaAtuacao"
+              }
+            ]
+          },
+          "categorias_atendidas": {
+            "type": ["null", "array"],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "CategoriaRequest": {
+        "required": ["nome", "ordem"],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "ordem": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "CategoriaResponse": {
+        "required": ["id_categoria", "nome", "ordem", "ativo"],
+        "type": "object",
+        "properties": {
+          "id_categoria": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "ordem": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "ativo": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CidadeAtendida": {
+        "required": ["nome", "uf"],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "uf": {
+            "type": "string"
+          }
+        }
+      },
+      "ClienteDetalheResponse": {
+        "required": ["cliente", "dependentes"],
+        "type": "object",
+        "properties": {
+          "cliente": {
+            "$ref": "#/components/schemas/ClienteResponse"
+          },
+          "dependentes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DependenteResponse"
+            }
+          }
+        }
+      },
+      "ClienteResponse": {
+        "required": [
+          "id_cliente",
+          "nome",
+          "cpf",
+          "data_nascimento",
+          "email",
+          "telefone",
+          "endereco",
+          "cep",
+          "cidade",
+          "estado"
+        ],
+        "type": "object",
+        "properties": {
+          "id_cliente": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          },
+          "data_nascimento": {
+            "type": "string",
+            "format": "date"
+          },
+          "email": {
+            "type": "string"
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "endereco": {
+            "type": ["null", "string"]
+          },
+          "cep": {
+            "type": ["null", "string"]
+          },
+          "cidade": {
+            "type": ["null", "string"]
+          },
+          "estado": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Dados do cliente devolvidos pela API. Nunca inclui a senha."
+      },
+      "ClienteResumoResponse": {
+        "required": ["nome", "cpf", "email"],
+        "type": "object",
+        "properties": {
+          "id_cliente": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "cidade": {
+            "type": ["null", "string"]
+          },
+          "estado": {
+            "type": ["null", "string"]
+          },
+          "quantidade_dependentes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "CoberturaRequest": {
+        "required": ["id_item_catalogo", "quantidade", "km_translado_incluso"],
+        "type": "object",
+        "properties": {
+          "id_item_catalogo": {
+            "type": ["null", "string"],
+            "description": "Item do catálogo coberto.",
+            "format": "uuid"
+          },
+          "quantidade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "description": "Quantidade coberta (ex.: 1 coroa de flores).",
+            "format": "int32"
+          },
+          "km_translado_incluso": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "description": "Quilômetros de translado incluídos, quando o item é de translado.",
+            "format": "int32"
+          }
+        }
+      },
+      "CoberturaResponse": {
+        "required": [
+          "id_plano_cobertura",
+          "id_item_catalogo",
+          "nome",
+          "categoria",
+          "quantidade",
+          "km_translado_incluso",
+          "item_ativo"
+        ],
+        "type": "object",
+        "properties": {
+          "id_plano_cobertura": {
+            "type": "string",
+            "description": "Cobertura no plano.",
+            "format": "uuid"
+          },
+          "id_item_catalogo": {
+            "type": "string",
+            "description": "Item do catálogo coberto.",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string",
+            "description": "Nome atual do item no catálogo."
+          },
+          "categoria": {
+            "type": "string",
+            "description": "Categoria atual do item no catálogo."
+          },
+          "quantidade": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "description": "Quantidade coberta.",
+            "format": "int32"
+          },
+          "km_translado_incluso": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "description": "Quilômetros de translado incluídos, quando houver.",
+            "format": "int32"
+          },
+          "item_ativo": {
+            "type": "boolean",
+            "description": "Item ainda ativo no catálogo. Item desativado depois continua na cobertura."
+          }
+        }
       },
       "ConfiguracaoDependentes": {
         "type": "object",
@@ -597,6 +5754,544 @@
           }
         }
       },
+      "ConfiguracoesResponse": {
+        "required": [
+          "id_tenant",
+          "nome_fantasia",
+          "slug",
+          "status",
+          "identidade_visual",
+          "parametros",
+          "cobranca_configurada"
+        ],
+        "type": "object",
+        "properties": {
+          "id_tenant": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome_fantasia": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusFuneraria"
+          },
+          "identidade_visual": {
+            "$ref": "#/components/schemas/IdentidadeVisual"
+          },
+          "parametros": {
+            "$ref": "#/components/schemas/ParametrosFuneraria"
+          },
+          "cobranca_configurada": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConfirmarEmailRequest": {
+        "required": ["token"],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Corpo de POST /auth/confirmar-email."
+      },
+      "ContratarParaClienteRequest": {
+        "required": [
+          "id_cliente",
+          "id_plano",
+          "tipo_cobertura",
+          "dependentes",
+          "periodicidade",
+          "dia_vencimento"
+        ],
+        "type": "object",
+        "properties": {
+          "id_cliente": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          },
+          "id_plano": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          },
+          "tipo_cobertura": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TipoCobertura"
+              }
+            ]
+          },
+          "dependentes": {
+            "type": ["null", "array"],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "periodicidade": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Periodicidade"
+              }
+            ]
+          },
+          "dia_vencimento": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          }
+        },
+        "description": "Contratação pela equipe da funerária, que informa o titular."
+      },
+      "ContratarRequest": {
+        "required": [
+          "id_plano",
+          "tipo_cobertura",
+          "dependentes",
+          "periodicidade",
+          "dia_vencimento"
+        ],
+        "type": "object",
+        "properties": {
+          "id_plano": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          },
+          "tipo_cobertura": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TipoCobertura"
+              }
+            ]
+          },
+          "dependentes": {
+            "type": ["null", "array"],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "periodicidade": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Periodicidade"
+              }
+            ]
+          },
+          "dia_vencimento": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          }
+        },
+        "description": "Contratação pelo próprio cliente. Campos opcionais para a validação devolver as mensagens do card."
+      },
+      "ContratoDetalheResponse": {
+        "required": [
+          "id_contrato",
+          "titular",
+          "id_plano",
+          "nome_plano",
+          "tipo_cobertura",
+          "periodicidade",
+          "dia_vencimento",
+          "data_contratacao",
+          "data_fim",
+          "status",
+          "valor_plano",
+          "valor_por_dependente",
+          "valor_total",
+          "carencia_dias",
+          "id_consultor",
+          "pessoas_cobertas"
+        ],
+        "type": "object",
+        "properties": {
+          "id_contrato": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "titular": {
+            "$ref": "#/components/schemas/TitularResponse"
+          },
+          "id_plano": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome_plano": {
+            "type": "string"
+          },
+          "tipo_cobertura": {
+            "$ref": "#/components/schemas/TipoCobertura"
+          },
+          "periodicidade": {
+            "$ref": "#/components/schemas/Periodicidade"
+          },
+          "dia_vencimento": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "data_contratacao": {
+            "type": "string",
+            "format": "date"
+          },
+          "data_fim": {
+            "type": ["null", "string"],
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusContrato"
+          },
+          "valor_plano": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "valor_por_dependente": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "valor_total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "carencia_dias": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "id_consultor": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          },
+          "pessoas_cobertas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PessoaCobertaDetalheResponse"
+            }
+          }
+        }
+      },
+      "ContratoResponse": {
+        "required": [
+          "id_contrato",
+          "id_cliente",
+          "id_plano",
+          "nome_plano",
+          "tipo_cobertura",
+          "periodicidade",
+          "dia_vencimento",
+          "data_contratacao",
+          "data_fim",
+          "status",
+          "valor_plano",
+          "valor_por_dependente",
+          "valor_total",
+          "id_consultor",
+          "pessoas_cobertas"
+        ],
+        "type": "object",
+        "properties": {
+          "id_contrato": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id_cliente": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id_plano": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome_plano": {
+            "type": "string"
+          },
+          "tipo_cobertura": {
+            "$ref": "#/components/schemas/TipoCobertura"
+          },
+          "periodicidade": {
+            "$ref": "#/components/schemas/Periodicidade"
+          },
+          "dia_vencimento": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "data_contratacao": {
+            "type": "string",
+            "format": "date"
+          },
+          "data_fim": {
+            "type": ["null", "string"],
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusContrato"
+          },
+          "valor_plano": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "valor_por_dependente": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "valor_total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "id_consultor": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          },
+          "pessoas_cobertas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PessoaCobertaResponse"
+            }
+          }
+        },
+        "description": "Contrato criado ou consultado (card Criar Contrato, CON-01)."
+      },
+      "ContratoResumoResponse": {
+        "required": [
+          "id_contrato",
+          "id_cliente",
+          "nome_titular",
+          "id_plano",
+          "nome_plano",
+          "tipo_cobertura",
+          "periodicidade",
+          "status",
+          "valor_total",
+          "data_contratacao",
+          "quantidade_pessoas"
+        ],
+        "type": "object",
+        "properties": {
+          "id_contrato": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id_cliente": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome_titular": {
+            "type": "string"
+          },
+          "id_plano": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome_plano": {
+            "type": "string"
+          },
+          "tipo_cobertura": {
+            "$ref": "#/components/schemas/TipoCobertura"
+          },
+          "periodicidade": {
+            "$ref": "#/components/schemas/Periodicidade"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusContrato"
+          },
+          "valor_total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "data_contratacao": {
+            "type": "string",
+            "format": "date"
+          },
+          "quantidade_pessoas": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "DefinirCoberturasRequest": {
+        "required": ["coberturas"],
+        "type": "object",
+        "properties": {
+          "coberturas": {
+            "type": ["null", "array"],
+            "items": {
+              "$ref": "#/components/schemas/CoberturaRequest"
+            }
+          }
+        },
+        "description": "Corpo de PUT /gestao/planos/{id}/coberturas."
+      },
+      "DefinirSenhaRequest": {
+        "required": ["token", "senha"],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": ["null", "string"]
+          },
+          "senha": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Corpo de POST /auth/definir-senha e de POST /auth/redefinir-senha."
+      },
+      "DependenteResponse": {
+        "required": [
+          "id_dependente",
+          "id_cliente",
+          "nome",
+          "cpf",
+          "data_nascimento",
+          "parentesco",
+          "telefone",
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "id_dependente": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id_cliente": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          },
+          "data_nascimento": {
+            "type": "string",
+            "format": "date"
+          },
+          "parentesco": {
+            "type": "string"
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "Endereco": {
+        "type": "object",
+        "properties": {
+          "logradouro": {
+            "type": ["null", "string"]
+          },
+          "numero": {
+            "type": ["null", "string"]
+          },
+          "complemento": {
+            "type": ["null", "string"]
+          },
+          "bairro": {
+            "type": ["null", "string"]
+          },
+          "cidade": {
+            "type": ["null", "string"]
+          },
+          "uf": {
+            "type": ["null", "string"]
+          },
+          "cep": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Endereço brasileiro. Value object do shared kernel: usado pela funerária, pelo cliente e, depois, pelo translado.\nTodos os campos são opcionais aqui; cada caso de uso decide quais exige."
+      },
+      "EsqueciSenhaRequest": {
+        "required": ["email"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Corpo de POST /auth/esqueci-senha."
+      },
+      "FunerariaCadastradaResponse": {
+        "required": ["id_tenant", "slug", "status"],
+        "type": "object",
+        "properties": {
+          "id_tenant": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusFuneraria"
+          }
+        }
+      },
+      "FunerariaListaResponse": {
+        "required": ["nome_fantasia", "razao_social", "cnpj", "slug", "email_contato"],
+        "type": "object",
+        "properties": {
+          "id_tenant": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome_fantasia": {
+            "type": "string"
+          },
+          "razao_social": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "email_contato": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusFuneraria"
+          },
+          "origem_cadastro": {
+            "$ref": "#/components/schemas/OrigemCadastro"
+          },
+          "criada_em": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "FunerariaVinculadaResponse": {
         "required": ["id_tenant", "slug", "nome_fantasia", "perfil", "suspensa"],
         "type": "object",
@@ -618,6 +6313,19 @@
             "type": "boolean"
           }
         }
+      },
+      "GestorRequest": {
+        "required": ["nome", "email"],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": ["null", "string"]
+          }
+        },
+        "description": "Quem vai administrar a funerária. Recebe por e-mail o convite para definir a senha."
       },
       "HttpValidationProblemDetails": {
         "type": "object",
@@ -650,6 +6358,153 @@
           }
         }
       },
+      "IdentidadeVisual": {
+        "type": "object",
+        "properties": {
+          "nome_exibicao": {
+            "type": "string"
+          },
+          "logo_url": {
+            "type": ["null", "string"],
+            "description": "Endereço público do logo, servido pela API. Definido pelo upload (POST /gestao/configuracoes/logo);\no valor enviado no PUT das configurações é ignorado."
+          },
+          "cor_primaria": {
+            "type": "string"
+          },
+          "cor_secundaria": {
+            "type": "string"
+          },
+          "email": {
+            "type": ["null", "string"]
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "whatsapp": {
+            "type": ["null", "string"]
+          },
+          "endereco": {
+            "$ref": "#/components/schemas/Endereco"
+          },
+          "horario_atendimento": {
+            "type": ["null", "string"],
+            "description": "Texto livre, ex.: \"Atendimento 24 horas\"."
+          }
+        },
+        "description": "Como a funerária aparece para os clientes (TEN-03). Gravada em jsonb."
+      },
+      "IdentidadeVisualResponse": {
+        "required": ["slug", "nome_fantasia", "identidade_visual"],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "nome_fantasia": {
+            "type": "string"
+          },
+          "identidade_visual": {
+            "$ref": "#/components/schemas/IdentidadeVisual"
+          }
+        }
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
+      "ItemRequest": {
+        "required": [
+          "id_categoria",
+          "nome",
+          "descricao",
+          "preco",
+          "controla_estoque",
+          "quantidade_estoque"
+        ],
+        "type": "object",
+        "properties": {
+          "id_categoria": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          },
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "descricao": {
+            "type": ["null", "string"]
+          },
+          "preco": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["null", "number", "string"],
+            "format": "double"
+          },
+          "controla_estoque": {
+            "type": "boolean"
+          },
+          "quantidade_estoque": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          }
+        }
+      },
+      "ItemResponse": {
+        "required": [
+          "id_item",
+          "id_categoria",
+          "nome",
+          "descricao",
+          "preco",
+          "controla_estoque",
+          "quantidade_estoque",
+          "imagem_url",
+          "ativo",
+          "variacoes"
+        ],
+        "type": "object",
+        "properties": {
+          "id_item": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id_categoria": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": ["null", "string"]
+          },
+          "preco": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "controla_estoque": {
+            "type": "boolean"
+          },
+          "quantidade_estoque": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["null", "integer", "string"],
+            "format": "int32"
+          },
+          "imagem_url": {
+            "type": ["null", "string"]
+          },
+          "ativo": {
+            "type": "boolean"
+          },
+          "variacoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariacaoResponse"
+            }
+          }
+        }
+      },
+      "JsonElement": {},
       "LoginRequest": {
         "required": ["email", "senha"],
         "type": "object",
@@ -680,6 +6535,379 @@
         },
         "description": "Resposta do login e da renovação (AUT-02). O refresh token vai só no cookie."
       },
+      "LogoResponse": {
+        "required": ["logo_url"],
+        "type": "object",
+        "properties": {
+          "logo_url": {
+            "type": "string"
+          }
+        }
+      },
+      "MembroEquipeResponse": {
+        "required": [
+          "id_usuario",
+          "id_funcionario",
+          "nome",
+          "email",
+          "perfil",
+          "ativo",
+          "cpf",
+          "cargo",
+          "telefone"
+        ],
+        "type": "object",
+        "properties": {
+          "id_usuario": {
+            "type": "string",
+            "description": "Conta da pessoa; é o id usado em /gestao/usuarios/{id}.",
+            "format": "uuid"
+          },
+          "id_funcionario": {
+            "type": ["null", "string"],
+            "description": "Cadastro de funcionário; vazio para gestores criados no onboarding.",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string",
+            "description": "Nome da pessoa."
+          },
+          "email": {
+            "type": "string",
+            "description": "E-mail da conta."
+          },
+          "perfil": {
+            "description": "FUNERARIA, FUNCIONARIO ou CONSULTOR.",
+            "$ref": "#/components/schemas/PerfilVinculo"
+          },
+          "ativo": {
+            "type": "boolean",
+            "description": "Vínculo ativo com a funerária."
+          },
+          "cpf": {
+            "type": ["null", "string"],
+            "description": "CPF, quando houver cadastro de funcionário."
+          },
+          "cargo": {
+            "type": ["null", "string"],
+            "description": "Cargo, quando informado."
+          },
+          "telefone": {
+            "type": ["null", "string"],
+            "description": "Telefone, quando informado."
+          }
+        },
+        "description": "Pessoa da equipe da funerária (AUT-07, AUT-08). Gestores criados no onboarding não têm dados de funcionário."
+      },
+      "ModoVencimento": {
+        "enum": ["FIXO", "ESCOLHA_CLIENTE"]
+      },
+      "OrigemCadastro": {
+        "enum": ["AUTO", "CONSULTOR", "ADMIN"]
+      },
+      "PaginaResultOfClienteResumoResponse": {
+        "required": ["itens", "pagina", "tamanho", "total"],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClienteResumoResponse"
+            }
+          },
+          "pagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "tamanho": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          }
+        },
+        "description": "Resposta paginada: `{ itens, pagina, tamanho, total }` (INF-17)."
+      },
+      "PaginaResultOfContratoResumoResponse": {
+        "required": ["itens", "pagina", "tamanho", "total"],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContratoResumoResponse"
+            }
+          },
+          "pagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "tamanho": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          }
+        },
+        "description": "Resposta paginada: `{ itens, pagina, tamanho, total }` (INF-17)."
+      },
+      "PaginaResultOfFunerariaListaResponse": {
+        "required": ["itens", "pagina", "tamanho", "total"],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FunerariaListaResponse"
+            }
+          },
+          "pagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "tamanho": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          }
+        },
+        "description": "Resposta paginada: `{ itens, pagina, tamanho, total }` (INF-17)."
+      },
+      "PaginaResultOfMembroEquipeResponse": {
+        "required": ["itens", "pagina", "tamanho", "total"],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembroEquipeResponse"
+            }
+          },
+          "pagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "tamanho": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          }
+        },
+        "description": "Resposta paginada: `{ itens, pagina, tamanho, total }` (INF-17)."
+      },
+      "PaginaResultOfTerceiroResponse": {
+        "required": ["itens", "pagina", "tamanho", "total"],
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TerceiroResponse"
+            }
+          },
+          "pagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "tamanho": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int32"
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "format": "int64"
+          }
+        },
+        "description": "Resposta paginada: `{ itens, pagina, tamanho, total }` (INF-17)."
+      },
+      "ParametrosCobranca": {
+        "type": "object",
+        "properties": {
+          "modo_vencimento": {
+            "$ref": "#/components/schemas/ModoVencimento"
+          },
+          "dia_vencimento_fixo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "description": "Dia do vencimento quando o modo é FIXO.",
+            "format": "int32"
+          },
+          "dias_vencimento_permitidos": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32"
+            },
+            "description": "Dias que o cliente pode escolher quando o modo é ESCOLHA_CLIENTE."
+          },
+          "tolerancia_dias": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": ["integer", "string"],
+            "description": "Dias úteis de atraso antes de suspender o plano (DEC-01, DEC-12). Pagamento em processamento não conta.",
+            "format": "int32"
+          },
+          "multa_percentual": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["null", "number", "string"],
+            "description": "Multa por atraso: 2%, o limite do CDC (DEC-12). Enquanto for nulo, a contratação fica bloqueada.",
+            "format": "double"
+          },
+          "juros_mensal_percentual": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["null", "number", "string"],
+            "description": "Juros de mora: 1% ao mês, proporcional aos dias (DEC-12). Enquanto for nulo, a contratação fica bloqueada.",
+            "format": "double"
+          },
+          "desconto_anual_percentual": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["null", "number", "string"],
+            "description": "Desconto do plano anual: 10% (DEC-12). Enquanto for nulo, a contratação fica bloqueada.",
+            "format": "double"
+          },
+          "reajuste_anual_percentual": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "description": "Reajuste no aniversário do contrato (DEC-01, COB-08).",
+            "format": "double"
+          }
+        }
+      },
+      "ParametrosFuneraria": {
+        "type": "object",
+        "properties": {
+          "cobranca": {
+            "$ref": "#/components/schemas/ParametrosCobranca"
+          },
+          "lembretes": {
+            "$ref": "#/components/schemas/ParametrosLembretes"
+          }
+        },
+        "description": "Parâmetros do negócio da funerária, em jsonb tipado (TEN-03). Os padrões são os do DEC-01.\nA tabela de preços do translado fica em tabela própria (TRA-02), porque é relacional."
+      },
+      "ParametrosLembretes": {
+        "type": "object",
+        "properties": {
+          "dias_antes": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32"
+            },
+            "description": "Dias antes do vencimento em que o lembrete é enviado (COB-04)."
+          },
+          "dias_depois": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": ["integer", "string"],
+              "format": "int32"
+            },
+            "description": "Dias depois do vencimento em que o lembrete de atraso é enviado (COB-04)."
+          }
+        }
+      },
+      "PerfilVinculo": {
+        "enum": ["FUNERARIA", "FUNCIONARIO", "CLIENTE", "TERCEIRO", "CONSULTOR"],
+        "description": "Perfis que existem dentro de uma funerária (DEC-06). O ADMIN é global e não tem vínculo."
+      },
+      "Periodicidade": {
+        "enum": ["MENSAL", "ANUAL"],
+        "description": "Todo plano oferece as duas opções e o cliente escolhe na contratação (DEC-01)."
+      },
+      "PessoaCobertaDetalheResponse": {
+        "required": [
+          "id_pessoa_coberta",
+          "tipo",
+          "id_dependente",
+          "nome",
+          "cpf",
+          "data_inclusao",
+          "carencia_cumprida_em"
+        ],
+        "type": "object",
+        "properties": {
+          "id_pessoa_coberta": {
+            "type": "string",
+            "description": "Identificador da pessoa no contrato (usado no registro do beneficiário).",
+            "format": "uuid"
+          },
+          "tipo": {
+            "description": "TITULAR ou DEPENDENTE.",
+            "$ref": "#/components/schemas/TipoPessoaCoberta"
+          },
+          "id_dependente": {
+            "type": ["null", "string"],
+            "description": "Preenchido quando a pessoa é um dependente.",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string",
+            "description": "Nome atual da pessoa no cadastro do cliente."
+          },
+          "cpf": {
+            "type": "string",
+            "description": "CPF da pessoa."
+          },
+          "data_inclusao": {
+            "type": "string",
+            "description": "Data em que a pessoa entrou no contrato.",
+            "format": "date"
+          },
+          "carencia_cumprida_em": {
+            "type": "string",
+            "description": "Data de inclusão mais a carência do plano na contratação (CON-04).",
+            "format": "date"
+          }
+        }
+      },
+      "PessoaCobertaResponse": {
+        "required": ["id_pessoa_coberta", "tipo", "id_dependente", "data_inclusao"],
+        "type": "object",
+        "properties": {
+          "id_pessoa_coberta": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoPessoaCoberta"
+          },
+          "id_dependente": {
+            "type": ["null", "string"],
+            "format": "uuid"
+          },
+          "data_inclusao": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
       "PlanoConfiguracoes": {
         "type": "object",
         "properties": {
@@ -704,7 +6932,7 @@
             "$ref": "#/components/schemas/ConfiguracaoDependentes"
           }
         },
-        "description": "Regras flexíveis do plano, gravadas na coluna jsonb `configuracoes` (PLA-03).\r\nO que é usado em filtros e cálculos frequentes fica em coluna, e não aqui."
+        "description": "Regras flexíveis do plano, gravadas na coluna jsonb `configuracoes` (PLA-03).\nO que é usado em filtros e cálculos frequentes fica em coluna, e não aqui."
       },
       "PlanoCriadoResponse": {
         "required": ["id_plano"],
@@ -796,7 +7024,8 @@
           "limite_dependentes",
           "permite_somente_dependente",
           "configuracoes",
-          "ativo"
+          "ativo",
+          "coberturas"
         ],
         "type": "object",
         "properties": {
@@ -848,6 +7077,12 @@
           },
           "ativo": {
             "type": "boolean"
+          },
+          "coberturas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoberturaResponse"
+            }
           }
         }
       },
@@ -922,6 +7157,113 @@
           }
         }
       },
+      "RecusarAtribuicaoRequest": {
+        "required": ["motivo"],
+        "type": "object",
+        "properties": {
+          "motivo": {
+            "type": ["null", "string"]
+          }
+        }
+      },
+      "StatusAtribuicao": {
+        "enum": ["PENDENTE", "ACEITA", "RECUSADA", "EXPIRADA", "CONCLUIDA", "CANCELADA"]
+      },
+      "StatusContrato": {
+        "enum": ["ATIVO", "A_PAGAR", "SUSPENSO", "CANCELADO"],
+        "description": "Situação do contrato (COB-03). SUSPENSO substitui o \"Vencido\" do card original (AJU-01)."
+      },
+      "StatusFuneraria": {
+        "enum": ["PENDENTE", "ATIVA", "SUSPENSA"]
+      },
+      "StatusRequest": {
+        "required": ["ativo"],
+        "type": "object",
+        "properties": {
+          "ativo": {
+            "type": ["null", "boolean"]
+          }
+        }
+      },
+      "StatusTerceiro": {
+        "enum": ["CONVIDADO", "ATIVO", "INATIVO"]
+      },
+      "TerceiroResponse": {
+        "required": [
+          "id_terceiro",
+          "tipo",
+          "nome_razao_social",
+          "cpf_cnpj",
+          "telefone",
+          "email",
+          "area_atuacao",
+          "categorias_atendidas",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id_terceiro": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoTerceiro"
+          },
+          "nome_razao_social": {
+            "type": "string"
+          },
+          "cpf_cnpj": {
+            "type": "string"
+          },
+          "telefone": {
+            "type": ["null", "string"]
+          },
+          "email": {
+            "type": "string"
+          },
+          "area_atuacao": {
+            "$ref": "#/components/schemas/AreaAtuacao"
+          },
+          "categorias_atendidas": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusTerceiro"
+          }
+        }
+      },
+      "TipoAtribuicao": {
+        "enum": ["TRANSLADO", "CERTIDAO", "PEDIDO"]
+      },
+      "TipoCobertura": {
+        "enum": ["TITULAR", "TITULAR_E_DEPENDENTES", "SOMENTE_DEPENDENTES"]
+      },
+      "TipoPessoaCoberta": {
+        "enum": ["TITULAR", "DEPENDENTE"]
+      },
+      "TipoTerceiro": {
+        "enum": ["FROTA", "CARTORIO_DESPACHANTE", "FORNECEDOR"]
+      },
+      "TitularResponse": {
+        "required": ["id_cliente", "nome", "cpf"],
+        "type": "object",
+        "properties": {
+          "id_cliente": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "cpf": {
+            "type": "string"
+          }
+        }
+      },
       "UsuarioSessao": {
         "required": ["id", "nome", "role"],
         "type": "object",
@@ -935,6 +7277,41 @@
           },
           "role": {
             "type": "string"
+          }
+        }
+      },
+      "VariacaoRequest": {
+        "required": ["nome", "acrescimo_preco"],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": ["null", "string"]
+          },
+          "acrescimo_preco": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["null", "number", "string"],
+            "format": "double"
+          }
+        }
+      },
+      "VariacaoResponse": {
+        "required": ["id_variacao", "nome", "acrescimo_preco", "ativo"],
+        "type": "object",
+        "properties": {
+          "id_variacao": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "acrescimo_preco": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": ["number", "string"],
+            "format": "double"
+          },
+          "ativo": {
+            "type": "boolean"
           }
         }
       }
@@ -955,10 +7332,37 @@
   ],
   "tags": [
     {
+      "name": "Equipe da funerária"
+    },
+    {
       "name": "Autenticação"
     },
     {
+      "name": "Configurações da funerária"
+    },
+    {
+      "name": "Funerárias"
+    },
+    {
+      "name": "Clientes"
+    },
+    {
       "name": "Planos"
+    },
+    {
+      "name": "Catálogo"
+    },
+    {
+      "name": "Contratos"
+    },
+    {
+      "name": "Dependentes"
+    },
+    {
+      "name": "Portal do terceiro"
+    },
+    {
+      "name": "Terceiros"
     }
   ]
 }

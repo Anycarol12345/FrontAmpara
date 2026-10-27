@@ -1,6 +1,6 @@
 {
   "$comentario": "Versão do backend usada por este frontend (FE-04, INF-21). Para atualizar: troque a versão e rode pnpm api:generate.",
   "repositorio": "ArturRibeiroB/Ampara",
-  "versao": "bb0d77f",
+  "versao": "8ffc5dc",
   "openapiUrl": "https://github.com/ArturRibeiroB/Ampara/releases/download/{versao}/openapi.json"
 }
