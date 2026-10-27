@@ -1,1 +1,1 @@
-export {};
+export { CadastroPage } from './pages/CadastroPage';

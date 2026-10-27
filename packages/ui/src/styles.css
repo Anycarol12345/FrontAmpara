@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/inter/wght-italic.css';
+@import '@fontsource-variable/newsreader';
+@import '@fontsource-variable/newsreader/wght-italic.css';
+
+/* Componentes deste pacote também usam classes do Tailwind. */
+@source './';
+
+/*
+ * Tokens da Ampara (FE-02). Cores tiradas do protótipo no Figma.
+ * Os nomes seguem o padrão do shadcn/ui; as cores da funerária (TEN-03)
+ * sobrescrevem --primary e --brand-* em tempo de execução.
+ */
+:root {
+  --background: #eef1f8;
+  --foreground: #1c2b4a;
+  --surface: #fbfaf7;
+  --card: #ffffff;
+  --card-foreground: #1c2b4a;
+  --primary: #13294a;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #1c2b4a;
+  --muted: #eef1f8;
+  --muted-foreground: #6b7690;
+  --subtle-foreground: #9aa3b5;
+  --accent: #e2c78d;
+  --accent-foreground: #13294a;
+  --destructive: #b4413c;
+  --border: #e4e8f0;
+  --input: #e1e5ed;
+  --ring: #1e4068;
+
+  --brand-950: #13294a;
+  --brand-900: #14304f;
+  --brand-800: #1e4068;
+  --brand-600: #275580;
+  --brand-300: #9db5d6;
+
+  --success: #dceee2;
+  --success-foreground: #2f7a4f;
+  --warning: #f7ead0;
+  --warning-foreground: #946a1d;
+  --info: #dce8f6;
+  --info-foreground: #2b5a8f;
+
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Newsreader Variable', Georgia, ui-serif, serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand-950: var(--brand-950);
+  --color-brand-900: var(--brand-900);
+  --color-brand-800: var(--brand-800);
+  --color-brand-600: var(--brand-600);
+  --color-brand-300: var(--brand-300);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+}
