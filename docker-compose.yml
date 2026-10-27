@@ -1,0 +1,62 @@
+# Frontend em containers (FE-09).
+#
+#   docker compose up --build
+#     web     http://localhost:8080   (repassa /api para API_UPSTREAM)
+#     landing http://localhost:3000
+#
+# Backend:
+#   - com a imagem publicada pelo CI do backend (INF-15):  docker compose --profile api up --build
+#   - com a API rodando na sua máquina (dotnet run):       API_UPSTREAM=host.docker.internal:5080 docker compose up --build
+name: ampara-front
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - '8080:80'
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-api:8080}
+      DOMINIO_BASE: ${DOMINIO_BASE:-localhost}
+      TENANT_PADRAO: ${TENANT_PADRAO:-demo}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+  landing:
+    build:
+      context: .
+      dockerfile: apps/landing/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+        NEXT_PUBLIC_APP_URL: http://localhost:8080
+    ports:
+      - '3000:3000'
+
+  # Versão do backend fixada em packages/api-client/backend.json (INF-21).
+  api:
+    profiles: ['api']
+    image: ${API_IMAGE:-ghcr.io/arturribeirob/ampara-api:latest}
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Database: Host=postgres;Port=5432;Database=funeraria;Username=funeraria;Password=funeraria
+      Jwt__ChaveAssinatura: ${JWT_CHAVE:-chave-local-apenas-para-desenvolvimento-123456}
+      Seed__AdminSenha: ${SEED_ADMIN_SENHA:-}
+      Seed__SenhaDemo: ${SEED_SENHA_DEMO:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    profiles: ['api']
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: funeraria
+      POSTGRES_USER: funeraria
+      POSTGRES_PASSWORD: funeraria
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U funeraria -d funeraria']
+      interval: 5s
+      timeout: 5s
+      retries: 10
