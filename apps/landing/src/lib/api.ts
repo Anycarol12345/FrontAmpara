@@ -35,7 +35,10 @@ export const listarPlanos = cache(async (slug: string): Promise<PlanoResponse[]>
       .filter((plano) => plano.ativo !== false && plano.id_plano)
       .map((plano) => obterPlano(slug, plano.id_plano!)),
   );
-  return planos.filter((plano): plano is PlanoResponse => plano !== null);
+  // Do mais barato ao mais completo, como no protótipo (a API devolve em ordem alfabética).
+  return planos
+    .filter((plano): plano is PlanoResponse => plano !== null)
+    .sort((a, b) => Number(a.valor_mensal) - Number(b.valor_mensal));
 });
 
 export const obterPlano = cache((slug: string, id: string) =>
