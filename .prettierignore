@@ -4,4 +4,4 @@ build
 .next
 .turbo
 coverage
-pnpm-lock.yaml
+pnpm-lock.yamlpackages/api-client/openapi

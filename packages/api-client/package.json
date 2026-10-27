@@ -1,0 +1,33 @@
+{
+  "name": "@ampara/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./mocks": "./src/mocks.ts"
+  },
+  "scripts": {
+    "api:download": "node scripts/baixar-openapi.mjs",
+    "api:orval": "orval --config orval.config.ts && prettier --write src/gerado --log-level warn",
+    "api:generate": "pnpm api:download && pnpm api:orval",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@ampara/config": "workspace:*",
+    "@faker-js/faker": "^10.6.0",
+    "@tanstack/react-query": "^5.105.0",
+    "@types/react": "^19.3.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0",
+    "msw": "^3.0.3",
+    "orval": "^8.45.0",
+    "prettier": "^3.9.10",
+    "react": "^19.3.1",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}
