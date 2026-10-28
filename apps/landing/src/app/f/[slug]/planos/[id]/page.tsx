@@ -45,14 +45,17 @@ export default async function DetalheDoPlano({ params }: Props) {
       sufixo: '/mês',
     },
   ];
+  // Os destaques também trazem "Até N dependentes": o Set tira a repetição (o texto é a key da lista).
   const condicoes = [
-    numero(plano.carencia_dias)
-      ? `Carência de ${numero(plano.carencia_dias)} dias`
-      : 'Sem carência',
-    `Até ${numero(plano.limite_dependentes)} dependentes`,
-    ...destaquesDoPlano(plano, 99).filter(
-      (d) => !plano.coberturas.some((c) => d.startsWith(c.nome)),
-    ),
+    ...new Set([
+      numero(plano.carencia_dias)
+        ? `Carência de ${numero(plano.carencia_dias)} dias`
+        : 'Sem carência',
+      `Até ${numero(plano.limite_dependentes)} dependentes`,
+      ...destaquesDoPlano(plano, 99).filter(
+        (d) => !plano.coberturas.some((c) => d.startsWith(c.nome)),
+      ),
+    ]),
   ];
 
   return (
