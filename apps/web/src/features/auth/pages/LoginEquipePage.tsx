@@ -13,7 +13,6 @@ import { PasswordInput } from '@/shared/components/PasswordInput';
 import { useFormularioLogin } from '../hooks/useFormularioLogin';
 
 // Usuários da funerária de demonstração criados pelo seed do backend (INF-16).
-// O perfil "Consultor" ainda não existe no backend (DEC-11).
 const PERFIS_DEMO = [
   {
     nome: 'Funcionário',

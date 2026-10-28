@@ -107,6 +107,32 @@ import { useListarPlanos } from '@ampara/api-client';
 const planos = useListarPlanos(); // erros chegam como ApiError (status, detail, erros por campo)
 ```
 
+## Ver todas as telas sem login (desenvolvimento)
+
+Com o `pnpm dev` rodando, abra **http://localhost:5173/demo** (ou o link no rodapé do login do cliente).
+A página lista todas as telas por perfil: cliente (em dia, com plano suspenso e sem plano), gestor,
+funcionário, consultor, parceiro e plataforma. Cada link entra direto com um usuário de demonstração.
+
+- A API inteira é simulada (`apps/web/src/mocks/demo`): não precisa de backend nem de login.
+- As alterações (dependentes, contratos, planos, equipe) valem até recarregar a página.
+- Para sair, use "Sair" no menu da tela ou o botão na própria página `/demo`.
+- O tempo real (SignalR) fica desligado na demonstração.
+- Nada disso entra no build de produção.
+
+## Dados fictícios (desenvolvimento)
+
+Algumas telas da área do cliente usam rotas que o backend ainda não publicou: faturas (COB-01),
+preferências de funeral (FUN-02), funerais (FUN-07) e notificações (NOT-02). Em desenvolvimento, o MSW
+responde só essas rotas no navegador (`apps/web/src/mocks`); todo o resto vai para a API real.
+
+- As faturas são geradas a partir do contrato real (valor, periodicidade e situação).
+- O botão de pagar abre `/pagamento-simulado`, que faz o papel da página do Stripe. Pix e boleto ficam
+  "em processamento" por alguns segundos antes de virarem pagos.
+- O estado fica no `localStorage` (`ampara:dados-ficticios`); apague a chave para recomeçar.
+- Para desligar: `VITE_DADOS_FICTICIOS=false` no `.env` do `apps/web`. No build de produção nada disso entra.
+- Quando o backend publicar uma rota, rode `pnpm api:generate`, troque o hook escrito à mão
+  (`features/*/hooks`) pelo do Orval e apague o handler correspondente em `src/mocks/handlers.ts`.
+
 ## Testes
 
 Vitest + Testing Library, com a API simulada pelo MSW usando os mocks gerados pelo Orval.
@@ -147,10 +173,10 @@ pnpm --filter @ampara/landing dev
 
 ## Variáveis de ambiente
 
-| App       | Arquivo local | Variáveis                                                                   |
-| --------- | ------------- | --------------------------------------------------------------------------- |
-| `web`     | `.env`        | `VITE_API_URL`, `VITE_API_PROXY`, `VITE_DOMINIO_BASE`, `VITE_TENANT_PADRAO` |
-| `landing` | `.env.local`  | `API_URL_INTERNA`, `DOMINIO_BASE`, `APP_URL` (lidas só no servidor)         |
+| App       | Arquivo local | Variáveis                                                                                           |
+| --------- | ------------- | --------------------------------------------------------------------------------------------------- |
+| `web`     | `.env`        | `VITE_API_URL`, `VITE_API_PROXY`, `VITE_DOMINIO_BASE`, `VITE_TENANT_PADRAO`, `VITE_DADOS_FICTICIOS` |
+| `landing` | `.env.local`  | `API_URL_INTERNA`, `DOMINIO_BASE`, `APP_URL` (lidas só no servidor)                                 |
 
 - Os arquivos `.env.example` são versionados; os `.env` reais não.
 - Tudo que começa com `VITE_` ou `NEXT_PUBLIC_` vai para o navegador. **Nunca coloque segredos aí.**

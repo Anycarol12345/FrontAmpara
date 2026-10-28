@@ -9,6 +9,7 @@ import {
   renovarAccessToken,
   useAuth,
 } from '@/features/auth';
+import { emDemonstracao } from '@/shared/lib/demo';
 import { env } from '@/shared/lib/env';
 import { criarQueryClient } from '@/shared/lib/queryClient';
 import { obterSlugDoTenant } from '@/shared/lib/tenant';
@@ -45,11 +46,17 @@ export function AppProviders({ children }: { children: ReactNode }) {
   );
 }
 
-/** A conexão em tempo real (FE-08) existe só enquanto há sessão e cai no logout. */
+/**
+ * A conexão em tempo real (FE-08) existe só enquanto há sessão e cai no logout.
+ * Na demonstração (/demo) fica desligada: o token é de mentira e o hub recusaria.
+ */
 function TempoRealDaSessao({ children }: { children: ReactNode }) {
   const { status } = useAuth();
   return (
-    <TempoRealProvider ativo={status === 'autenticado'} obterToken={obterAccessToken}>
+    <TempoRealProvider
+      ativo={status === 'autenticado' && !emDemonstracao()}
+      obterToken={obterAccessToken}
+    >
       {children}
     </TempoRealProvider>
   );

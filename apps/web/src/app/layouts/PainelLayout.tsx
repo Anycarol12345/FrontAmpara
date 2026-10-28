@@ -17,7 +17,7 @@ import { ETIQUETA_DO_PERFIL, MENU_DO_PERFIL } from './menus';
 // Os três perfis da equipe mostrados no topo do protótipo. O ativo é o da sessão.
 const PERFIS_DA_EQUIPE: { rotulo: string; perfis: Perfil[] }[] = [
   { rotulo: 'Funcionário', perfis: ['FUNCIONARIO'] },
-  { rotulo: 'Consultor', perfis: [] },
+  { rotulo: 'Consultor', perfis: ['CONSULTOR'] },
   { rotulo: 'Administrador', perfis: ['FUNERARIA'] },
 ];
 
@@ -33,7 +33,7 @@ export function PainelLayout() {
   if (!usuario) return null;
 
   const menu = MENU_DO_PERFIL[usuario.perfil] ?? [];
-  const daEquipe = usuario.perfil === 'FUNERARIA' || usuario.perfil === 'FUNCIONARIO';
+  const daEquipe = ['FUNERARIA', 'FUNCIONARIO', 'CONSULTOR'].includes(usuario.perfil);
   async function encerrar() {
     await sair();
     await navigate('/equipe/entrar', { replace: true });

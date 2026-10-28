@@ -1,5 +1,13 @@
 // Perfis e tipos de terceiro do DEC-06 (valores das claims role e tipo_terceiro do JWT).
-export const PERFIS = ['ADMIN', 'FUNERARIA', 'FUNCIONARIO', 'CLIENTE', 'TERCEIRO'] as const;
+// CONSULTOR: vendedor que atende clientes e faz contratações (DEC-11).
+export const PERFIS = [
+  'ADMIN',
+  'FUNERARIA',
+  'FUNCIONARIO',
+  'CONSULTOR',
+  'CLIENTE',
+  'TERCEIRO',
+] as const;
 export type Perfil = (typeof PERFIS)[number];
 
 export const TIPOS_TERCEIRO = ['FROTA', 'CARTORIO_DESPACHANTE', 'FORNECEDOR'] as const;
@@ -9,6 +17,7 @@ export const NOME_PERFIL: Record<Perfil, string> = {
   ADMIN: 'Administrador da plataforma',
   FUNERARIA: 'Gestor',
   FUNCIONARIO: 'Funcionário',
+  CONSULTOR: 'Consultor',
   CLIENTE: 'Cliente',
   TERCEIRO: 'Parceiro',
 };
@@ -18,6 +27,7 @@ export const AREA_DO_PERFIL: Record<Perfil, string> = {
   ADMIN: '/admin',
   FUNERARIA: '/painel',
   FUNCIONARIO: '/painel',
+  CONSULTOR: '/painel',
   CLIENTE: '/minha-conta',
   TERCEIRO: '/parceiro',
 };

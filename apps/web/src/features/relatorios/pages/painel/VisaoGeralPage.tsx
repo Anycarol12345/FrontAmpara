@@ -121,7 +121,7 @@ function AtividadesRecentes() {
           <h2 className="text-lg font-bold">Atividades recentes</h2>
           <p className="text-[11px] text-subtle-foreground">Atualizado há poucos minutos</p>
         </div>
-        <Link to="/painel/atendimentos" className="mt-1 text-xs font-semibold hover:underline">
+        <Link to="/painel/clientes" className="mt-1 text-xs font-semibold hover:underline">
           Ver todas
         </Link>
       </div>

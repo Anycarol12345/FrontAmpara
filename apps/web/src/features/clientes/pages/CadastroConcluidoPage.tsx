@@ -8,6 +8,11 @@ import { Eyebrow } from '@/shared/components/Eyebrow';
 export function CadastroConcluidoPage() {
   const [parametros] = useSearchParams();
   const email = parametros.get('email');
+  const plano = parametros.get('plano');
+  // Quem veio de "Contratar" na landing segue para a contratação depois de entrar.
+  const login = plano
+    ? `/entrar?voltar=${encodeURIComponent(`/minha-conta/contratar?plano=${plano}`)}`
+    : '/entrar';
 
   return (
     <AuthSplitLayout
@@ -32,7 +37,7 @@ export function CadastroConcluidoPage() {
         mensagem e toque no link para ativar sua conta. Se não encontrar, confira a caixa de spam.
       </p>
       <Button asChild className="mt-7 h-11 w-full">
-        <Link to="/entrar">
+        <Link to={login}>
           Ir para o login <ArrowRight />
         </Link>
       </Button>

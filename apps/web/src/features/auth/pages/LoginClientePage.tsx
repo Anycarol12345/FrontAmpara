@@ -107,6 +107,15 @@ export function LoginClientePage() {
         <Link to="/equipe/entrar" className="text-xs font-semibold hover:underline">
           Acesso da equipe
         </Link>
+        {/* Atalho de desenvolvimento: todas as telas sem login (src/mocks/demo). */}
+        {import.meta.env.DEV && (
+          <Link
+            to="/demo"
+            className="mt-2 block text-[11px] text-subtle-foreground hover:underline"
+          >
+            Ver todas as telas sem login (demonstração)
+          </Link>
+        )}
       </div>
     </AuthSplitLayout>
   );

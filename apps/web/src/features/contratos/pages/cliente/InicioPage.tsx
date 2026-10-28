@@ -1,68 +1,77 @@
-import { Badge } from '@ampara/ui/components/badge';
+import {
+  useIdentidadeVisual,
+  useListarDependentes,
+  useMeusContratos,
+  useObterContrato,
+  type ContratoResumoResponse,
+} from '@ampara/api-client';
 import { Button } from '@ampara/ui/components/button';
 import { Card } from '@ampara/ui/components/card';
-import { CalendarDays, FileText, Phone, ShieldCheck, Wallet, type LucideIcon } from 'lucide-react';
+import { FileText, Phone, ShieldCheck, Wallet, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { useAuth } from '@/features/auth';
+import { ProximaFatura } from '@/features/financeiro';
+import { AtendimentoEmAndamento } from '@/features/funeral';
+import { Carregando } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { numero, real } from '@/shared/lib/formatar';
+import { COBERTURA, PERIODICIDADE, STATUS_CONTRATO } from '../../components/rotulos';
 
-// Dados fixos do protótipo. Passam a vir da API com os contratos (CON-01) e as faturas (COB-02).
-const PLANO = {
-  nome: 'Acolher',
-  situacao: 'Em dia',
-  proximoPagamento: '12 de abril',
-  valor: 'R$ 55,00',
-  formaPagamento: 'Cartão final 2048',
-};
+// Ordem de importância para escolher o contrato mostrado no cartão principal.
+const PRIORIDADE = ['ATIVO', 'A_PAGAR', 'SUSPENSO', 'CANCELADO'];
 
-const TELEFONE_ATENDIMENTO = '0800 000 2025';
-
-const ATALHOS: {
-  titulo: string;
-  descricao: string;
-  resumo: string;
-  para: string;
-  icone: LucideIcon;
-}[] = [
-  {
-    titulo: 'Meus documentos',
-    descricao: 'Consulte os arquivos e informações do seu plano.',
-    resumo: '4 documentos',
-    para: '/minha-conta/documentos',
-    icone: FileText,
-  },
-  {
-    titulo: 'Pagamentos',
-    descricao: 'Veja datas, valores e comprovantes anteriores.',
-    resumo: 'Tudo em dia',
-    para: '/minha-conta/faturas',
-    icone: Wallet,
-  },
-  {
-    titulo: 'Pessoas protegidas',
-    descricao: 'Confira quem está incluído no seu contrato.',
-    resumo: '3 pessoas',
-    para: '/minha-conta/dependentes',
-    icone: ShieldCheck,
-  },
-  {
-    titulo: 'Atendimento',
-    descricao: 'Fale com a equipe por telefone ou WhatsApp.',
-    resumo: '24 horas',
-    para: '/minha-conta/atendimento',
-    icone: Phone,
-  },
-];
-
-const PAGAMENTOS: { descricao: string; data: string; valor: string; pago: boolean }[] = [
-  { descricao: 'Mensalidade abril', data: '12 de abril', valor: 'R$ 55,00', pago: false },
-  { descricao: 'Mensalidade março', data: '12 de março', valor: 'R$ 55,00', pago: true },
-  { descricao: 'Mensalidade fevereiro', data: '12 de fevereiro', valor: 'R$ 55,00', pago: true },
-];
-
+/** Início da área do cliente (FE-CLI-01). */
 export function InicioPage() {
   const { usuario } = useAuth();
   const primeiroNome = usuario?.nome.split(' ')[0] ?? '';
+  const contratos = useMeusContratos();
+  const dependentes = useListarDependentes();
+  const funeraria = useIdentidadeVisual({ query: { meta: { silenciarErro: true } } });
+
+  const visual = funeraria.data?.identidade_visual;
+  const telefone = visual?.telefone ?? null;
+  const whatsapp = visual?.whatsapp ?? null;
+  const principal = [...(contratos.data ?? [])].sort(
+    (a, b) => PRIORIDADE.indexOf(a.status) - PRIORIDADE.indexOf(b.status),
+  )[0];
+  const totalDependentes = dependentes.data?.length;
+
+  const atalhos: {
+    titulo: string;
+    descricao: string;
+    resumo: string;
+    para: string;
+    icone: LucideIcon;
+  }[] = [
+    {
+      titulo: 'Meus contratos',
+      descricao: 'Seus planos, valores e quem está protegido em cada um.',
+      resumo: contratos.data ? `${contratos.data.length} contrato(s)` : '…',
+      para: '/minha-conta/contratos',
+      icone: FileText,
+    },
+    {
+      titulo: 'Pagamentos',
+      descricao: 'Veja datas, valores e comprovantes anteriores.',
+      resumo: 'Ver faturas',
+      para: '/minha-conta/faturas',
+      icone: Wallet,
+    },
+    {
+      titulo: 'Pessoas protegidas',
+      descricao: 'Cadastre quem você ama para incluir nos planos.',
+      resumo: totalDependentes === undefined ? '…' : `${totalDependentes} pessoa(s)`,
+      para: '/minha-conta/dependentes',
+      icone: ShieldCheck,
+    },
+    {
+      titulo: 'Meus dados',
+      descricao: 'Atualize seus contatos e endereço.',
+      resumo: 'Ver e editar',
+      para: '/minha-conta/dados',
+      icone: Phone,
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-5">
@@ -71,31 +80,53 @@ export function InicioPage() {
         titulo={`Olá, ${primeiroNome}`}
         descricao="Acompanhe seu plano e encontre ajuda quando precisar."
         acoes={
-          <Button>
-            <Phone /> Falar pelo WhatsApp
-          </Button>
+          whatsapp ? (
+            <Button asChild>
+              <a
+                href={`https://wa.me/55${whatsapp.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Phone /> Falar pelo WhatsApp
+              </a>
+            </Button>
+          ) : undefined
         }
       />
 
+      <AtendimentoEmAndamento />
+
       <div className="mt-1 grid gap-5 lg:grid-cols-[1fr_355px]">
-        <CartaoPlano />
+        {contratos.isPending ? (
+          <Card>
+            <Carregando />
+          </Card>
+        ) : principal ? (
+          <CartaoPlano contrato={principal} />
+        ) : (
+          <SemPlano />
+        )}
         <Card className="flex flex-col p-7">
           <Phone className="size-4 text-brand-800" strokeWidth={1.75} />
           <h2 className="mt-4 text-base font-bold">Precisa de ajuda agora?</h2>
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-            Nossa equipe está disponível todos os dias, a qualquer hora.
+            {visual?.horario_atendimento ?? 'Nossa equipe está disponível para ajudar você.'}
           </p>
-          <a
-            href={`tel:${TELEFONE_ATENDIMENTO.replaceAll(' ', '')}`}
-            className="mt-4 font-semibold"
-          >
-            {TELEFONE_ATENDIMENTO}
-          </a>
+          {telefone && (
+            <a href={`tel:${telefone.replace(/\D/g, '')}`} className="mt-4 font-semibold">
+              {telefone}
+            </a>
+          )}
+          {!telefone && visual?.email && (
+            <a href={`mailto:${visual.email}`} className="mt-4 font-semibold break-all">
+              {visual.email}
+            </a>
+          )}
         </Card>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        {ATALHOS.map(({ titulo, descricao, resumo, para, icone: Icone }) => (
+        {atalhos.map(({ titulo, descricao, resumo, para, icone: Icone }) => (
           <Link key={titulo} to={para} className="group">
             <Card className="flex h-full flex-col p-6 transition-colors group-hover:border-ring/30">
               <span className="grid size-9 place-items-center rounded-lg bg-muted text-brand-800">
@@ -109,71 +140,92 @@ export function InicioPage() {
         ))}
       </div>
 
-      <ProximosPagamentos />
+      {principal && principal.status !== 'CANCELADO' && (
+        <ProximaFatura idContrato={principal.id_contrato} plano={principal.nome_plano} />
+      )}
     </div>
   );
 }
 
-function CartaoPlano() {
+function CartaoPlano({ contrato }: { contrato: ContratoResumoResponse }) {
+  const status = STATUS_CONTRATO[contrato.status];
+  const detalhe = useObterContrato(contrato.id_contrato);
+  const pessoas = detalhe.data?.pessoas_cobertas ?? [];
   const detalhes = [
-    { rotulo: 'Próximo pagamento', valor: PLANO.proximoPagamento },
-    { rotulo: 'Valor', valor: PLANO.valor },
-    { rotulo: 'Forma de pagamento', valor: PLANO.formaPagamento },
+    { rotulo: 'Quem está protegido', valor: COBERTURA[contrato.tipo_cobertura] },
+    {
+      rotulo: 'Valor',
+      valor: `${real(contrato.valor_total)}${PERIODICIDADE[contrato.periodicidade].sufixo}`,
+    },
+    { rotulo: 'Pessoas', valor: String(numero(contrato.quantidade_pessoas)) },
   ];
 
   return (
-    <section className="rounded-xl bg-primary p-8 text-primary-foreground">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[10px] font-semibold tracking-[0.14em] text-white/60 uppercase">
-            Seu plano
-          </p>
-          <h2 className="mt-2 text-[28px] leading-tight font-bold">{PLANO.nome}</h2>
-          <p className="mt-2 text-xs text-white/70">Tudo certo com o seu cuidado.</p>
-        </div>
-        <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-          {PLANO.situacao}
-        </span>
-      </div>
-
-      <dl className="mt-7 grid grid-cols-1 gap-4 border-t border-white/10 pt-7 sm:grid-cols-3">
-        {detalhes.map(({ rotulo, valor }) => (
-          <div key={rotulo}>
-            <dt className="text-[11px] text-white/60">{rotulo}</dt>
-            <dd className="mt-1 text-sm font-semibold">{valor}</dd>
+    <Link to={`/minha-conta/contratos/${contrato.id_contrato}`} className="group">
+      <section className="h-full rounded-xl bg-primary p-8 text-primary-foreground transition-opacity group-hover:opacity-95">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[10px] font-semibold tracking-[0.14em] text-white/60 uppercase">
+              Seu plano
+            </p>
+            <h2 className="mt-2 text-[28px] leading-tight font-bold">{contrato.nome_plano}</h2>
+            <p className="mt-2 text-xs text-white/70">
+              {contrato.status === 'ATIVO'
+                ? 'Tudo certo com o seu cuidado.'
+                : 'O contrato fica ativo com o pagamento da primeira cobrança.'}
+            </p>
           </div>
-        ))}
-      </dl>
-    </section>
+          <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+            {status.rotulo}
+          </span>
+        </div>
+        <dl className="mt-7 grid grid-cols-1 gap-4 border-t border-white/10 pt-7 sm:grid-cols-3">
+          {detalhes.map(({ rotulo, valor }) => (
+            <div key={rotulo}>
+              <dt className="text-[11px] text-white/60">{rotulo}</dt>
+              <dd className="mt-1 text-sm font-semibold">{valor}</dd>
+            </div>
+          ))}
+        </dl>
+        {pessoas.length > 0 && (
+          <div className="mt-6">
+            <p className="text-[11px] text-white/60">Pessoas cobertas</p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {pessoas.map((pessoa) => (
+                <li
+                  key={pessoa.id_pessoa_coberta}
+                  className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold"
+                >
+                  {pessoa.nome}
+                  {pessoa.tipo === 'TITULAR' && (
+                    <span className="font-normal text-white/60"> · titular</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+    </Link>
   );
 }
 
-function ProximosPagamentos() {
+function SemPlano() {
   return (
-    <Card className="overflow-hidden">
-      <div className="px-6 pt-6 pb-4">
-        <h2 className="text-base font-bold">Próximos pagamentos</h2>
-        <p className="mt-0.5 text-[11px] text-subtle-foreground">
-          Plano Acolher · cobrança mensal recorrente.
-        </p>
-      </div>
-      <ul className="divide-y divide-border/70 border-t border-border/70">
-        {PAGAMENTOS.map(({ descricao, data, valor, pago }) => (
-          <li key={descricao} className="flex items-center gap-4 px-6 py-3.5">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
-              <CalendarDays className="size-3.5" strokeWidth={1.75} />
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-[13px] font-semibold">{descricao}</span>
-              <span className="text-[11px] text-subtle-foreground">{data}</span>
-            </span>
-            <span className="w-24 text-sm font-semibold">{valor}</span>
-            <span className="flex w-24 justify-end">
-              <Badge variant={pago ? 'success' : 'info'}>{pago ? 'Pago' : 'Agendado'}</Badge>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </Card>
+    <section className="flex flex-col justify-center rounded-xl bg-primary p-8 text-primary-foreground">
+      <p className="text-[10px] font-semibold tracking-[0.14em] text-white/60 uppercase">
+        Seu plano
+      </p>
+      <h2 className="mt-2 text-[28px] leading-tight font-bold">Você ainda não tem um plano</h2>
+      <p className="mt-2 max-w-md text-xs text-white/70">
+        Compare os planos com calma e escolha o que faz sentido para você e sua família.
+      </p>
+      <Button
+        asChild
+        className="mt-6 self-start bg-linear-to-r from-accent to-[#d4b16c] text-accent-foreground hover:opacity-90"
+      >
+        <Link to="/minha-conta/contratar">Conhecer os planos</Link>
+      </Button>
+    </section>
   );
 }

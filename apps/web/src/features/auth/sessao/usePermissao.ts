@@ -21,5 +21,7 @@ export function usePermissao() {
     ehGestor: tem('FUNERARIA'),
     /** Atendimento do dia a dia: clientes, contratos, funeral, translado. */
     ehEquipe: tem('FUNERARIA', 'FUNCIONARIO'),
+    /** Clientes e contratações (política Atendimento do backend). */
+    atende: tem('FUNERARIA', 'FUNCIONARIO', 'CONSULTOR'),
   };
 }

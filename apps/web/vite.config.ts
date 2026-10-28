@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { msw } from 'msw/vite';
 import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
@@ -8,7 +9,8 @@ export default defineConfig(({ mode }) => {
   const api = env.VITE_API_PROXY || 'http://localhost:5080';
 
   return {
-    plugins: [react(), tailwindcss()],
+    // msw: serve o service worker dos dados fictícios só em desenvolvimento (src/mocks).
+    plugins: [react(), tailwindcss(), msw({ mode: 'worker-only' })],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
