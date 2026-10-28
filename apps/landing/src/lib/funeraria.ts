@@ -65,6 +65,7 @@ export function navegacaoDa(funeraria: IdentidadeVisualResponse) {
             { rotulo: 'Conhecer os planos', href: '/#planos' },
             { rotulo: 'Comparar planos', href: '/planos' },
             { rotulo: 'Personalizar', href: '/#personalizar' },
+            { rotulo: 'Para funerárias', href: '/para-funerarias' },
           ],
         },
         {

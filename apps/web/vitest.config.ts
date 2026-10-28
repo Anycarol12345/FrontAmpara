@@ -12,6 +12,8 @@ export default defineConfig({
     environmentOptions: { jsdom: { url: 'http://localhost:5173' } },
     setupFiles: ['./src/test/setup.ts'],
     // Cada worker sobe um jsdom; metade dos núcleos evita estourar a memória em máquinas mais modestas.
+    // Threads gastam menos memória que processos: os testes não travam em máquinas mais modestas.
+    pool: 'threads',
     maxWorkers: '50%',
     // Testes de tela digitam como o usuário; 15s dá folga em máquinas lentas e no CI.
     testTimeout: 15_000,

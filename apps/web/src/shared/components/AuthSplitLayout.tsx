@@ -2,6 +2,7 @@ import { Logo } from '@ampara/ui/components/logo';
 import { cn } from '@ampara/ui/lib/utils';
 import { ArrowLeft, Check } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { urlDoSite } from '../lib/tenant';
 
 type AuthSplitLayoutProps = {
   /** `cliente` usa a fonte serifada; `equipe` usa a sans do portal interno. */
@@ -13,7 +14,6 @@ type AuthSplitLayoutProps = {
   children: ReactNode;
 };
 
-const URL_SITE = '/';
 const ATENDIMENTO = 'Atendimento 24h · 0800 000 2025';
 
 /** Tela dividida usada no login e no cadastro: painel azul à esquerda e formulário à direita. */
@@ -81,7 +81,7 @@ export function AuthSplitLayout({
 
       <main className="relative flex flex-col bg-surface px-6 py-10 sm:px-12">
         <a
-          href={URL_SITE}
+          href={urlDoSite()}
           className="inline-flex items-center gap-2 self-start text-sm font-semibold text-foreground hover:underline"
         >
           <ArrowLeft className="size-4" />

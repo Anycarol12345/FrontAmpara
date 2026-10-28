@@ -2,6 +2,7 @@ import { Logo } from '@ampara/ui/components/logo';
 import { ArrowLeft, LogOut } from 'lucide-react';
 import { Link, Outlet, useNavigate } from 'react-router';
 import { useAuth } from '@/features/auth';
+import { urlDoSite } from '@/shared/lib/tenant';
 
 /** Layout da área do cliente (FE-03): topo simples, conteúdo e rodapé. */
 export function ClienteLayout() {
@@ -21,7 +22,7 @@ export function ClienteLayout() {
         </Link>
         <div className="flex items-center gap-6">
           <a
-            href="/"
+            href={urlDoSite()}
             className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" />

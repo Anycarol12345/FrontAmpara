@@ -16,6 +16,8 @@ export default defineConfig({
     environmentOptions: { jsdom: { url: 'http://localhost:3000' } },
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    // Threads gastam menos memória que processos: os testes não travam em máquinas mais modestas.
+    pool: 'threads',
     maxWorkers: '50%',
     testTimeout: 15_000,
   },

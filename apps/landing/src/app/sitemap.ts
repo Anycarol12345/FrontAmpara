@@ -6,7 +6,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const host = (await headers()).get('host');
   const origem = `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${host}`;
   return [
-    { url: `${origem}/`, changeFrequency: 'monthly', priority: 1 },
+    { url: `${origem}/para-funerarias`, changeFrequency: 'monthly', priority: 1 },
     { url: `${origem}/cadastrar-funeraria`, changeFrequency: 'monthly', priority: 0.8 },
   ];
 }

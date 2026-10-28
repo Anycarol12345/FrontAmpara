@@ -20,6 +20,7 @@ ENV API_UPSTREAM=api:8080 \
     API_URL="" \
     HUB_URL=/hubs/notificacoes \
     DOMINIO_BASE=localhost \
-    TENANT_PADRAO=""
+    TENANT_PADRAO="" \
+    SITE_URL=http://localhost:3000
 
 EXPOSE 80

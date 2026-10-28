@@ -22,6 +22,23 @@ export function obterSlugDoTenant(
   return env.tenantPadrao || null;
 }
 
+/**
+ * Endereço da landing da funerária atual: no subdomínio dela (demo.localhost:3000)
+ * ou, sem subdomínio, o endereço principal do site (localhost:3000).
+ */
+export function urlDoSite(caminho = '/', local: Pick<Location, 'hostname'> = window.location) {
+  const url = new URL(caminho, env.siteUrl);
+  const host = local.hostname.toLowerCase();
+  const sufixo = `.${env.dominioBase.toLowerCase()}`;
+  if (host.endsWith(sufixo)) {
+    const subdominio = host.slice(0, -sufixo.length);
+    if (subdominio && !subdominio.includes('.') && !RESERVADOS.has(subdominio)) {
+      url.hostname = `${subdominio}.${url.hostname}`;
+    }
+  }
+  return url.toString();
+}
+
 /** Endereço da mesma tela em outra funerária (troca de subdomínio). */
 export function urlDaFuneraria(slug: string, caminho: string, local: Location = window.location) {
   const porta = local.port ? `:${local.port}` : '';

@@ -11,6 +11,7 @@ window.__AMPARA_CONFIG__ = {
   apiUrl: "$(json "${API_URL:-}")",
   hubUrl: "$(json "${HUB_URL:-/hubs/notificacoes}")",
   dominioBase: "$(json "${DOMINIO_BASE:-localhost}")",
-  tenantPadrao: "$(json "${TENANT_PADRAO:-}")"
+  tenantPadrao: "$(json "${TENANT_PADRAO:-}")",
+  siteUrl: "$(json "${SITE_URL:-http://localhost:3000}")"
 };
 CONFIG

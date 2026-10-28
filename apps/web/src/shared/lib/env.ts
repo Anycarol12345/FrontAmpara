@@ -4,6 +4,7 @@ type ConfigExecucao = {
   hubUrl?: string;
   dominioBase?: string;
   tenantPadrao?: string;
+  siteUrl?: string;
 };
 
 declare global {
@@ -26,4 +27,6 @@ export const env = {
   dominioBase: ler('dominioBase', import.meta.env.VITE_DOMINIO_BASE, 'localhost'),
   /** Funerária usada quando o endereço não tem subdomínio (ex.: localhost em desenvolvimento). */
   tenantPadrao: ler('tenantPadrao', import.meta.env.VITE_TENANT_PADRAO, ''),
+  /** Landing (apps/landing): para onde levam o "Voltar ao site" e o "Voltar para o início". */
+  siteUrl: ler('siteUrl', import.meta.env.VITE_SITE_URL, 'http://localhost:3000'),
 } as const;

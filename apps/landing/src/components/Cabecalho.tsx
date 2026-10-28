@@ -19,12 +19,14 @@ export function Cabecalho({ nome, logoUrl, navegacao, entrar, acao }: CabecalhoP
       <Container className="flex h-[88px] items-center justify-between gap-6">
         <a href="/" aria-label={`${nome ?? 'Ampara'}, início`} className="flex items-center gap-3">
           {logoUrl ? (
-            // Logo servido pela API, com tamanho variável: <img> simples em vez do next/image.
-            <img src={logoUrl} alt="" className="h-9 w-auto" />
-          ) : nome ? null : (
-            <Logo font="serif" className="text-xl text-primary" />
+            <>
+              {/* Logo servido pela API, com tamanho variável: <img> simples em vez do next/image. */}
+              <img src={logoUrl} alt="" className="h-9 w-auto" />
+              {nome && <span className="font-serif text-xl text-primary">{nome}</span>}
+            </>
+          ) : (
+            <Logo font="serif" nome={nome} className="text-xl text-primary" />
           )}
-          {nome && <span className="font-serif text-xl text-primary">{nome}</span>}
         </a>
         <nav className="hidden items-center gap-10 md:flex">
           {navegacao.map((link) => (

@@ -4,8 +4,8 @@ import { env } from '@/lib/env';
 export const navegacaoDaPlataforma = {
   cabecalho: {
     navegacao: [
-      { rotulo: 'Para funerárias', href: '/#beneficios' },
-      { rotulo: 'Como funciona', href: '/#como-funciona' },
+      { rotulo: 'Para funerárias', href: '/para-funerarias#beneficios' },
+      { rotulo: 'Como funciona', href: '/para-funerarias#como-funciona' },
       { rotulo: 'Cadastro', href: '/cadastrar-funeraria' },
     ],
     // O painel da plataforma (ADMIN) fica no apps/web, sem funerária.
@@ -20,8 +20,8 @@ export const navegacaoDaPlataforma = {
       {
         titulo: 'Plataforma',
         itens: [
-          { rotulo: 'Benefícios', href: '/#beneficios' },
-          { rotulo: 'Como funciona', href: '/#como-funciona' },
+          { rotulo: 'Benefícios', href: '/para-funerarias#beneficios' },
+          { rotulo: 'Como funciona', href: '/para-funerarias#como-funciona' },
         ],
       },
       {

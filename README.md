@@ -57,9 +57,17 @@ O `/admin` (plataforma) é aberto sem funerária.
 
 ### Landing (apps/landing)
 
-- http://localhost:3000: landing da plataforma e auto-cadastro de funerária (FE-PUB-04).
-- http://demo.localhost:3000: landing da funerária `demo`, com marca, contatos, planos e catálogo vindos da API
-  (FE-PUB-01). Também `/planos` (comparação) e `/planos/{id}` (detalhe).
+Os três endereços formam um site só:
+
+| Endereço                              | O que abre                                                                  |
+| ------------------------------------- | --------------------------------------------------------------------------- |
+| http://localhost:3000                 | site da Ampara: landing com os planos (funerária `TENANT_PADRAO`, a `demo`) |
+| http://localhost:5173                 | sistema (login, cadastro, áreas); "Voltar ao site" leva ao localhost:3000   |
+| http://localhost:3000/para-funerarias | página para funerárias e auto-cadastro (FE-PUB-04)                          |
+
+- Marca, contatos, planos e catálogo vêm da API (FE-PUB-01). Também `/planos` (comparação) e `/planos/{id}` (detalhe).
+- Outras funerárias abrem no subdomínio delas (http://outra.localhost:3000), com os links para http://outra.localhost:5173.
+- Sem `TENANT_PADRAO`, o endereço principal mostra a página para funerárias.
 - O servidor do Next lê a API em `API_URL_INTERNA` e o navegador chama `/api` na própria landing (mesma origem).
 - Os planos modelo do seed nascem **inativos**: ative-os no painel do gestor (ou `PATCH /gestao/planos/{id}/status`)
   para aparecerem na landing. As páginas guardam os dados por `REVALIDAR_SEGUNDOS` (padrão 300).

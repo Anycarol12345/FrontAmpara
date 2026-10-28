@@ -4,9 +4,11 @@ import { cn } from '../lib/utils';
 type LogoProps = ComponentProps<'span'> & {
   /** `sans` no portal da equipe, `serif` nas telas do cliente e na landing. */
   font?: 'sans' | 'serif';
+  /** Nome ao lado do símbolo. Na landing de cada funerária, o nome dela. */
+  nome?: string;
 };
 
-function Logo({ className, font = 'sans', ...props }: LogoProps) {
+function Logo({ className, font = 'sans', nome = 'Ampara', ...props }: LogoProps) {
   return (
     <span
       className={cn(
@@ -17,9 +19,10 @@ function Logo({ className, font = 'sans', ...props }: LogoProps) {
       {...props}
     >
       <span className="grid size-6 place-items-center rounded-full border border-current text-[11px] font-semibold">
-        V
+        {/* O símbolo da Ampara no protótipo; outras marcas usam a inicial do nome. */}
+        {nome === 'Ampara' ? 'V' : nome.charAt(0).toUpperCase()}
       </span>
-      Ampara
+      {nome}
     </span>
   );
 }

@@ -17,7 +17,7 @@ export function Rodape({ nome, descricao, colunas, contato }: RodapeProps) {
       <Container className="grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <span className="inline-flex rounded-lg bg-white px-3 py-1.5 text-primary">
-            {nome ? <span className="font-serif">{nome}</span> : <Logo font="serif" />}
+            <Logo font="serif" nome={nome} />
           </span>
           <p className="mt-5 max-w-[260px] text-xs leading-relaxed text-white/60">{descricao}</p>
         </div>
@@ -45,7 +45,7 @@ export function Rodape({ nome, descricao, colunas, contato }: RodapeProps) {
           © {new Date().getFullYear()} {nome ?? 'Ampara'}. Todos os direitos reservados.
         </span>
         {contato && <span>{contato}</span>}
-        {nome && <span>Feito com Ampara</span>}
+        {nome && nome !== 'Ampara' && <span>Feito com Ampara</span>}
       </Container>
     </footer>
   );
