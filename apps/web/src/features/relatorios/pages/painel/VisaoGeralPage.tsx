@@ -1,24 +1,32 @@
+import { useDashboardFuneraria } from '@ampara/api-client';
 import { Badge } from '@ampara/ui/components/badge';
 import { Button } from '@ampara/ui/components/button';
 import { Card } from '@ampara/ui/components/card';
 import { cn } from '@ampara/ui/lib/utils';
 import {
   ArrowRight,
+  Banknote,
   CalendarDays,
   Check,
   ChevronRight,
   FileText,
   Pencil,
+  Percent,
   UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { NOME_PERFIL, useAuth } from '@/features/auth';
+import { EstadoConsulta } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '@/shared/components/StatCard';
+import { numero } from '@/shared/lib/formatar';
+import { GraficosFinanceiros } from '@/features/relatorios/components/GraficosFinanceiros';
+import { FuneraisEmAndamento } from '@/features/relatorios/components/FuneraisEmAndamento';
 
 // Dados fixos do protótipo. Passam a vir da API quando os endpoints de relatórios (REL-01) existirem.
+// Atividades e prioridades ainda são dados fixos do protótipo.
 const INDICADORES = [
   { rotulo: 'Atendimentos hoje', valor: '08', detalhe: '3 em andamento', icone: UsersRound },
   { rotulo: 'Tarefas pendentes', valor: '05', detalhe: '2 com prioridade', icone: Check },
@@ -99,11 +107,15 @@ export function VisaoGeralPage() {
         }
       />
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <Indicadores />
         {INDICADORES.map((indicador) => (
           <StatCard key={indicador.rotulo} {...indicador} />
         ))}
-      </div>
+      <Indicadores />
+
+      <GraficosFinanceiros />
+
+      <FuneraisEmAndamento />
 
       <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
         <AtividadesRecentes />
@@ -214,4 +226,49 @@ function saudacao() {
   if (hora < 12) return 'Bom dia';
   if (hora < 18) return 'Boa tarde';
   return 'Boa noite';
+}
+
+const realCompacto = (valor: number | string) =>
+  numero(valor).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  });
+
+function Indicadores() {
+  const dashboard = useDashboardFuneraria();
+
+  return (
+    <EstadoConsulta consulta={dashboard}>
+      {(d) => (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            rotulo="Contratos ativos"
+            valor={numero(d.contratos_ativos).toLocaleString('pt-BR')}
+            detalhe={`Novos no mês: ${numero(d.novos_contratos_no_mes)}`}
+            icone={FileText}
+          />
+          <StatCard
+            rotulo="Receita recebida"
+            valor={realCompacto(d.receita_recebida_no_mes)}
+            detalhe={`Prevista no mês: ${realCompacto(d.receita_prevista_no_mes)}`}
+            icone={Banknote}
+          />
+          <StatCard
+            rotulo="Inadimplência"
+            valor={`${numero(d.taxa_inadimplencia).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`}
+            detalhe="Dos contratos em vigor"
+            icone={Percent}
+          />
+          <StatCard
+            rotulo="Funerais em andamento"
+            valor={numero(d.funerais_em_andamento).toLocaleString('pt-BR')}
+            detalhe={`Translados em andamento: ${numero(d.translados_em_andamento)}`}
+            icone={CalendarDays}
+          />
+        </div>
+      )}
+    </EstadoConsulta>
+  );
 }
