@@ -3,14 +3,14 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
 import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'msw';
 
-import { ModoVencimento, StatusFuneraria } from '../../modelos';
+import { ModoCertidao, ModoVencimento, StatusFuneraria } from '../../modelos';
 import type {
   AtualizarConfiguracoesRequest,
   ConfiguracoesResponse,
@@ -208,6 +208,19 @@ export const getObterConfiguracoesResponseMock = (
           Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() =>
             faker.number.int(),
           ),
+          undefined,
+        ]),
+      },
+      undefined,
+    ]),
+    terceiros: faker.helpers.arrayElement([
+      { prazo_aceite_horas: faker.helpers.arrayElement([faker.number.int(), undefined]) },
+      undefined,
+    ]),
+    certidao: faker.helpers.arrayElement([
+      {
+        modo: faker.helpers.arrayElement([
+          faker.helpers.arrayElement(Object.values(ModoCertidao)),
           undefined,
         ]),
       },

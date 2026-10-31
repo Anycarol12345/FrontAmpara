@@ -3,9 +3,493 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import * as zod from 'zod';
+
+/**
+ * @summary Pedidos do fornecedor logado: o que entregar, onde e quando
+ */
+export const MeusPedidosQueryParams = zod.object({
+  status: zod.string().optional(),
+});
+
+export const MeusPedidosHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const MeusPedidosResponseItem = zod.object({
+  id_pedido: zod.uuid(),
+  id_funeral: zod.uuid(),
+  id_terceiro: zod.uuid(),
+  nome_falecido: zod.string(),
+  status: zod
+    .enum(['PENDENTE', 'ACEITO', 'EM_PREPARO', 'ENTREGUE', 'RECUSADO', 'CANCELADO'])
+    .describe(
+      'PENDENTE → ACEITO → EM_PREPARO → ENTREGUE; recusa só no PENDENTE; cancelamento enquanto não foi entregue.',
+    ),
+  itens: zod.array(
+    zod
+      .object({
+        id_funeral_item: zod.uuid(),
+        nome: zod.string(),
+        variacao: zod.string().nullable(),
+        quantidade: zod.int(),
+      })
+      .describe('Item do funeral no pedido, como o fornecedor vê.'),
+  ),
+  local_entrega: zod.string(),
+  data_hora_entrega: zod.iso.datetime({ offset: true }),
+  observacoes: zod.string().nullable(),
+  motivo_recusa: zod.string().nullable(),
+});
+export const MeusPedidosResponse = zod.array(MeusPedidosResponseItem);
+
+/**
+ * @summary O fornecedor avança o pedido: EM_PREPARO ou ENTREGUE
+ */
+export const AtualizarPedidoParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const AtualizarPedidoHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const AtualizarPedidoBody = zod.object({
+  status: zod.union([
+    zod.null(),
+    zod
+      .enum(['PENDENTE', 'ACEITO', 'EM_PREPARO', 'ENTREGUE', 'RECUSADO', 'CANCELADO'])
+      .describe(
+        'PENDENTE → ACEITO → EM_PREPARO → ENTREGUE; recusa só no PENDENTE; cancelamento enquanto não foi entregue.',
+      ),
+  ]),
+  observacao: zod.string().nullable(),
+});
+
+export const AtualizarPedidoResponse = zod.object({
+  id_pedido: zod.uuid(),
+  id_funeral: zod.uuid(),
+  id_terceiro: zod.uuid(),
+  nome_falecido: zod.string(),
+  status: zod
+    .enum(['PENDENTE', 'ACEITO', 'EM_PREPARO', 'ENTREGUE', 'RECUSADO', 'CANCELADO'])
+    .describe(
+      'PENDENTE → ACEITO → EM_PREPARO → ENTREGUE; recusa só no PENDENTE; cancelamento enquanto não foi entregue.',
+    ),
+  itens: zod.array(
+    zod
+      .object({
+        id_funeral_item: zod.uuid(),
+        nome: zod.string(),
+        variacao: zod.string().nullable(),
+        quantidade: zod.int(),
+      })
+      .describe('Item do funeral no pedido, como o fornecedor vê.'),
+  ),
+  local_entrega: zod.string(),
+  data_hora_entrega: zod.iso.datetime({ offset: true }),
+  observacoes: zod.string().nullable(),
+  motivo_recusa: zod.string().nullable(),
+});
+
+/**
+ * @summary O despachante registra uma etapa da certidão atribuída a ele
+ */
+export const AlterarStatusCertidaoTerceiroParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const AlterarStatusCertidaoTerceiroHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const AlterarStatusCertidaoTerceiroBody = zod.object({
+  status: zod.union([
+    zod.null(),
+    zod.enum(['SOLICITADA', 'EM_PROCESSAMENTO', 'EMITIDA', 'REJEITADA', 'ERRO']),
+  ]),
+  observacao: zod.string().nullable(),
+  protocolo: zod.string().nullable(),
+});
+
+export const AlterarStatusCertidaoTerceiroResponse = zod.object({
+  id_solicitacao: zod.uuid(),
+  id_beneficiario: zod.uuid(),
+  status: zod.enum(['SOLICITADA', 'EM_PROCESSAMENTO', 'EMITIDA', 'REJEITADA', 'ERRO']),
+  modo: zod.enum(['MANUAL', 'SIMULADO']),
+  responsavel: zod.union([
+    zod.null(),
+    zod.object({
+      tipo: zod.enum(['FUNCIONARIO', 'TERCEIRO']),
+      id_usuario: zod.uuid().nullable(),
+      id_terceiro: zod.uuid().nullable(),
+      nome: zod.string(),
+    }),
+  ]),
+  protocolo: zod.string().nullable(),
+  pendencia: zod.string().nullable(),
+  numero_matricula: zod.string().nullable(),
+  id_documento_certidao: zod.uuid().nullable(),
+  prazo: zod.object({
+    data: zod.iso.date().describe('Até quando o óbito precisa ser registrado.'),
+    dias_restantes: zod.int().describe('Negativo quando já passou.'),
+    vencido: zod
+      .boolean()
+      .describe('Passou do prazo e a certidão não saiu: a equipe precisa agir (alerta do CER-03).'),
+  }),
+  historico: zod.array(
+    zod.object({
+      de: zod.enum(['SOLICITADA', 'EM_PROCESSAMENTO', 'EMITIDA', 'REJEITADA', 'ERRO']),
+      para: zod.enum(['SOLICITADA', 'EM_PROCESSAMENTO', 'EMITIDA', 'REJEITADA', 'ERRO']),
+      id_usuario: zod.uuid().nullable(),
+      observacao: zod.string().nullable(),
+      em: zod.iso.datetime({ offset: true }),
+    }),
+  ),
+});
+
+/**
+ * @summary O despachante envia o PDF da certidão e o número da matrícula
+ */
+export const RegistrarCertidaoEmitidaTerceiroParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const RegistrarCertidaoEmitidaTerceiroHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const RegistrarCertidaoEmitidaTerceiroBody = zod
+  .object({
+    arquivo: zod.instanceof(Blob).optional(),
+  })
+  .and(
+    zod.object({
+      numero_matricula: zod.string().optional(),
+    }),
+  );
+
+export const RegistrarCertidaoEmitidaTerceiroResponse = zod.object({
+  id_solicitacao: zod.uuid(),
+  id_beneficiario: zod.uuid(),
+  status: zod.enum(['SOLICITADA', 'EM_PROCESSAMENTO', 'EMITIDA', 'REJEITADA', 'ERRO']),
+  modo: zod.enum(['MANUAL', 'SIMULADO']),
+  responsavel: zod.union([
+    zod.null(),
+    zod.object({
+      tipo: zod.enum(['FUNCIONARIO', 'TERCEIRO']),
+      id_usuario: zod.uuid().nullable(),
+      id_terceiro: zod.uuid().nullable(),
+      nome: zod.string(),
+    }),
+  ]),
+  protocolo: zod.string().nullable(),
+  pendencia: zod.string().nullable(),
+  numero_matricula: zod.string().nullable(),
+  id_documento_certidao: zod.uuid().nullable(),
+  prazo: zod.object({
+    data: zod.iso.date().describe('Até quando o óbito precisa ser registrado.'),
+    dias_restantes: zod.int().describe('Negativo quando já passou.'),
+    vencido: zod
+      .boolean()
+      .describe('Passou do prazo e a certidão não saiu: a equipe precisa agir (alerta do CER-03).'),
+  }),
+  historico: zod.array(
+    zod.object({
+      de: zod.enum(['SOLICITADA', 'EM_PROCESSAMENTO', 'EMITIDA', 'REJEITADA', 'ERRO']),
+      para: zod.enum(['SOLICITADA', 'EM_PROCESSAMENTO', 'EMITIDA', 'REJEITADA', 'ERRO']),
+      id_usuario: zod.uuid().nullable(),
+      observacao: zod.string().nullable(),
+      em: zod.iso.datetime({ offset: true }),
+    }),
+  ),
+});
+
+/**
+ * @summary Link temporário de um documento da certidão atribuída ao despachante
+ */
+export const BaixarDocumentoCertidaoTerceiroParams = zod.object({
+  id: zod.uuid(),
+  idDocumento: zod.uuid(),
+});
+
+export const BaixarDocumentoCertidaoTerceiroHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const BaixarDocumentoCertidaoTerceiroResponse = zod.object({
+  url: zod.url(),
+  expira_em: zod.iso.datetime({ offset: true }),
+});
+
+/**
+ * @summary Translados da empresa logada: origem, destino, horário e contato, sem valores nem contrato
+ */
+export const MeusTransladosHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const MeusTransladosResponseItem = zod
+  .object({
+    id_translado: zod.uuid(),
+    nome_falecido: zod.string(),
+    status: zod.enum(['AGENDADO', 'EM_COLETA', 'EM_TRANSITO', 'ENTREGUE', 'CANCELADO']),
+    origem: zod.object({
+      endereco: zod.string(),
+      cidade: zod.string(),
+      uf: zod.string(),
+      pais: zod.string(),
+    }),
+    destino: zod.object({
+      endereco: zod.string(),
+      cidade: zod.string(),
+      uf: zod.string(),
+      pais: zod.string(),
+    }),
+    data_prevista: zod.iso.datetime({ offset: true }),
+    contato_nome: zod.string(),
+    contato_telefone: zod.string(),
+    status_aceite: zod.union([
+      zod.null(),
+      zod.union([
+        zod.literal('PENDENTE'),
+        zod.literal('ACEITO'),
+        zod.literal('RECUSADO'),
+        zod.literal(null),
+      ]),
+    ]),
+    motorista: zod.union([
+      zod.null(),
+      zod.object({
+        nome: zod.string(),
+        telefone: zod.string(),
+        placa: zod.string(),
+        modelo: zod.string(),
+      }),
+    ]),
+  })
+  .describe('O que a empresa vê (TRA-04, LGPD): sem CPF, contrato nem valores.');
+export const MeusTransladosResponse = zod.array(MeusTransladosResponseItem);
+
+/**
+ * @summary Translado atribuído à empresa logada
+ */
+export const ObterTransladoFrotaParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const ObterTransladoFrotaHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const ObterTransladoFrotaResponse = zod
+  .object({
+    id_translado: zod.uuid(),
+    nome_falecido: zod.string(),
+    status: zod.enum(['AGENDADO', 'EM_COLETA', 'EM_TRANSITO', 'ENTREGUE', 'CANCELADO']),
+    origem: zod.object({
+      endereco: zod.string(),
+      cidade: zod.string(),
+      uf: zod.string(),
+      pais: zod.string(),
+    }),
+    destino: zod.object({
+      endereco: zod.string(),
+      cidade: zod.string(),
+      uf: zod.string(),
+      pais: zod.string(),
+    }),
+    data_prevista: zod.iso.datetime({ offset: true }),
+    contato_nome: zod.string(),
+    contato_telefone: zod.string(),
+    status_aceite: zod.union([
+      zod.null(),
+      zod.union([
+        zod.literal('PENDENTE'),
+        zod.literal('ACEITO'),
+        zod.literal('RECUSADO'),
+        zod.literal(null),
+      ]),
+    ]),
+    motorista: zod.union([
+      zod.null(),
+      zod.object({
+        nome: zod.string(),
+        telefone: zod.string(),
+        placa: zod.string(),
+        modelo: zod.string(),
+      }),
+    ]),
+  })
+  .describe('O que a empresa vê (TRA-04, LGPD): sem CPF, contrato nem valores.');
+
+/**
+ * @summary Informa o motorista e o veículo, depois do aceite
+ */
+export const InformarMotoristaTransladoParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const InformarMotoristaTransladoHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const InformarMotoristaTransladoBody = zod.object({
+  nome: zod.string().nullable(),
+  telefone: zod.string().nullable(),
+  placa: zod.string().nullable(),
+  modelo: zod.string().nullable(),
+});
+
+export const InformarMotoristaTransladoResponse = zod
+  .object({
+    id_translado: zod.uuid(),
+    nome_falecido: zod.string(),
+    status: zod.enum(['AGENDADO', 'EM_COLETA', 'EM_TRANSITO', 'ENTREGUE', 'CANCELADO']),
+    origem: zod.object({
+      endereco: zod.string(),
+      cidade: zod.string(),
+      uf: zod.string(),
+      pais: zod.string(),
+    }),
+    destino: zod.object({
+      endereco: zod.string(),
+      cidade: zod.string(),
+      uf: zod.string(),
+      pais: zod.string(),
+    }),
+    data_prevista: zod.iso.datetime({ offset: true }),
+    contato_nome: zod.string(),
+    contato_telefone: zod.string(),
+    status_aceite: zod.union([
+      zod.null(),
+      zod.union([
+        zod.literal('PENDENTE'),
+        zod.literal('ACEITO'),
+        zod.literal('RECUSADO'),
+        zod.literal(null),
+      ]),
+    ]),
+    motorista: zod.union([
+      zod.null(),
+      zod.object({
+        nome: zod.string(),
+        telefone: zod.string(),
+        placa: zod.string(),
+        modelo: zod.string(),
+      }),
+    ]),
+  })
+  .describe('O que a empresa vê (TRA-04, LGPD): sem CPF, contrato nem valores.');
+
+/**
+ * @summary A empresa atualiza o status do translado atribuído a ela
+ */
+export const AlterarStatusTransladoFrotaParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const AlterarStatusTransladoFrotaHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const AlterarStatusTransladoFrotaBody = zod.object({
+  status: zod.union([
+    zod.null(),
+    zod.enum(['AGENDADO', 'EM_COLETA', 'EM_TRANSITO', 'ENTREGUE', 'CANCELADO']),
+  ]),
+  observacao: zod.string().nullable(),
+});
+
+export const AlterarStatusTransladoFrotaResponse = zod
+  .object({
+    id_translado: zod.uuid(),
+    nome_falecido: zod.string(),
+    status: zod.enum(['AGENDADO', 'EM_COLETA', 'EM_TRANSITO', 'ENTREGUE', 'CANCELADO']),
+    origem: zod.object({
+      endereco: zod.string(),
+      cidade: zod.string(),
+      uf: zod.string(),
+      pais: zod.string(),
+    }),
+    destino: zod.object({
+      endereco: zod.string(),
+      cidade: zod.string(),
+      uf: zod.string(),
+      pais: zod.string(),
+    }),
+    data_prevista: zod.iso.datetime({ offset: true }),
+    contato_nome: zod.string(),
+    contato_telefone: zod.string(),
+    status_aceite: zod.union([
+      zod.null(),
+      zod.union([
+        zod.literal('PENDENTE'),
+        zod.literal('ACEITO'),
+        zod.literal('RECUSADO'),
+        zod.literal(null),
+      ]),
+    ]),
+    motorista: zod.union([
+      zod.null(),
+      zod.object({
+        nome: zod.string(),
+        telefone: zod.string(),
+        placa: zod.string(),
+        modelo: zod.string(),
+      }),
+    ]),
+  })
+  .describe('O que a empresa vê (TRA-04, LGPD): sem CPF, contrato nem valores.');
+
+/**
+ * @summary Link temporário de um documento do translado atribuído à empresa
+ */
+export const BaixarDocumentoTransladoFrotaParams = zod.object({
+  id: zod.uuid(),
+  idDocumento: zod.uuid(),
+});
+
+export const BaixarDocumentoTransladoFrotaHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const BaixarDocumentoTransladoFrotaResponse = zod.object({
+  url: zod.url(),
+  expira_em: zod.iso.datetime({ offset: true }),
+});
 
 /**
  * @summary Cadastro do terceiro logado nesta funerária

@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import * as zod from 'zod';
 
@@ -30,6 +30,7 @@ export const CadastrarClienteBody = zod
     cep: zod.string().nullable(),
     cidade: zod.string().nullable(),
     estado: zod.string().nullable(),
+    aceite_termos: zod.boolean().nullish(),
   })
   .describe('Corpo de POST /clientes, igual ao exemplo do card Criar Cliente.');
 
@@ -47,6 +48,97 @@ export const CadastrarClienteResponse = zod
     estado: zod.string().nullable(),
   })
   .describe('Dados do cliente devolvidos pela API. Nunca inclui a senha.');
+
+/**
+ * Cadastro, dependentes, contratos e histórico de aceite dos termos (SEG-01).
+ * @summary Todos os dados do titular nesta funerária, para download (LGPD)
+ */
+export const ExportarMeusDadosHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const ExportarMeusDadosResponse = zod.object({
+  gerado_em: zod.iso.datetime({ offset: true }).describe('Quando a exportação foi gerada (UTC).'),
+  titular: zod
+    .object({
+      id_cliente: zod.uuid(),
+      nome: zod.string(),
+      cpf: zod.string(),
+      data_nascimento: zod.iso.date(),
+      email: zod.string(),
+      telefone: zod.string().nullable(),
+      endereco: zod.string().nullable(),
+      cep: zod.string().nullable(),
+      cidade: zod.string().nullable(),
+      estado: zod.string().nullable(),
+    })
+    .describe('Cadastro do titular.'),
+  dependentes: zod
+    .array(
+      zod.object({
+        id_dependente: zod.uuid(),
+        id_cliente: zod.uuid(),
+        nome: zod.string(),
+        cpf: zod.string(),
+        data_nascimento: zod.iso.date(),
+        parentesco: zod.string(),
+        telefone: zod.string().nullable(),
+        email: zod.string().nullable(),
+      }),
+    )
+    .describe('Dependentes cadastrados pelo titular.'),
+  contratos: zod
+    .array(
+      zod
+        .object({
+          id_contrato: zod.uuid(),
+          nome_plano: zod.string(),
+          status: zod.string(),
+          periodicidade: zod.string(),
+          valor_total: zod.number(),
+          data_contratacao: zod.iso.date(),
+          data_fim: zod.iso.date().nullable(),
+          quantidade_pessoas: zod.int(),
+        })
+        .describe(
+          'Contrato do cliente. Status: ATIVO, A_PAGAR, SUSPENSO ou CANCELADO; periodicidade: MENSAL ou ANUAL.',
+        ),
+    )
+    .describe('Contratos do titular nesta funerária.'),
+  aceites_termos: zod
+    .array(
+      zod
+        .object({
+          documento: zod.string(),
+          versao: zod.string(),
+          aceito_em: zod.iso.datetime({ offset: true }),
+        })
+        .describe(
+          'Aceite de um documento legal. Documento: TERMOS_DE_USO ou POLITICA_DE_PRIVACIDADE.',
+        ),
+    )
+    .describe('Histórico de aceite dos termos de uso e da política de privacidade.'),
+  preferencias_funeral: zod
+    .array(
+      zod
+        .object({
+          id_pessoa: zod.uuid(),
+          tipo: zod.string(),
+          destinacao: zod.string(),
+          tipo_cerimonia: zod.string(),
+          crenca_religiosa: zod.string().nullable(),
+          musicas: zod.array(zod.string()),
+          mensagens: zod.string().nullable(),
+          observacoes: zod.string().nullable(),
+          ids_itens_catalogo: zod.array(zod.uuid()),
+        })
+        .describe('Preferência de funeral como o titular registrou. Tipo: TITULAR ou DEPENDENTE.'),
+    )
+    .describe('Preferências de funeral registradas em vida (FUN-02).'),
+});
 
 /**
  * @summary Dados do cliente logado
@@ -112,8 +204,8 @@ export const AtualizarMeusDadosResponse = zod
   .describe('Dados do cliente devolvidos pela API. Nunca inclui a senha.');
 
 /**
- * Ordenação: ordenarPor = nome (padrão), cpf, cidade ou cadastrado_em; direcao = asc ou desc.
- * @summary Busca clientes da funerária por nome ou CPF
+ * status_contrato = ATIVO, A_PAGAR, SUSPENSO, CANCELADO (tem pelo menos um contrato no status) ou SEM_CONTRATO. Ordenação: ordenarPor = nome (padrão), cidade ou cadastrado_em; direcao = asc ou desc. O CPF da listagem vem mascarado.
+ * @summary Busca clientes da funerária por nome, CPF ou status do contrato
  */
 export const buscarClientesQueryPaginaDefault = 1;
 export const buscarClientesQueryTamanhoDefault = 20;
@@ -121,6 +213,7 @@ export const buscarClientesQueryTamanhoDefault = 20;
 export const BuscarClientesQueryParams = zod.object({
   nome: zod.string().optional(),
   cpf: zod.string().optional(),
+  status_contrato: zod.string().optional(),
   pagina: zod.int().default(buscarClientesQueryPaginaDefault),
   tamanho: zod.int().default(buscarClientesQueryTamanhoDefault),
   ordenarPor: zod.string().optional(),
@@ -140,7 +233,9 @@ export const BuscarClientesResponse = zod
       zod.object({
         id_cliente: zod.uuid().optional(),
         nome: zod.string(),
-        cpf: zod.string(),
+        cpf: zod
+          .string()
+          .describe('Mascarado (***.456.789-**): a listagem não precisa do CPF completo (SEG-01).'),
         email: zod.string(),
         telefone: zod.string().nullish(),
         cidade: zod.string().nullish(),
@@ -194,5 +289,21 @@ export const ObterClienteGestaoResponse = zod.object({
       telefone: zod.string().nullable(),
       email: zod.string().nullable(),
     }),
+  ),
+  contratos: zod.array(
+    zod
+      .object({
+        id_contrato: zod.uuid(),
+        nome_plano: zod.string(),
+        status: zod.string(),
+        periodicidade: zod.string(),
+        valor_total: zod.number(),
+        data_contratacao: zod.iso.date(),
+        data_fim: zod.iso.date().nullable(),
+        quantidade_pessoas: zod.int(),
+      })
+      .describe(
+        'Contrato do cliente. Status: ATIVO, A_PAGAR, SUSPENSO ou CANCELADO; periodicidade: MENSAL ou ANUAL.',
+      ),
   ),
 });

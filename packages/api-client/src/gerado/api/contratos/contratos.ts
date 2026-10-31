@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -23,12 +23,15 @@ import type {
 
 import type {
   BuscarContratosParams,
+  CancelarContratoRequest,
   ContratarParaClienteRequest,
   ContratarRequest,
   ContratoDetalheResponse,
   ContratoResponse,
   ContratoResumoResponse,
+  ElegibilidadeResponse,
   HttpValidationProblemDetails,
+  IncluirDependenteRequest,
   PaginaResultOfContratoResumoResponse,
   ProblemDetails,
 } from '../../modelos';
@@ -641,3 +644,460 @@ export function useObterContrato<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export const getElegibilidadeContratoUrl = (id: string) => {
+  return `/api/v1/contratos/${id}/elegibilidade`;
+};
+
+/**
+ * Por pessoa coberta: elegivel, motivo e carencia_cumprida_em (CON-04).
+ * @summary Quem do contrato pode usar o plano hoje: contrato ativo e adimplente e carência cumprida
+ */
+export const elegibilidadeContrato = async (
+  id: string,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<ElegibilidadeResponse[]> => {
+  return requisicao<ElegibilidadeResponse[]>(getElegibilidadeContratoUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getElegibilidadeContratoQueryKey = (id: string) => {
+  return [`/api/v1/contratos/${id}/elegibilidade`] as const;
+};
+
+export const getElegibilidadeContratoQueryOptions = <
+  TData = Awaited<ReturnType<typeof elegibilidadeContrato>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof elegibilidadeContrato>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getElegibilidadeContratoQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof elegibilidadeContrato>>> = ({ signal }) =>
+    elegibilidadeContrato(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof elegibilidadeContrato>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type ElegibilidadeContratoQueryResult = NonNullable<
+  Awaited<ReturnType<typeof elegibilidadeContrato>>
+>;
+export type ElegibilidadeContratoQueryError = ErrorType<ProblemDetails>;
+
+export function useElegibilidadeContrato<
+  TData = Awaited<ReturnType<typeof elegibilidadeContrato>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof elegibilidadeContrato>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof elegibilidadeContrato>>,
+          TError,
+          Awaited<ReturnType<typeof elegibilidadeContrato>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useElegibilidadeContrato<
+  TData = Awaited<ReturnType<typeof elegibilidadeContrato>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof elegibilidadeContrato>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof elegibilidadeContrato>>,
+          TError,
+          Awaited<ReturnType<typeof elegibilidadeContrato>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useElegibilidadeContrato<
+  TData = Awaited<ReturnType<typeof elegibilidadeContrato>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof elegibilidadeContrato>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Quem do contrato pode usar o plano hoje: contrato ativo e adimplente e carência cumprida
+ */
+
+export function useElegibilidadeContrato<
+  TData = Awaited<ReturnType<typeof elegibilidadeContrato>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof elegibilidadeContrato>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getElegibilidadeContratoQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getIncluirDependenteContratoUrl = (id: string) => {
+  return `/api/v1/contratos/${id}/dependentes`;
+};
+
+/**
+ * A carência do dependente conta a partir da inclusão e o novo valor vale a partir da próxima fatura. Respeita o limite de dependentes do plano.
+ * @summary Inclui um dependente do titular no contrato
+ */
+export const incluirDependenteContrato = async (
+  id: string,
+  incluirDependenteRequest: IncluirDependenteRequest,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<ContratoResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return requisicao<ContratoResponse>(getIncluirDependenteContratoUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(incluirDependenteRequest),
+  });
+};
+
+export const getIncluirDependenteContratoMutationKey = () => ['incluirDependenteContrato'] as const;
+
+export const getIncluirDependenteContratoMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof incluirDependenteContrato>>,
+    TError,
+    IncluirDependenteContratoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof incluirDependenteContrato>>,
+  TError,
+  IncluirDependenteContratoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getIncluirDependenteContratoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof incluirDependenteContrato>>,
+    IncluirDependenteContratoMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return incluirDependenteContrato(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type IncluirDependenteContratoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof incluirDependenteContrato>>
+>;
+export type IncluirDependenteContratoMutationBody = BodyType<IncluirDependenteRequest>;
+export type IncluirDependenteContratoMutationError = ErrorType<
+  HttpValidationProblemDetails | ProblemDetails
+>;
+export type IncluirDependenteContratoMutationVariables = {
+  id: string;
+  data: BodyType<IncluirDependenteRequest>;
+};
+
+/**
+ * @summary Inclui um dependente do titular no contrato
+ */
+export const useIncluirDependenteContrato = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof incluirDependenteContrato>>,
+      TError,
+      IncluirDependenteContratoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof incluirDependenteContrato>>,
+  TError,
+  IncluirDependenteContratoMutationVariables,
+  TContext
+> => {
+  return useMutation(getIncluirDependenteContratoMutationOptions(options), queryClient);
+};
+export const getRemoverDependenteContratoUrl = (id: string, idDependente: string) => {
+  return `/api/v1/contratos/${id}/dependentes/${idDependente}`;
+};
+
+/**
+ * Dependente já registrado como beneficiário não pode ser removido. O novo valor vale a partir da próxima fatura.
+ * @summary Tira um dependente do contrato
+ */
+export const removerDependenteContrato = async (
+  id: string,
+  idDependente: string,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<ContratoResponse> => {
+  return requisicao<ContratoResponse>(getRemoverDependenteContratoUrl(id, idDependente), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoverDependenteContratoMutationKey = () => ['removerDependenteContrato'] as const;
+
+export const getRemoverDependenteContratoMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removerDependenteContrato>>,
+    TError,
+    RemoverDependenteContratoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removerDependenteContrato>>,
+  TError,
+  RemoverDependenteContratoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoverDependenteContratoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removerDependenteContrato>>,
+    RemoverDependenteContratoMutationVariables
+  > = (props) => {
+    const { id, idDependente } = props ?? {};
+
+    return removerDependenteContrato(id, idDependente, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoverDependenteContratoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removerDependenteContrato>>
+>;
+
+export type RemoverDependenteContratoMutationError = ErrorType<ProblemDetails>;
+export type RemoverDependenteContratoMutationVariables = { id: string; idDependente: string };
+
+/**
+ * @summary Tira um dependente do contrato
+ */
+export const useRemoverDependenteContrato = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removerDependenteContrato>>,
+      TError,
+      RemoverDependenteContratoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removerDependenteContrato>>,
+  TError,
+  RemoverDependenteContratoMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoverDependenteContratoMutationOptions(options), queryClient);
+};
+export const getCancelarContratoUrl = (id: string) => {
+  return `/api/v1/contratos/${id}/cancelar`;
+};
+
+/**
+ * Faturas futuras são canceladas e as vencidas continuam em aberto. Contrato com funeral em andamento não pode ser cancelado. O consultor não cancela contratos.
+ * @summary Cancela o contrato, pelo titular ou pela equipe da funerária
+ */
+export const cancelarContrato = async (
+  id: string,
+  cancelarContratoRequest: CancelarContratoRequest,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<ContratoResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return requisicao<ContratoResponse>(getCancelarContratoUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cancelarContratoRequest),
+  });
+};
+
+export const getCancelarContratoMutationKey = () => ['cancelarContrato'] as const;
+
+export const getCancelarContratoMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelarContrato>>,
+    TError,
+    CancelarContratoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelarContrato>>,
+  TError,
+  CancelarContratoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCancelarContratoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelarContrato>>,
+    CancelarContratoMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return cancelarContrato(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelarContratoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelarContrato>>
+>;
+export type CancelarContratoMutationBody = BodyType<CancelarContratoRequest>;
+export type CancelarContratoMutationError = ErrorType<
+  HttpValidationProblemDetails | ProblemDetails
+>;
+export type CancelarContratoMutationVariables = {
+  id: string;
+  data: BodyType<CancelarContratoRequest>;
+};
+
+/**
+ * @summary Cancela o contrato, pelo titular ou pela equipe da funerária
+ */
+export const useCancelarContrato = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cancelarContrato>>,
+      TError,
+      CancelarContratoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof cancelarContrato>>,
+  TError,
+  CancelarContratoMutationVariables,
+  TContext
+> => {
+  return useMutation(getCancelarContratoMutationOptions(options), queryClient);
+};

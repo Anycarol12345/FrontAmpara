@@ -3,12 +3,13 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 
 export interface ClienteResumoResponse {
   id_cliente?: string;
   nome: string;
+  /** Mascarado (***.456.789-**): a listagem não precisa do CPF completo (SEG-01). */
   cpf: string;
   email: string;
   /** @nullable */

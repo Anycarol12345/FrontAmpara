@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { faker } from '@faker-js/faker';
 
@@ -12,11 +12,14 @@ import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'ms
 
 import { Periodicidade, StatusContrato, TipoCobertura, TipoPessoaCoberta } from '../../modelos';
 import type {
+  CancelarContratoRequest,
   ContratarParaClienteRequest,
   ContratarRequest,
   ContratoDetalheResponse,
   ContratoResponse,
   ContratoResumoResponse,
+  ElegibilidadeResponse,
+  IncluirDependenteRequest,
   PaginaResultOfContratoResumoResponse,
 } from '../../modelos';
 
@@ -46,6 +49,10 @@ export const getContratarResponseMock = (
     id_dependente: faker.helpers.arrayElement([faker.string.uuid(), null]),
     data_inclusao: faker.date.past().toISOString().slice(0, 10),
   })),
+  motivo_cancelamento: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
   ...overrideResponse,
 });
 
@@ -90,6 +97,10 @@ export const getContratarParaClienteResponseMock = (
     id_dependente: faker.helpers.arrayElement([faker.string.uuid(), null]),
     data_inclusao: faker.date.past().toISOString().slice(0, 10),
   })),
+  motivo_cancelamento: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
   ...overrideResponse,
 });
 
@@ -149,6 +160,123 @@ export const getObterContratoResponseMock = (
     data_inclusao: faker.date.past().toISOString().slice(0, 10),
     carencia_cumprida_em: faker.date.past().toISOString().slice(0, 10),
   })),
+  motivo_cancelamento: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  ...overrideResponse,
+});
+
+export const getElegibilidadeContratoResponseMock = (): ElegibilidadeResponse[] =>
+  Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+    id_pessoa_coberta: faker.string.uuid(),
+    tipo: faker.helpers.arrayElement(Object.values(TipoPessoaCoberta)),
+    id_dependente: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    elegivel: faker.datatype.boolean(),
+    motivo: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    carencia_cumprida_em: faker.date.past().toISOString().slice(0, 10),
+  }));
+
+export const getIncluirDependenteContratoResponseMock = (
+  overrideResponse: Partial<Extract<ContratoResponse, object>> = {},
+): ContratoResponse => ({
+  id_contrato: faker.string.uuid(),
+  id_cliente: faker.string.uuid(),
+  id_plano: faker.string.uuid(),
+  nome_plano: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  tipo_cobertura: faker.helpers.arrayElement(Object.values(TipoCobertura)),
+  periodicidade: faker.helpers.arrayElement(Object.values(Periodicidade)),
+  dia_vencimento: faker.number.int(),
+  data_contratacao: faker.date.past().toISOString().slice(0, 10),
+  data_fim: faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 10), null]),
+  status: faker.helpers.arrayElement(Object.values(StatusContrato)),
+  valor_plano: faker.number.float({ fractionDigits: 2 }),
+  valor_por_dependente: faker.number.float({ fractionDigits: 2 }),
+  valor_total: faker.number.float({ fractionDigits: 2 }),
+  id_consultor: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  pessoas_cobertas: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    id_pessoa_coberta: faker.string.uuid(),
+    tipo: faker.helpers.arrayElement(Object.values(TipoPessoaCoberta)),
+    id_dependente: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    data_inclusao: faker.date.past().toISOString().slice(0, 10),
+  })),
+  motivo_cancelamento: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  ...overrideResponse,
+});
+
+export const getRemoverDependenteContratoResponseMock = (
+  overrideResponse: Partial<Extract<ContratoResponse, object>> = {},
+): ContratoResponse => ({
+  id_contrato: faker.string.uuid(),
+  id_cliente: faker.string.uuid(),
+  id_plano: faker.string.uuid(),
+  nome_plano: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  tipo_cobertura: faker.helpers.arrayElement(Object.values(TipoCobertura)),
+  periodicidade: faker.helpers.arrayElement(Object.values(Periodicidade)),
+  dia_vencimento: faker.number.int(),
+  data_contratacao: faker.date.past().toISOString().slice(0, 10),
+  data_fim: faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 10), null]),
+  status: faker.helpers.arrayElement(Object.values(StatusContrato)),
+  valor_plano: faker.number.float({ fractionDigits: 2 }),
+  valor_por_dependente: faker.number.float({ fractionDigits: 2 }),
+  valor_total: faker.number.float({ fractionDigits: 2 }),
+  id_consultor: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  pessoas_cobertas: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    id_pessoa_coberta: faker.string.uuid(),
+    tipo: faker.helpers.arrayElement(Object.values(TipoPessoaCoberta)),
+    id_dependente: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    data_inclusao: faker.date.past().toISOString().slice(0, 10),
+  })),
+  motivo_cancelamento: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  ...overrideResponse,
+});
+
+export const getCancelarContratoResponseMock = (
+  overrideResponse: Partial<Extract<ContratoResponse, object>> = {},
+): ContratoResponse => ({
+  id_contrato: faker.string.uuid(),
+  id_cliente: faker.string.uuid(),
+  id_plano: faker.string.uuid(),
+  nome_plano: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  tipo_cobertura: faker.helpers.arrayElement(Object.values(TipoCobertura)),
+  periodicidade: faker.helpers.arrayElement(Object.values(Periodicidade)),
+  dia_vencimento: faker.number.int(),
+  data_contratacao: faker.date.past().toISOString().slice(0, 10),
+  data_fim: faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 10), null]),
+  status: faker.helpers.arrayElement(Object.values(StatusContrato)),
+  valor_plano: faker.number.float({ fractionDigits: 2 }),
+  valor_por_dependente: faker.number.float({ fractionDigits: 2 }),
+  valor_total: faker.number.float({ fractionDigits: 2 }),
+  id_consultor: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  pessoas_cobertas: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    id_pessoa_coberta: faker.string.uuid(),
+    tipo: faker.helpers.arrayElement(Object.values(TipoPessoaCoberta)),
+    id_dependente: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    data_inclusao: faker.date.past().toISOString().slice(0, 10),
+  })),
+  motivo_cancelamento: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
   ...overrideResponse,
 });
 
@@ -271,10 +399,110 @@ export const getObterContratoMockHandler = (
     options,
   );
 };
+
+export const getElegibilidadeContratoMockHandler = (
+  overrideResponse?:
+    | ElegibilidadeResponse[]
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
+      ) => Promise<ElegibilidadeResponse[]> | ElegibilidadeResponse[]),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get<{ id: string }>(
+    '*/api/v1/contratos/:id/elegibilidade',
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getElegibilidadeContratoResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getIncluirDependenteContratoMockHandler = (
+  overrideResponse?:
+    | ContratoResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }, IncluirDependenteRequest>>[0],
+      ) => Promise<ContratoResponse> | ContratoResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post<{ id: string }, IncluirDependenteRequest>(
+    '*/api/v1/contratos/:id/dependentes',
+    async (info: Parameters<HttpResponseResolver<{ id: string }, IncluirDependenteRequest>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getIncluirDependenteContratoResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getRemoverDependenteContratoMockHandler = (
+  overrideResponse?:
+    | ContratoResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string; idDependente: string }>>[0],
+      ) => Promise<ContratoResponse> | ContratoResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.delete<{ id: string; idDependente: string }>(
+    '*/api/v1/contratos/:id/dependentes/:idDependente',
+    async (info: Parameters<HttpResponseResolver<{ id: string; idDependente: string }>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getRemoverDependenteContratoResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getCancelarContratoMockHandler = (
+  overrideResponse?:
+    | ContratoResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }, CancelarContratoRequest>>[0],
+      ) => Promise<ContratoResponse> | ContratoResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post<{ id: string }, CancelarContratoRequest>(
+    '*/api/v1/contratos/:id/cancelar',
+    async (info: Parameters<HttpResponseResolver<{ id: string }, CancelarContratoRequest>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getCancelarContratoResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 export const getContratosMock = () => [
   getContratarMockHandler(),
   getMeusContratosMockHandler(),
   getContratarParaClienteMockHandler(),
   getBuscarContratosMockHandler(),
   getObterContratoMockHandler(),
+  getElegibilidadeContratoMockHandler(),
+  getIncluirDependenteContratoMockHandler(),
+  getRemoverDependenteContratoMockHandler(),
+  getCancelarContratoMockHandler(),
 ];

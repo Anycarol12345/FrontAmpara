@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { faker } from '@faker-js/faker';
 
@@ -45,6 +45,7 @@ export const getListarCatalogoResponseMock = (): ItemResponse[] =>
         ativo: faker.datatype.boolean(),
       }),
     ),
+    id_terceiro_fornecedor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   }));
 
 export const getListarCategoriasCatalogoResponseMock = (): CategoriaResponse[] =>
@@ -81,6 +82,7 @@ export const getObterItemCatalogoResponseMock = (
       ativo: faker.datatype.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   ...overrideResponse,
 });
 
@@ -109,6 +111,7 @@ export const getListarCatalogoGestaoResponseMock = (): ItemResponse[] =>
         ativo: faker.datatype.boolean(),
       }),
     ),
+    id_terceiro_fornecedor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   }));
 
 export const getCriarItemCatalogoResponseMock = (
@@ -137,6 +140,7 @@ export const getCriarItemCatalogoResponseMock = (
       ativo: faker.datatype.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   ...overrideResponse,
 });
 
@@ -194,6 +198,7 @@ export const getAtualizarItemCatalogoResponseMock = (
       ativo: faker.datatype.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   ...overrideResponse,
 });
 
@@ -223,6 +228,7 @@ export const getEnviarImagemItemCatalogoResponseMock = (
       ativo: faker.datatype.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   ...overrideResponse,
 });
 
@@ -252,6 +258,7 @@ export const getAdicionarVariacaoResponseMock = (
       ativo: faker.datatype.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: faker.helpers.arrayElement([faker.string.uuid(), null]),
   ...overrideResponse,
 });
 

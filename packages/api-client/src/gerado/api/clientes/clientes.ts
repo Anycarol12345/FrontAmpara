@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -27,6 +27,7 @@ import type {
   CadastrarClienteRequest,
   ClienteDetalheResponse,
   ClienteResponse,
+  ExportacaoDadosResponse,
   HttpValidationProblemDetails,
   PaginaResultOfClienteResumoResponse,
   ProblemDetails,
@@ -163,6 +164,122 @@ export const useCadastrarCliente = <
 > => {
   return useMutation(getCadastrarClienteMutationOptions(options), queryClient);
 };
+export const getExportarMeusDadosUrl = () => {
+  return `/api/v1/clientes/me/exportacao`;
+};
+
+/**
+ * Cadastro, dependentes, contratos e histórico de aceite dos termos (SEG-01).
+ * @summary Todos os dados do titular nesta funerária, para download (LGPD)
+ */
+export const exportarMeusDados = async (
+  options?: Parameters<typeof requisicao>[1],
+): Promise<ExportacaoDadosResponse> => {
+  return requisicao<ExportacaoDadosResponse>(getExportarMeusDadosUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportarMeusDadosQueryKey = () => {
+  return [`/api/v1/clientes/me/exportacao`] as const;
+};
+
+export const getExportarMeusDadosQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportarMeusDados>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarMeusDados>>, TError, TData>>;
+  request?: SecondParameter<typeof requisicao>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportarMeusDadosQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportarMeusDados>>> = ({ signal }) =>
+    exportarMeusDados({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportarMeusDados>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportarMeusDadosQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportarMeusDados>>
+>;
+export type ExportarMeusDadosQueryError = ErrorType<ProblemDetails>;
+
+export function useExportarMeusDados<
+  TData = Awaited<ReturnType<typeof exportarMeusDados>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarMeusDados>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportarMeusDados>>,
+          TError,
+          Awaited<ReturnType<typeof exportarMeusDados>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportarMeusDados<
+  TData = Awaited<ReturnType<typeof exportarMeusDados>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarMeusDados>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportarMeusDados>>,
+          TError,
+          Awaited<ReturnType<typeof exportarMeusDados>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportarMeusDados<
+  TData = Awaited<ReturnType<typeof exportarMeusDados>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarMeusDados>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Todos os dados do titular nesta funerária, para download (LGPD)
+ */
+
+export function useExportarMeusDados<
+  TData = Awaited<ReturnType<typeof exportarMeusDados>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportarMeusDados>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportarMeusDadosQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getObterMeusDadosUrl = () => {
   return `/api/v1/clientes/me`;
 };
@@ -403,8 +520,8 @@ export const getBuscarClientesUrl = (params?: BuscarClientesParams) => {
 };
 
 /**
- * Ordenação: ordenarPor = nome (padrão), cpf, cidade ou cadastrado_em; direcao = asc ou desc.
- * @summary Busca clientes da funerária por nome ou CPF
+ * status_contrato = ATIVO, A_PAGAR, SUSPENSO, CANCELADO (tem pelo menos um contrato no status) ou SEM_CONTRATO. Ordenação: ordenarPor = nome (padrão), cidade ou cadastrado_em; direcao = asc ou desc. O CPF da listagem vem mascarado.
+ * @summary Busca clientes da funerária por nome, CPF ou status do contrato
  */
 export const buscarClientes = async (
   params?: BuscarClientesParams,
@@ -497,7 +614,7 @@ export function useBuscarClientes<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Busca clientes da funerária por nome ou CPF
+ * @summary Busca clientes da funerária por nome, CPF ou status do contrato
  */
 
 export function useBuscarClientes<

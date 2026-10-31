@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import * as zod from 'zod';
 
@@ -170,6 +170,74 @@ export const AlterarSenhaBody = zod
   .describe('Corpo de PUT /auth/senha.');
 
 export const AlterarSenhaResponse = zod.void();
+
+/**
+ * Quando pendente = true, o frontend mostra os textos e pede o aceite (SEG-01).
+ * @summary Versões vigentes dos termos de uso e da política de privacidade e o que o usuário já aceitou
+ */
+export const SituacaoTermosHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const SituacaoTermosResponse = zod.object({
+  termos_de_uso: zod.object({
+    versao_vigente: zod.string().describe('Versão publicada hoje.'),
+    versao_aceita: zod.string().nullable().describe('Última versão que o usuário aceitou.'),
+    aceito_em: zod.iso
+      .datetime({ offset: true })
+      .nullable()
+      .describe('Quando aceitou a última versão.'),
+  }),
+  politica_de_privacidade: zod.object({
+    versao_vigente: zod.string().describe('Versão publicada hoje.'),
+    versao_aceita: zod.string().nullable().describe('Última versão que o usuário aceitou.'),
+    aceito_em: zod.iso
+      .datetime({ offset: true })
+      .nullable()
+      .describe('Quando aceitou a última versão.'),
+  }),
+  pendente: zod.boolean(),
+});
+
+/**
+ * @summary Registra o aceite das versões vigentes, com data e IP
+ */
+export const AceitarTermosHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const AceitarTermosBody = zod
+  .object({
+    versao_termos_de_uso: zod.string().nullable(),
+    versao_politica_de_privacidade: zod.string().nullable(),
+  })
+  .describe('Corpo de POST /auth/termos/aceite: as versões que o usuário leu.');
+
+export const AceitarTermosResponse = zod.object({
+  termos_de_uso: zod.object({
+    versao_vigente: zod.string().describe('Versão publicada hoje.'),
+    versao_aceita: zod.string().nullable().describe('Última versão que o usuário aceitou.'),
+    aceito_em: zod.iso
+      .datetime({ offset: true })
+      .nullable()
+      .describe('Quando aceitou a última versão.'),
+  }),
+  politica_de_privacidade: zod.object({
+    versao_vigente: zod.string().describe('Versão publicada hoje.'),
+    versao_aceita: zod.string().nullable().describe('Última versão que o usuário aceitou.'),
+    aceito_em: zod.iso
+      .datetime({ offset: true })
+      .nullable()
+      .describe('Quando aceitou a última versão.'),
+  }),
+  pendente: zod.boolean(),
+});
 
 /**
  * @summary Funerárias em que o usuário tem vínculo ativo

@@ -3,15 +3,403 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { faker } from '@faker-js/faker';
 
 import { HttpResponse, http } from 'msw';
 import type { HttpResponseResolver, RequestHandlerOptions } from 'msw';
 
-import { StatusAtribuicao, StatusTerceiro, TipoAtribuicao, TipoTerceiro } from '../../modelos';
-import type { AtribuicaoResponse, RecusarAtribuicaoRequest, TerceiroResponse } from '../../modelos';
+import {
+  ModoCertidao,
+  StatusAtribuicao,
+  StatusCertidao,
+  StatusPedido,
+  StatusTerceiro,
+  StatusTranslado,
+  TipoAtribuicao,
+  TipoResponsavel,
+  TipoTerceiro,
+} from '../../modelos';
+import type {
+  AtribuicaoResponse,
+  AtualizarPedidoRequest,
+  CertidaoResponse,
+  LinkDocumentoDto,
+  LinkDocumentoResponse,
+  MotoristaRequest,
+  MotoristaResponse,
+  PedidoResponse,
+  RecusarAtribuicaoRequest,
+  RegistrarCertidaoEmitidaTerceiroBody,
+  ResponsavelCertidaoResponse,
+  StatusCertidaoRequest,
+  StatusTransladoRequest,
+  TerceiroResponse,
+  TransladoFrotaResponse,
+} from '../../modelos';
+
+export const getMeusPedidosResponseMock = (): PedidoResponse[] =>
+  Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+    id_pedido: faker.string.uuid(),
+    id_funeral: faker.string.uuid(),
+    id_terceiro: faker.string.uuid(),
+    nome_falecido: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    status: faker.helpers.arrayElement(Object.values(StatusPedido)),
+    itens: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+      () => ({
+        id_funeral_item: faker.string.uuid(),
+        nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+        variacao: faker.helpers.arrayElement([
+          faker.string.alpha({ length: { min: 10, max: 20 } }),
+          null,
+        ]),
+        quantidade: faker.number.int(),
+      }),
+    ),
+    local_entrega: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    data_hora_entrega: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    observacoes: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    motivo_recusa: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+  }));
+
+export const getAtualizarPedidoResponseMock = (
+  overrideResponse: Partial<Extract<PedidoResponse, object>> = {},
+): PedidoResponse => ({
+  id_pedido: faker.string.uuid(),
+  id_funeral: faker.string.uuid(),
+  id_terceiro: faker.string.uuid(),
+  nome_falecido: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status: faker.helpers.arrayElement(Object.values(StatusPedido)),
+  itens: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+    id_funeral_item: faker.string.uuid(),
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    variacao: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    quantidade: faker.number.int(),
+  })),
+  local_entrega: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  data_hora_entrega: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  observacoes: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  motivo_recusa: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  ...overrideResponse,
+});
+
+export const getAlterarStatusCertidaoTerceiroResponseResponsavelCertidaoResponseMock = (
+  overrideResponse: Partial<ResponsavelCertidaoResponse> = {},
+): ResponsavelCertidaoResponse => ({
+  ...{
+    tipo: faker.helpers.arrayElement(Object.values(TipoResponsavel)),
+    id_usuario: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    id_terceiro: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  ...overrideResponse,
+});
+
+export const getAlterarStatusCertidaoTerceiroResponseMock = (
+  overrideResponse: Partial<Extract<CertidaoResponse, object>> = {},
+): CertidaoResponse => ({
+  id_solicitacao: faker.string.uuid(),
+  id_beneficiario: faker.string.uuid(),
+  status: faker.helpers.arrayElement(Object.values(StatusCertidao)),
+  modo: faker.helpers.arrayElement(Object.values(ModoCertidao)),
+  responsavel: faker.helpers.arrayElement([
+    null,
+    { ...getAlterarStatusCertidaoTerceiroResponseResponsavelCertidaoResponseMock() },
+  ]),
+  protocolo: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  pendencia: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  numero_matricula: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  id_documento_certidao: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  prazo: {
+    data: faker.date.past().toISOString().slice(0, 10),
+    dias_restantes: faker.number.int(),
+    vencido: faker.datatype.boolean(),
+  },
+  historico: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      de: faker.helpers.arrayElement(Object.values(StatusCertidao)),
+      para: faker.helpers.arrayElement(Object.values(StatusCertidao)),
+      id_usuario: faker.helpers.arrayElement([faker.string.uuid(), null]),
+      observacao: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      em: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    }),
+  ),
+  ...overrideResponse,
+});
+
+export const getRegistrarCertidaoEmitidaTerceiroResponseResponsavelCertidaoResponseMock = (
+  overrideResponse: Partial<ResponsavelCertidaoResponse> = {},
+): ResponsavelCertidaoResponse => ({
+  ...{
+    tipo: faker.helpers.arrayElement(Object.values(TipoResponsavel)),
+    id_usuario: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    id_terceiro: faker.helpers.arrayElement([faker.string.uuid(), null]),
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  ...overrideResponse,
+});
+
+export const getRegistrarCertidaoEmitidaTerceiroResponseMock = (
+  overrideResponse: Partial<Extract<CertidaoResponse, object>> = {},
+): CertidaoResponse => ({
+  id_solicitacao: faker.string.uuid(),
+  id_beneficiario: faker.string.uuid(),
+  status: faker.helpers.arrayElement(Object.values(StatusCertidao)),
+  modo: faker.helpers.arrayElement(Object.values(ModoCertidao)),
+  responsavel: faker.helpers.arrayElement([
+    null,
+    { ...getRegistrarCertidaoEmitidaTerceiroResponseResponsavelCertidaoResponseMock() },
+  ]),
+  protocolo: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  pendencia: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  numero_matricula: faker.helpers.arrayElement([
+    faker.string.alpha({ length: { min: 10, max: 20 } }),
+    null,
+  ]),
+  id_documento_certidao: faker.helpers.arrayElement([faker.string.uuid(), null]),
+  prazo: {
+    data: faker.date.past().toISOString().slice(0, 10),
+    dias_restantes: faker.number.int(),
+    vencido: faker.datatype.boolean(),
+  },
+  historico: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      de: faker.helpers.arrayElement(Object.values(StatusCertidao)),
+      para: faker.helpers.arrayElement(Object.values(StatusCertidao)),
+      id_usuario: faker.helpers.arrayElement([faker.string.uuid(), null]),
+      observacao: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      em: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    }),
+  ),
+  ...overrideResponse,
+});
+
+export const getBaixarDocumentoCertidaoTerceiroResponseMock = (
+  overrideResponse: Partial<Extract<LinkDocumentoResponse, object>> = {},
+): LinkDocumentoResponse => ({
+  url: faker.internet.url(),
+  expira_em: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  ...overrideResponse,
+});
+
+export const getMeusTransladosResponseMotoristaResponseMock = (
+  overrideResponse: Partial<MotoristaResponse> = {},
+): MotoristaResponse => ({
+  ...{
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    telefone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    placa: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    modelo: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  ...overrideResponse,
+});
+
+export const getMeusTransladosResponseMock = (): TransladoFrotaResponse[] =>
+  Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(() => ({
+    id_translado: faker.string.uuid(),
+    nome_falecido: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    status: faker.helpers.arrayElement(Object.values(StatusTranslado)),
+    origem: {
+      endereco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      cidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      uf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      pais: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    },
+    destino: {
+      endereco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      cidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      uf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      pais: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    },
+    data_prevista: faker.date.past().toISOString().slice(0, 19) + 'Z',
+    contato_nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    contato_telefone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    status_aceite: faker.helpers.arrayElement([
+      null,
+      faker.helpers.arrayElement(['PENDENTE', 'ACEITO', 'RECUSADO'] as const),
+    ]),
+    motorista: faker.helpers.arrayElement([
+      null,
+      { ...getMeusTransladosResponseMotoristaResponseMock() },
+    ]),
+  }));
+
+export const getObterTransladoFrotaResponseMotoristaResponseMock = (
+  overrideResponse: Partial<MotoristaResponse> = {},
+): MotoristaResponse => ({
+  ...{
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    telefone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    placa: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    modelo: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  ...overrideResponse,
+});
+
+export const getObterTransladoFrotaResponseMock = (
+  overrideResponse: Partial<Extract<TransladoFrotaResponse, object>> = {},
+): TransladoFrotaResponse => ({
+  id_translado: faker.string.uuid(),
+  nome_falecido: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status: faker.helpers.arrayElement(Object.values(StatusTranslado)),
+  origem: {
+    endereco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    cidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    uf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    pais: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  destino: {
+    endereco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    cidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    uf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    pais: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  data_prevista: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  contato_nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  contato_telefone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status_aceite: faker.helpers.arrayElement([
+    null,
+    faker.helpers.arrayElement(['PENDENTE', 'ACEITO', 'RECUSADO'] as const),
+  ]),
+  motorista: faker.helpers.arrayElement([
+    null,
+    { ...getObterTransladoFrotaResponseMotoristaResponseMock() },
+  ]),
+  ...overrideResponse,
+});
+
+export const getInformarMotoristaTransladoResponseMotoristaResponseMock = (
+  overrideResponse: Partial<MotoristaResponse> = {},
+): MotoristaResponse => ({
+  ...{
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    telefone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    placa: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    modelo: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  ...overrideResponse,
+});
+
+export const getInformarMotoristaTransladoResponseMock = (
+  overrideResponse: Partial<Extract<TransladoFrotaResponse, object>> = {},
+): TransladoFrotaResponse => ({
+  id_translado: faker.string.uuid(),
+  nome_falecido: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status: faker.helpers.arrayElement(Object.values(StatusTranslado)),
+  origem: {
+    endereco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    cidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    uf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    pais: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  destino: {
+    endereco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    cidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    uf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    pais: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  data_prevista: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  contato_nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  contato_telefone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status_aceite: faker.helpers.arrayElement([
+    null,
+    faker.helpers.arrayElement(['PENDENTE', 'ACEITO', 'RECUSADO'] as const),
+  ]),
+  motorista: faker.helpers.arrayElement([
+    null,
+    { ...getInformarMotoristaTransladoResponseMotoristaResponseMock() },
+  ]),
+  ...overrideResponse,
+});
+
+export const getAlterarStatusTransladoFrotaResponseMotoristaResponseMock = (
+  overrideResponse: Partial<MotoristaResponse> = {},
+): MotoristaResponse => ({
+  ...{
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    telefone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    placa: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    modelo: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  ...overrideResponse,
+});
+
+export const getAlterarStatusTransladoFrotaResponseMock = (
+  overrideResponse: Partial<Extract<TransladoFrotaResponse, object>> = {},
+): TransladoFrotaResponse => ({
+  id_translado: faker.string.uuid(),
+  nome_falecido: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status: faker.helpers.arrayElement(Object.values(StatusTranslado)),
+  origem: {
+    endereco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    cidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    uf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    pais: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  destino: {
+    endereco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    cidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    uf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    pais: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  },
+  data_prevista: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  contato_nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  contato_telefone: faker.string.alpha({ length: { min: 10, max: 20 } }),
+  status_aceite: faker.helpers.arrayElement([
+    null,
+    faker.helpers.arrayElement(['PENDENTE', 'ACEITO', 'RECUSADO'] as const),
+  ]),
+  motorista: faker.helpers.arrayElement([
+    null,
+    { ...getAlterarStatusTransladoFrotaResponseMotoristaResponseMock() },
+  ]),
+  ...overrideResponse,
+});
+
+export const getBaixarDocumentoTransladoFrotaResponseMock = (
+  overrideResponse: Partial<Extract<LinkDocumentoDto, object>> = {},
+): LinkDocumentoDto => ({
+  url: faker.internet.url(),
+  expira_em: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  ...overrideResponse,
+});
 
 export const getMeuCadastroTerceiroResponseMock = (
   overrideResponse: Partial<Extract<TerceiroResponse, object>> = {},
@@ -105,6 +493,250 @@ export const getRecusarAtribuicaoResponseMock = (
   resumo: {},
   ...overrideResponse,
 });
+
+export const getMeusPedidosMockHandler = (
+  overrideResponse?:
+    | PedidoResponse[]
+    | ((info: Parameters<HttpResponseResolver>[0]) => Promise<PedidoResponse[]> | PedidoResponse[]),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/v1/terceiros/pedidos',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getMeusPedidosResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getAtualizarPedidoMockHandler = (
+  overrideResponse?:
+    | PedidoResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }, AtualizarPedidoRequest>>[0],
+      ) => Promise<PedidoResponse> | PedidoResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.patch<{ id: string }, AtualizarPedidoRequest>(
+    '*/api/v1/terceiros/pedidos/:id/status',
+    async (info: Parameters<HttpResponseResolver<{ id: string }, AtualizarPedidoRequest>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getAtualizarPedidoResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getAlterarStatusCertidaoTerceiroMockHandler = (
+  overrideResponse?:
+    | CertidaoResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }, StatusCertidaoRequest>>[0],
+      ) => Promise<CertidaoResponse> | CertidaoResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.patch<{ id: string }, StatusCertidaoRequest>(
+    '*/api/v1/terceiros/certidoes/:id/status',
+    async (info: Parameters<HttpResponseResolver<{ id: string }, StatusCertidaoRequest>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getAlterarStatusCertidaoTerceiroResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getRegistrarCertidaoEmitidaTerceiroMockHandler = (
+  overrideResponse?:
+    | CertidaoResponse
+    | ((
+        info: Parameters<
+          HttpResponseResolver<{ id: string }, RegistrarCertidaoEmitidaTerceiroBody>
+        >[0],
+      ) => Promise<CertidaoResponse> | CertidaoResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post<{ id: string }, RegistrarCertidaoEmitidaTerceiroBody>(
+    '*/api/v1/terceiros/certidoes/:id/emitida',
+    async (
+      info: Parameters<
+        HttpResponseResolver<{ id: string }, RegistrarCertidaoEmitidaTerceiroBody>
+      >[0],
+    ) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getRegistrarCertidaoEmitidaTerceiroResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getBaixarDocumentoCertidaoTerceiroMockHandler = (
+  overrideResponse?:
+    | LinkDocumentoResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string; idDocumento: string }>>[0],
+      ) => Promise<LinkDocumentoResponse> | LinkDocumentoResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get<{ id: string; idDocumento: string }>(
+    '*/api/v1/terceiros/certidoes/:id/documentos/:idDocumento/download',
+    async (info: Parameters<HttpResponseResolver<{ id: string; idDocumento: string }>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getBaixarDocumentoCertidaoTerceiroResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getMeusTransladosMockHandler = (
+  overrideResponse?:
+    | TransladoFrotaResponse[]
+    | ((
+        info: Parameters<HttpResponseResolver>[0],
+      ) => Promise<TransladoFrotaResponse[]> | TransladoFrotaResponse[]),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/v1/terceiros/translados',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getMeusTransladosResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getObterTransladoFrotaMockHandler = (
+  overrideResponse?:
+    | TransladoFrotaResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }>>[0],
+      ) => Promise<TransladoFrotaResponse> | TransladoFrotaResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get<{ id: string }>(
+    '*/api/v1/terceiros/translados/:id',
+    async (info: Parameters<HttpResponseResolver<{ id: string }>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getObterTransladoFrotaResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getInformarMotoristaTransladoMockHandler = (
+  overrideResponse?:
+    | TransladoFrotaResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }, MotoristaRequest>>[0],
+      ) => Promise<TransladoFrotaResponse> | TransladoFrotaResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.put<{ id: string }, MotoristaRequest>(
+    '*/api/v1/terceiros/translados/:id/motorista',
+    async (info: Parameters<HttpResponseResolver<{ id: string }, MotoristaRequest>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getInformarMotoristaTransladoResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getAlterarStatusTransladoFrotaMockHandler = (
+  overrideResponse?:
+    | TransladoFrotaResponse
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string }, StatusTransladoRequest>>[0],
+      ) => Promise<TransladoFrotaResponse> | TransladoFrotaResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.patch<{ id: string }, StatusTransladoRequest>(
+    '*/api/v1/terceiros/translados/:id/status',
+    async (info: Parameters<HttpResponseResolver<{ id: string }, StatusTransladoRequest>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getAlterarStatusTransladoFrotaResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getBaixarDocumentoTransladoFrotaMockHandler = (
+  overrideResponse?:
+    | LinkDocumentoDto
+    | ((
+        info: Parameters<HttpResponseResolver<{ id: string; idDocumento: string }>>[0],
+      ) => Promise<LinkDocumentoDto> | LinkDocumentoDto),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get<{ id: string; idDocumento: string }>(
+    '*/api/v1/terceiros/translados/:id/documentos/:idDocumento/download',
+    async (info: Parameters<HttpResponseResolver<{ id: string; idDocumento: string }>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getBaixarDocumentoTransladoFrotaResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
 
 export const getMeuCadastroTerceiroMockHandler = (
   overrideResponse?:
@@ -200,6 +832,16 @@ export const getRecusarAtribuicaoMockHandler = (
   );
 };
 export const getPortalDoTerceiroMock = () => [
+  getMeusPedidosMockHandler(),
+  getAtualizarPedidoMockHandler(),
+  getAlterarStatusCertidaoTerceiroMockHandler(),
+  getRegistrarCertidaoEmitidaTerceiroMockHandler(),
+  getBaixarDocumentoCertidaoTerceiroMockHandler(),
+  getMeusTransladosMockHandler(),
+  getObterTransladoFrotaMockHandler(),
+  getInformarMotoristaTransladoMockHandler(),
+  getAlterarStatusTransladoFrotaMockHandler(),
+  getBaixarDocumentoTransladoFrotaMockHandler(),
   getMeuCadastroTerceiroMockHandler(),
   getMinhasAtribuicoesMockHandler(),
   getAceitarAtribuicaoMockHandler(),

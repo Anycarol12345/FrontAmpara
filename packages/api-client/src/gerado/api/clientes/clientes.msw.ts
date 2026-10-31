@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { faker } from '@faker-js/faker';
 
@@ -15,6 +15,7 @@ import type {
   CadastrarClienteRequest,
   ClienteDetalheResponse,
   ClienteResponse,
+  ExportacaoDadosResponse,
   PaginaResultOfClienteResumoResponse,
 } from '../../modelos';
 
@@ -37,6 +38,103 @@ export const getCadastrarClienteResponseMock = (
   cep: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
   cidade: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
   estado: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+  ...overrideResponse,
+});
+
+export const getExportarMeusDadosResponseMock = (
+  overrideResponse: Partial<Extract<ExportacaoDadosResponse, object>> = {},
+): ExportacaoDadosResponse => ({
+  gerado_em: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  titular: {
+    id_cliente: faker.string.uuid(),
+    nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    cpf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    data_nascimento: faker.date.past().toISOString().slice(0, 10),
+    email: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    telefone: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    endereco: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    cep: faker.helpers.arrayElement([faker.string.alpha({ length: { min: 10, max: 20 } }), null]),
+    cidade: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    estado: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+  },
+  dependentes: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      id_dependente: faker.string.uuid(),
+      id_cliente: faker.string.uuid(),
+      nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      cpf: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      data_nascimento: faker.date.past().toISOString().slice(0, 10),
+      parentesco: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      telefone: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+      email: faker.helpers.arrayElement([
+        faker.string.alpha({ length: { min: 10, max: 20 } }),
+        null,
+      ]),
+    }),
+  ),
+  contratos: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      id_contrato: faker.string.uuid(),
+      nome_plano: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      periodicidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      valor_total: faker.number.float({ fractionDigits: 2 }),
+      data_contratacao: faker.date.past().toISOString().slice(0, 10),
+      data_fim: faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 10), null]),
+      quantidade_pessoas: faker.number.int(),
+    }),
+  ),
+  aceites_termos: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    documento: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    versao: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    aceito_em: faker.date.past().toISOString().slice(0, 19) + 'Z',
+  })),
+  preferencias_funeral: Array.from(
+    { length: faker.number.int({ min: 1, max: 10 }) },
+    (_, i) => i + 1,
+  ).map(() => ({
+    id_pessoa: faker.string.uuid(),
+    tipo: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    destinacao: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    tipo_cerimonia: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    crenca_religiosa: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    musicas: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+      () => faker.string.alpha({ length: { min: 10, max: 20 } }),
+    ),
+    mensagens: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    observacoes: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    ids_itens_catalogo: Array.from(
+      { length: faker.number.int({ min: 1, max: 10 }) },
+      (_, i) => i + 1,
+    ).map(() => faker.string.uuid()),
+  })),
   ...overrideResponse,
 });
 
@@ -157,6 +255,18 @@ export const getObterClienteGestaoResponseMock = (
       ]),
     }),
   ),
+  contratos: Array.from({ length: faker.number.int({ min: 1, max: 10 }) }, (_, i) => i + 1).map(
+    () => ({
+      id_contrato: faker.string.uuid(),
+      nome_plano: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      status: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      periodicidade: faker.string.alpha({ length: { min: 10, max: 20 } }),
+      valor_total: faker.number.float({ fractionDigits: 2 }),
+      data_contratacao: faker.date.past().toISOString().slice(0, 10),
+      data_fim: faker.helpers.arrayElement([faker.date.past().toISOString().slice(0, 10), null]),
+      quantidade_pessoas: faker.number.int(),
+    }),
+  ),
   ...overrideResponse,
 });
 
@@ -178,6 +288,30 @@ export const getCadastrarClienteMockHandler = (
             : overrideResponse
           : getCadastrarClienteResponseMock(),
         { status: 201 },
+      );
+    },
+    options,
+  );
+};
+
+export const getExportarMeusDadosMockHandler = (
+  overrideResponse?:
+    | ExportacaoDadosResponse
+    | ((
+        info: Parameters<HttpResponseResolver>[0],
+      ) => Promise<ExportacaoDadosResponse> | ExportacaoDadosResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/v1/clientes/me/exportacao',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getExportarMeusDadosResponseMock(),
+        { status: 200 },
       );
     },
     options,
@@ -279,6 +413,7 @@ export const getObterClienteGestaoMockHandler = (
 };
 export const getClientesMock = () => [
   getCadastrarClienteMockHandler(),
+  getExportarMeusDadosMockHandler(),
   getObterMeusDadosMockHandler(),
   getAtualizarMeusDadosMockHandler(),
   getBuscarClientesMockHandler(),

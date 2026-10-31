@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import * as zod from 'zod';
 
@@ -39,6 +39,7 @@ export const ListarCatalogoResponseItem = zod.object({
       ativo: zod.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: zod.uuid().nullable(),
 });
 export const ListarCatalogoResponse = zod.array(ListarCatalogoResponseItem);
 
@@ -92,6 +93,7 @@ export const ObterItemCatalogoResponse = zod.object({
       ativo: zod.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: zod.uuid().nullable(),
 });
 
 /**
@@ -143,6 +145,7 @@ export const ListarCatalogoGestaoResponseItem = zod.object({
       ativo: zod.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: zod.uuid().nullable(),
 });
 export const ListarCatalogoGestaoResponse = zod.array(ListarCatalogoGestaoResponseItem);
 
@@ -163,6 +166,7 @@ export const CriarItemCatalogoBody = zod.object({
   preco: zod.number().nullable(),
   controla_estoque: zod.boolean(),
   quantidade_estoque: zod.int().nullable(),
+  id_terceiro_fornecedor: zod.uuid().nullish(),
 });
 
 export const CriarItemCatalogoResponse = zod.object({
@@ -183,6 +187,7 @@ export const CriarItemCatalogoResponse = zod.object({
       ativo: zod.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: zod.uuid().nullable(),
 });
 
 /**
@@ -292,6 +297,7 @@ export const AtualizarItemCatalogoBody = zod.object({
   preco: zod.number().nullable(),
   controla_estoque: zod.boolean(),
   quantidade_estoque: zod.int().nullable(),
+  id_terceiro_fornecedor: zod.uuid().nullish(),
 });
 
 export const AtualizarItemCatalogoResponse = zod.object({
@@ -312,6 +318,7 @@ export const AtualizarItemCatalogoResponse = zod.object({
       ativo: zod.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: zod.uuid().nullable(),
 });
 
 /**
@@ -370,6 +377,7 @@ export const EnviarImagemItemCatalogoResponse = zod.object({
       ativo: zod.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: zod.uuid().nullable(),
 });
 
 /**
@@ -409,6 +417,7 @@ export const AdicionarVariacaoResponse = zod.object({
       ativo: zod.boolean(),
     }),
   ),
+  id_terceiro_fornecedor: zod.uuid().nullable(),
 });
 
 /**

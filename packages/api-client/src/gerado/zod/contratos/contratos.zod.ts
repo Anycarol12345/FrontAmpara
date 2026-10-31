@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import * as zod from 'zod';
 
@@ -68,6 +68,7 @@ export const ContratarResponse = zod
         data_inclusao: zod.iso.date(),
       }),
     ),
+    motivo_cancelamento: zod.string().nullable(),
   })
   .describe('Contrato criado ou consultado (card Criar Contrato, CON-01).');
 
@@ -161,6 +162,7 @@ export const ContratarParaClienteResponse = zod
         data_inclusao: zod.iso.date(),
       }),
     ),
+    motivo_cancelamento: zod.string().nullable(),
   })
   .describe('Contrato criado ou consultado (card Criar Contrato, CON-01).');
 
@@ -275,4 +277,191 @@ export const ObterContratoResponse = zod.object({
         .describe('Data de inclusão mais a carência do plano na contratação (CON-04).'),
     }),
   ),
+  motivo_cancelamento: zod.string().nullable(),
 });
+
+/**
+ * Por pessoa coberta: elegivel, motivo e carencia_cumprida_em (CON-04).
+ * @summary Quem do contrato pode usar o plano hoje: contrato ativo e adimplente e carência cumprida
+ */
+export const ElegibilidadeContratoParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const ElegibilidadeContratoHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const ElegibilidadeContratoResponseItem = zod.object({
+  id_pessoa_coberta: zod
+    .uuid()
+    .describe('Pessoa no contrato (é o id usado no registro do beneficiário).'),
+  tipo: zod.enum(['TITULAR', 'DEPENDENTE']).describe('TITULAR ou DEPENDENTE.'),
+  id_dependente: zod.uuid().nullable().describe('Preenchido quando a pessoa é um dependente.'),
+  nome: zod.string().describe('Nome da pessoa.'),
+  elegivel: zod.boolean().describe('Pode usar o plano hoje.'),
+  motivo: zod.string().nullable().describe('Por que não pode; vazio quando pode.'),
+  carencia_cumprida_em: zod.iso
+    .date()
+    .describe('Fim da carência: data de inclusão mais a carência do plano na contratação.'),
+});
+export const ElegibilidadeContratoResponse = zod.array(ElegibilidadeContratoResponseItem);
+
+/**
+ * A carência do dependente conta a partir da inclusão e o novo valor vale a partir da próxima fatura. Respeita o limite de dependentes do plano.
+ * @summary Inclui um dependente do titular no contrato
+ */
+export const IncluirDependenteContratoParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const IncluirDependenteContratoHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const IncluirDependenteContratoBody = zod.object({
+  id_dependente: zod.uuid().nullable(),
+});
+
+export const IncluirDependenteContratoResponse = zod
+  .object({
+    id_contrato: zod.uuid(),
+    id_cliente: zod.uuid(),
+    id_plano: zod.uuid(),
+    nome_plano: zod.string(),
+    tipo_cobertura: zod.enum(['TITULAR', 'TITULAR_E_DEPENDENTES', 'SOMENTE_DEPENDENTES']),
+    periodicidade: zod
+      .enum(['MENSAL', 'ANUAL'])
+      .describe('Todo plano oferece as duas opções e o cliente escolhe na contratação (DEC-01).'),
+    dia_vencimento: zod.int(),
+    data_contratacao: zod.iso.date(),
+    data_fim: zod.iso.date().nullable(),
+    status: zod
+      .enum(['ATIVO', 'A_PAGAR', 'SUSPENSO', 'CANCELADO'])
+      .describe(
+        'Situação do contrato (COB-03). SUSPENSO substitui o "Vencido" do card original (AJU-01).',
+      ),
+    valor_plano: zod.number(),
+    valor_por_dependente: zod.number(),
+    valor_total: zod.number(),
+    id_consultor: zod.uuid().nullable(),
+    pessoas_cobertas: zod.array(
+      zod.object({
+        id_pessoa_coberta: zod.uuid(),
+        tipo: zod.enum(['TITULAR', 'DEPENDENTE']),
+        id_dependente: zod.uuid().nullable(),
+        data_inclusao: zod.iso.date(),
+      }),
+    ),
+    motivo_cancelamento: zod.string().nullable(),
+  })
+  .describe('Contrato criado ou consultado (card Criar Contrato, CON-01).');
+
+/**
+ * Dependente já registrado como beneficiário não pode ser removido. O novo valor vale a partir da próxima fatura.
+ * @summary Tira um dependente do contrato
+ */
+export const RemoverDependenteContratoParams = zod.object({
+  id: zod.uuid(),
+  idDependente: zod.uuid(),
+});
+
+export const RemoverDependenteContratoHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const RemoverDependenteContratoResponse = zod
+  .object({
+    id_contrato: zod.uuid(),
+    id_cliente: zod.uuid(),
+    id_plano: zod.uuid(),
+    nome_plano: zod.string(),
+    tipo_cobertura: zod.enum(['TITULAR', 'TITULAR_E_DEPENDENTES', 'SOMENTE_DEPENDENTES']),
+    periodicidade: zod
+      .enum(['MENSAL', 'ANUAL'])
+      .describe('Todo plano oferece as duas opções e o cliente escolhe na contratação (DEC-01).'),
+    dia_vencimento: zod.int(),
+    data_contratacao: zod.iso.date(),
+    data_fim: zod.iso.date().nullable(),
+    status: zod
+      .enum(['ATIVO', 'A_PAGAR', 'SUSPENSO', 'CANCELADO'])
+      .describe(
+        'Situação do contrato (COB-03). SUSPENSO substitui o "Vencido" do card original (AJU-01).',
+      ),
+    valor_plano: zod.number(),
+    valor_por_dependente: zod.number(),
+    valor_total: zod.number(),
+    id_consultor: zod.uuid().nullable(),
+    pessoas_cobertas: zod.array(
+      zod.object({
+        id_pessoa_coberta: zod.uuid(),
+        tipo: zod.enum(['TITULAR', 'DEPENDENTE']),
+        id_dependente: zod.uuid().nullable(),
+        data_inclusao: zod.iso.date(),
+      }),
+    ),
+    motivo_cancelamento: zod.string().nullable(),
+  })
+  .describe('Contrato criado ou consultado (card Criar Contrato, CON-01).');
+
+/**
+ * Faturas futuras são canceladas e as vencidas continuam em aberto. Contrato com funeral em andamento não pode ser cancelado. O consultor não cancela contratos.
+ * @summary Cancela o contrato, pelo titular ou pela equipe da funerária
+ */
+export const CancelarContratoParams = zod.object({
+  id: zod.uuid(),
+});
+
+export const CancelarContratoHeader = zod.object({
+  'X-Tenant': zod
+    .string()
+    .optional()
+    .describe('Slug da funerária (ex.: demo). Vazio = domínio da plataforma (login do ADMIN).'),
+});
+
+export const CancelarContratoBody = zod.object({
+  motivo: zod.string().nullable(),
+});
+
+export const CancelarContratoResponse = zod
+  .object({
+    id_contrato: zod.uuid(),
+    id_cliente: zod.uuid(),
+    id_plano: zod.uuid(),
+    nome_plano: zod.string(),
+    tipo_cobertura: zod.enum(['TITULAR', 'TITULAR_E_DEPENDENTES', 'SOMENTE_DEPENDENTES']),
+    periodicidade: zod
+      .enum(['MENSAL', 'ANUAL'])
+      .describe('Todo plano oferece as duas opções e o cliente escolhe na contratação (DEC-01).'),
+    dia_vencimento: zod.int(),
+    data_contratacao: zod.iso.date(),
+    data_fim: zod.iso.date().nullable(),
+    status: zod
+      .enum(['ATIVO', 'A_PAGAR', 'SUSPENSO', 'CANCELADO'])
+      .describe(
+        'Situação do contrato (COB-03). SUSPENSO substitui o "Vencido" do card original (AJU-01).',
+      ),
+    valor_plano: zod.number(),
+    valor_por_dependente: zod.number(),
+    valor_total: zod.number(),
+    id_consultor: zod.uuid().nullable(),
+    pessoas_cobertas: zod.array(
+      zod.object({
+        id_pessoa_coberta: zod.uuid(),
+        tipo: zod.enum(['TITULAR', 'DEPENDENTE']),
+        id_dependente: zod.uuid().nullable(),
+        data_inclusao: zod.iso.date(),
+      }),
+    ),
+    motivo_cancelamento: zod.string().nullable(),
+  })
+  .describe('Contrato criado ou consultado (card Criar Contrato, CON-01).');

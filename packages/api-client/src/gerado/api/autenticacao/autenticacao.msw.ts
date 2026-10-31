@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { faker } from '@faker-js/faker';
 
@@ -11,6 +11,7 @@ import { HttpResponse, http } from 'msw';
 import type { HttpResponseResolver, PathParams, RequestHandlerOptions } from 'msw';
 
 import type {
+  AceitarTermosRequest,
   AlterarSenhaRequest,
   ConfirmarEmailRequest,
   DefinirSenhaRequest,
@@ -18,6 +19,7 @@ import type {
   FunerariaVinculadaResponse,
   LoginRequest,
   LoginResponse,
+  SituacaoTermosResponse,
 } from '../../modelos';
 
 export const getLoginResponseMock = (
@@ -43,6 +45,64 @@ export const getRenovarSessaoResponseMock = (
     nome: faker.string.alpha({ length: { min: 10, max: 20 } }),
     role: faker.string.alpha({ length: { min: 10, max: 20 } }),
   },
+  ...overrideResponse,
+});
+
+export const getSituacaoTermosResponseMock = (
+  overrideResponse: Partial<Extract<SituacaoTermosResponse, object>> = {},
+): SituacaoTermosResponse => ({
+  termos_de_uso: {
+    versao_vigente: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    versao_aceita: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    aceito_em: faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + 'Z',
+      null,
+    ]),
+  },
+  politica_de_privacidade: {
+    versao_vigente: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    versao_aceita: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    aceito_em: faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + 'Z',
+      null,
+    ]),
+  },
+  pendente: faker.datatype.boolean(),
+  ...overrideResponse,
+});
+
+export const getAceitarTermosResponseMock = (
+  overrideResponse: Partial<Extract<SituacaoTermosResponse, object>> = {},
+): SituacaoTermosResponse => ({
+  termos_de_uso: {
+    versao_vigente: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    versao_aceita: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    aceito_em: faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + 'Z',
+      null,
+    ]),
+  },
+  politica_de_privacidade: {
+    versao_vigente: faker.string.alpha({ length: { min: 10, max: 20 } }),
+    versao_aceita: faker.helpers.arrayElement([
+      faker.string.alpha({ length: { min: 10, max: 20 } }),
+      null,
+    ]),
+    aceito_em: faker.helpers.arrayElement([
+      faker.date.past().toISOString().slice(0, 19) + 'Z',
+      null,
+    ]),
+  },
+  pendente: faker.datatype.boolean(),
   ...overrideResponse,
 });
 
@@ -223,6 +283,54 @@ export const getAlterarSenhaMockHandler = (
   );
 };
 
+export const getSituacaoTermosMockHandler = (
+  overrideResponse?:
+    | SituacaoTermosResponse
+    | ((
+        info: Parameters<HttpResponseResolver>[0],
+      ) => Promise<SituacaoTermosResponse> | SituacaoTermosResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.get(
+    '*/api/v1/auth/termos',
+    async (info: Parameters<HttpResponseResolver>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getSituacaoTermosResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
+export const getAceitarTermosMockHandler = (
+  overrideResponse?:
+    | SituacaoTermosResponse
+    | ((
+        info: Parameters<HttpResponseResolver<PathParams, AceitarTermosRequest>>[0],
+      ) => Promise<SituacaoTermosResponse> | SituacaoTermosResponse),
+  options?: RequestHandlerOptions,
+) => {
+  return http.post<PathParams, AceitarTermosRequest>(
+    '*/api/v1/auth/termos/aceite',
+    async (info: Parameters<HttpResponseResolver<PathParams, AceitarTermosRequest>>[0]) => {
+      return HttpResponse.json(
+        overrideResponse !== undefined
+          ? typeof overrideResponse === 'function'
+            ? await overrideResponse(info)
+            : overrideResponse
+          : getAceitarTermosResponseMock(),
+        { status: 200 },
+      );
+    },
+    options,
+  );
+};
+
 export const getMinhasFunerariasMockHandler = (
   overrideResponse?:
     | FunerariaVinculadaResponse[]
@@ -255,5 +363,7 @@ export const getAutenticacaoMock = () => [
   getRedefinirSenhaMockHandler(),
   getConfirmarEmailMockHandler(),
   getAlterarSenhaMockHandler(),
+  getSituacaoTermosMockHandler(),
+  getAceitarTermosMockHandler(),
   getMinhasFunerariasMockHandler(),
 ];

@@ -3,10 +3,12 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
+import type { ParametrosCertidao } from './parametrosCertidao';
 import type { ParametrosCobranca } from './parametrosCobranca';
 import type { ParametrosLembretes } from './parametrosLembretes';
+import type { ParametrosTerceiros } from './parametrosTerceiros';
 
 /**
  * Parâmetros do negócio da funerária, em jsonb tipado (TEN-03). Os padrões são os do DEC-01.
@@ -15,4 +17,6 @@ import type { ParametrosLembretes } from './parametrosLembretes';
 export interface ParametrosFuneraria {
   cobranca?: ParametrosCobranca;
   lembretes?: ParametrosLembretes;
+  terceiros?: ParametrosTerceiros;
+  certidao?: ParametrosCertidao;
 }

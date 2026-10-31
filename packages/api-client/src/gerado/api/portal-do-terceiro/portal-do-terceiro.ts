@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -23,11 +23,22 @@ import type {
 
 import type {
   AtribuicaoResponse,
+  AtualizarPedidoRequest,
+  CertidaoResponse,
   HttpValidationProblemDetails,
+  LinkDocumentoDto,
+  LinkDocumentoResponse,
+  MeusPedidosParams,
   MinhasAtribuicoesParams,
+  MotoristaRequest,
+  PedidoResponse,
   ProblemDetails,
   RecusarAtribuicaoRequest,
+  RegistrarCertidaoEmitidaTerceiroBody,
+  StatusCertidaoRequest,
+  StatusTransladoRequest,
   TerceiroResponse,
+  TransladoFrotaResponse,
 } from '../../modelos';
 
 import { requisicao } from '../../../http/requisicao';
@@ -49,6 +60,1240 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getMeusPedidosUrl = (params?: MeusPedidosParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/terceiros/pedidos?${stringifiedParams}`
+    : `/api/v1/terceiros/pedidos`;
+};
+
+/**
+ * @summary Pedidos do fornecedor logado: o que entregar, onde e quando
+ */
+export const meusPedidos = async (
+  params?: MeusPedidosParams,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<PedidoResponse[]> => {
+  return requisicao<PedidoResponse[]>(getMeusPedidosUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getMeusPedidosQueryKey = (params?: MeusPedidosParams) => {
+  return [`/api/v1/terceiros/pedidos`, ...(params ? [params] : [])] as const;
+};
+
+export const getMeusPedidosQueryOptions = <
+  TData = Awaited<ReturnType<typeof meusPedidos>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: MeusPedidosParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusPedidos>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getMeusPedidosQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof meusPedidos>>> = ({ signal }) =>
+    meusPedidos(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof meusPedidos>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type MeusPedidosQueryResult = NonNullable<Awaited<ReturnType<typeof meusPedidos>>>;
+export type MeusPedidosQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useMeusPedidos<
+  TData = Awaited<ReturnType<typeof meusPedidos>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | MeusPedidosParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusPedidos>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof meusPedidos>>,
+          TError,
+          Awaited<ReturnType<typeof meusPedidos>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useMeusPedidos<
+  TData = Awaited<ReturnType<typeof meusPedidos>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: MeusPedidosParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusPedidos>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof meusPedidos>>,
+          TError,
+          Awaited<ReturnType<typeof meusPedidos>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useMeusPedidos<
+  TData = Awaited<ReturnType<typeof meusPedidos>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: MeusPedidosParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusPedidos>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Pedidos do fornecedor logado: o que entregar, onde e quando
+ */
+
+export function useMeusPedidos<
+  TData = Awaited<ReturnType<typeof meusPedidos>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: MeusPedidosParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusPedidos>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getMeusPedidosQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAtualizarPedidoUrl = (id: string) => {
+  return `/api/v1/terceiros/pedidos/${id}/status`;
+};
+
+/**
+ * @summary O fornecedor avança o pedido: EM_PREPARO ou ENTREGUE
+ */
+export const atualizarPedido = async (
+  id: string,
+  atualizarPedidoRequest: AtualizarPedidoRequest,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<PedidoResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return requisicao<PedidoResponse>(getAtualizarPedidoUrl(id), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(atualizarPedidoRequest),
+  });
+};
+
+export const getAtualizarPedidoMutationKey = () => ['atualizarPedido'] as const;
+
+export const getAtualizarPedidoMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof atualizarPedido>>,
+    TError,
+    AtualizarPedidoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof atualizarPedido>>,
+  TError,
+  AtualizarPedidoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAtualizarPedidoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof atualizarPedido>>,
+    AtualizarPedidoMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return atualizarPedido(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AtualizarPedidoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof atualizarPedido>>
+>;
+export type AtualizarPedidoMutationBody = BodyType<AtualizarPedidoRequest>;
+export type AtualizarPedidoMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AtualizarPedidoMutationVariables = {
+  id: string;
+  data: BodyType<AtualizarPedidoRequest>;
+};
+
+/**
+ * @summary O fornecedor avança o pedido: EM_PREPARO ou ENTREGUE
+ */
+export const useAtualizarPedido = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof atualizarPedido>>,
+      TError,
+      AtualizarPedidoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof atualizarPedido>>,
+  TError,
+  AtualizarPedidoMutationVariables,
+  TContext
+> => {
+  return useMutation(getAtualizarPedidoMutationOptions(options), queryClient);
+};
+export const getAlterarStatusCertidaoTerceiroUrl = (id: string) => {
+  return `/api/v1/terceiros/certidoes/${id}/status`;
+};
+
+/**
+ * @summary O despachante registra uma etapa da certidão atribuída a ele
+ */
+export const alterarStatusCertidaoTerceiro = async (
+  id: string,
+  statusCertidaoRequest: StatusCertidaoRequest,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<CertidaoResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return requisicao<CertidaoResponse>(getAlterarStatusCertidaoTerceiroUrl(id), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(statusCertidaoRequest),
+  });
+};
+
+export const getAlterarStatusCertidaoTerceiroMutationKey = () =>
+  ['alterarStatusCertidaoTerceiro'] as const;
+
+export const getAlterarStatusCertidaoTerceiroMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof alterarStatusCertidaoTerceiro>>,
+    TError,
+    AlterarStatusCertidaoTerceiroMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof alterarStatusCertidaoTerceiro>>,
+  TError,
+  AlterarStatusCertidaoTerceiroMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAlterarStatusCertidaoTerceiroMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof alterarStatusCertidaoTerceiro>>,
+    AlterarStatusCertidaoTerceiroMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return alterarStatusCertidaoTerceiro(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AlterarStatusCertidaoTerceiroMutationResult = NonNullable<
+  Awaited<ReturnType<typeof alterarStatusCertidaoTerceiro>>
+>;
+export type AlterarStatusCertidaoTerceiroMutationBody = BodyType<StatusCertidaoRequest>;
+export type AlterarStatusCertidaoTerceiroMutationError = ErrorType<
+  HttpValidationProblemDetails | ProblemDetails
+>;
+export type AlterarStatusCertidaoTerceiroMutationVariables = {
+  id: string;
+  data: BodyType<StatusCertidaoRequest>;
+};
+
+/**
+ * @summary O despachante registra uma etapa da certidão atribuída a ele
+ */
+export const useAlterarStatusCertidaoTerceiro = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof alterarStatusCertidaoTerceiro>>,
+      TError,
+      AlterarStatusCertidaoTerceiroMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof alterarStatusCertidaoTerceiro>>,
+  TError,
+  AlterarStatusCertidaoTerceiroMutationVariables,
+  TContext
+> => {
+  return useMutation(getAlterarStatusCertidaoTerceiroMutationOptions(options), queryClient);
+};
+export const getRegistrarCertidaoEmitidaTerceiroUrl = (id: string) => {
+  return `/api/v1/terceiros/certidoes/${id}/emitida`;
+};
+
+/**
+ * @summary O despachante envia o PDF da certidão e o número da matrícula
+ */
+export const registrarCertidaoEmitidaTerceiro = async (
+  id: string,
+  registrarCertidaoEmitidaTerceiroBody: RegistrarCertidaoEmitidaTerceiroBody,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<CertidaoResponse> => {
+  const formData = new FormData();
+  if (registrarCertidaoEmitidaTerceiroBody.arquivo !== undefined) {
+    formData.append(`arquivo`, registrarCertidaoEmitidaTerceiroBody.arquivo);
+  }
+
+  if (registrarCertidaoEmitidaTerceiroBody.numero_matricula !== undefined) {
+    formData.append(`numero_matricula`, registrarCertidaoEmitidaTerceiroBody.numero_matricula);
+  }
+
+  return requisicao<CertidaoResponse>(getRegistrarCertidaoEmitidaTerceiroUrl(id), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getRegistrarCertidaoEmitidaTerceiroMutationKey = () =>
+  ['registrarCertidaoEmitidaTerceiro'] as const;
+
+export const getRegistrarCertidaoEmitidaTerceiroMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof registrarCertidaoEmitidaTerceiro>>,
+    TError,
+    RegistrarCertidaoEmitidaTerceiroMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof registrarCertidaoEmitidaTerceiro>>,
+  TError,
+  RegistrarCertidaoEmitidaTerceiroMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRegistrarCertidaoEmitidaTerceiroMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof registrarCertidaoEmitidaTerceiro>>,
+    RegistrarCertidaoEmitidaTerceiroMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return registrarCertidaoEmitidaTerceiro(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RegistrarCertidaoEmitidaTerceiroMutationResult = NonNullable<
+  Awaited<ReturnType<typeof registrarCertidaoEmitidaTerceiro>>
+>;
+export type RegistrarCertidaoEmitidaTerceiroMutationBody =
+  BodyType<RegistrarCertidaoEmitidaTerceiroBody>;
+export type RegistrarCertidaoEmitidaTerceiroMutationError = ErrorType<
+  HttpValidationProblemDetails | ProblemDetails
+>;
+export type RegistrarCertidaoEmitidaTerceiroMutationVariables = {
+  id: string;
+  data: BodyType<RegistrarCertidaoEmitidaTerceiroBody>;
+};
+
+/**
+ * @summary O despachante envia o PDF da certidão e o número da matrícula
+ */
+export const useRegistrarCertidaoEmitidaTerceiro = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof registrarCertidaoEmitidaTerceiro>>,
+      TError,
+      RegistrarCertidaoEmitidaTerceiroMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof registrarCertidaoEmitidaTerceiro>>,
+  TError,
+  RegistrarCertidaoEmitidaTerceiroMutationVariables,
+  TContext
+> => {
+  return useMutation(getRegistrarCertidaoEmitidaTerceiroMutationOptions(options), queryClient);
+};
+export const getBaixarDocumentoCertidaoTerceiroUrl = (id: string, idDocumento: string) => {
+  return `/api/v1/terceiros/certidoes/${id}/documentos/${idDocumento}/download`;
+};
+
+/**
+ * @summary Link temporário de um documento da certidão atribuída ao despachante
+ */
+export const baixarDocumentoCertidaoTerceiro = async (
+  id: string,
+  idDocumento: string,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<LinkDocumentoResponse> => {
+  return requisicao<LinkDocumentoResponse>(getBaixarDocumentoCertidaoTerceiroUrl(id, idDocumento), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getBaixarDocumentoCertidaoTerceiroQueryKey = (id: string, idDocumento: string) => {
+  return [`/api/v1/terceiros/certidoes/${id}/documentos/${idDocumento}/download`] as const;
+};
+
+export const getBaixarDocumentoCertidaoTerceiroQueryOptions = <
+  TData = Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getBaixarDocumentoCertidaoTerceiroQueryKey(id, idDocumento);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>> = ({
+    signal,
+  }) => baixarDocumentoCertidaoTerceiro(id, idDocumento, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined && idDocumento !== null && idDocumento !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type BaixarDocumentoCertidaoTerceiroQueryResult = NonNullable<
+  Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>
+>;
+export type BaixarDocumentoCertidaoTerceiroQueryError = ErrorType<ProblemDetails>;
+
+export function useBaixarDocumentoCertidaoTerceiro<
+  TData = Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>,
+          TError,
+          Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useBaixarDocumentoCertidaoTerceiro<
+  TData = Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>,
+          TError,
+          Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useBaixarDocumentoCertidaoTerceiro<
+  TData = Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Link temporário de um documento da certidão atribuída ao despachante
+ */
+
+export function useBaixarDocumentoCertidaoTerceiro<
+  TData = Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoCertidaoTerceiro>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getBaixarDocumentoCertidaoTerceiroQueryOptions(id, idDocumento, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getMeusTransladosUrl = () => {
+  return `/api/v1/terceiros/translados`;
+};
+
+/**
+ * @summary Translados da empresa logada: origem, destino, horário e contato, sem valores nem contrato
+ */
+export const meusTranslados = async (
+  options?: Parameters<typeof requisicao>[1],
+): Promise<TransladoFrotaResponse[]> => {
+  return requisicao<TransladoFrotaResponse[]>(getMeusTransladosUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getMeusTransladosQueryKey = () => {
+  return [`/api/v1/terceiros/translados`] as const;
+};
+
+export const getMeusTransladosQueryOptions = <
+  TData = Awaited<ReturnType<typeof meusTranslados>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusTranslados>>, TError, TData>>;
+  request?: SecondParameter<typeof requisicao>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getMeusTransladosQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof meusTranslados>>> = ({ signal }) =>
+    meusTranslados({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof meusTranslados>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type MeusTransladosQueryResult = NonNullable<Awaited<ReturnType<typeof meusTranslados>>>;
+export type MeusTransladosQueryError = ErrorType<unknown>;
+
+export function useMeusTranslados<
+  TData = Awaited<ReturnType<typeof meusTranslados>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusTranslados>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof meusTranslados>>,
+          TError,
+          Awaited<ReturnType<typeof meusTranslados>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useMeusTranslados<
+  TData = Awaited<ReturnType<typeof meusTranslados>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusTranslados>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof meusTranslados>>,
+          TError,
+          Awaited<ReturnType<typeof meusTranslados>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useMeusTranslados<
+  TData = Awaited<ReturnType<typeof meusTranslados>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusTranslados>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Translados da empresa logada: origem, destino, horário e contato, sem valores nem contrato
+ */
+
+export function useMeusTranslados<
+  TData = Awaited<ReturnType<typeof meusTranslados>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof meusTranslados>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getMeusTransladosQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getObterTransladoFrotaUrl = (id: string) => {
+  return `/api/v1/terceiros/translados/${id}`;
+};
+
+/**
+ * @summary Translado atribuído à empresa logada
+ */
+export const obterTransladoFrota = async (
+  id: string,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<TransladoFrotaResponse> => {
+  return requisicao<TransladoFrotaResponse>(getObterTransladoFrotaUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getObterTransladoFrotaQueryKey = (id: string) => {
+  return [`/api/v1/terceiros/translados/${id}`] as const;
+};
+
+export const getObterTransladoFrotaQueryOptions = <
+  TData = Awaited<ReturnType<typeof obterTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof obterTransladoFrota>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getObterTransladoFrotaQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof obterTransladoFrota>>> = ({ signal }) =>
+    obterTransladoFrota(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof obterTransladoFrota>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type ObterTransladoFrotaQueryResult = NonNullable<
+  Awaited<ReturnType<typeof obterTransladoFrota>>
+>;
+export type ObterTransladoFrotaQueryError = ErrorType<ProblemDetails>;
+
+export function useObterTransladoFrota<
+  TData = Awaited<ReturnType<typeof obterTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof obterTransladoFrota>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obterTransladoFrota>>,
+          TError,
+          Awaited<ReturnType<typeof obterTransladoFrota>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useObterTransladoFrota<
+  TData = Awaited<ReturnType<typeof obterTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof obterTransladoFrota>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof obterTransladoFrota>>,
+          TError,
+          Awaited<ReturnType<typeof obterTransladoFrota>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useObterTransladoFrota<
+  TData = Awaited<ReturnType<typeof obterTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof obterTransladoFrota>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Translado atribuído à empresa logada
+ */
+
+export function useObterTransladoFrota<
+  TData = Awaited<ReturnType<typeof obterTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof obterTransladoFrota>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getObterTransladoFrotaQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getInformarMotoristaTransladoUrl = (id: string) => {
+  return `/api/v1/terceiros/translados/${id}/motorista`;
+};
+
+/**
+ * @summary Informa o motorista e o veículo, depois do aceite
+ */
+export const informarMotoristaTranslado = async (
+  id: string,
+  motoristaRequest: MotoristaRequest,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<TransladoFrotaResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return requisicao<TransladoFrotaResponse>(getInformarMotoristaTransladoUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(motoristaRequest),
+  });
+};
+
+export const getInformarMotoristaTransladoMutationKey = () =>
+  ['informarMotoristaTranslado'] as const;
+
+export const getInformarMotoristaTransladoMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof informarMotoristaTranslado>>,
+    TError,
+    InformarMotoristaTransladoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof informarMotoristaTranslado>>,
+  TError,
+  InformarMotoristaTransladoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getInformarMotoristaTransladoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof informarMotoristaTranslado>>,
+    InformarMotoristaTransladoMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return informarMotoristaTranslado(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type InformarMotoristaTransladoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof informarMotoristaTranslado>>
+>;
+export type InformarMotoristaTransladoMutationBody = BodyType<MotoristaRequest>;
+export type InformarMotoristaTransladoMutationError = ErrorType<
+  HttpValidationProblemDetails | ProblemDetails
+>;
+export type InformarMotoristaTransladoMutationVariables = {
+  id: string;
+  data: BodyType<MotoristaRequest>;
+};
+
+/**
+ * @summary Informa o motorista e o veículo, depois do aceite
+ */
+export const useInformarMotoristaTranslado = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof informarMotoristaTranslado>>,
+      TError,
+      InformarMotoristaTransladoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof informarMotoristaTranslado>>,
+  TError,
+  InformarMotoristaTransladoMutationVariables,
+  TContext
+> => {
+  return useMutation(getInformarMotoristaTransladoMutationOptions(options), queryClient);
+};
+export const getAlterarStatusTransladoFrotaUrl = (id: string) => {
+  return `/api/v1/terceiros/translados/${id}/status`;
+};
+
+/**
+ * @summary A empresa atualiza o status do translado atribuído a ela
+ */
+export const alterarStatusTransladoFrota = async (
+  id: string,
+  statusTransladoRequest: StatusTransladoRequest,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<TransladoFrotaResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return requisicao<TransladoFrotaResponse>(getAlterarStatusTransladoFrotaUrl(id), {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(statusTransladoRequest),
+  });
+};
+
+export const getAlterarStatusTransladoFrotaMutationKey = () =>
+  ['alterarStatusTransladoFrota'] as const;
+
+export const getAlterarStatusTransladoFrotaMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof alterarStatusTransladoFrota>>,
+    TError,
+    AlterarStatusTransladoFrotaMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof alterarStatusTransladoFrota>>,
+  TError,
+  AlterarStatusTransladoFrotaMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAlterarStatusTransladoFrotaMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof alterarStatusTransladoFrota>>,
+    AlterarStatusTransladoFrotaMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return alterarStatusTransladoFrota(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AlterarStatusTransladoFrotaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof alterarStatusTransladoFrota>>
+>;
+export type AlterarStatusTransladoFrotaMutationBody = BodyType<StatusTransladoRequest>;
+export type AlterarStatusTransladoFrotaMutationError = ErrorType<
+  HttpValidationProblemDetails | ProblemDetails
+>;
+export type AlterarStatusTransladoFrotaMutationVariables = {
+  id: string;
+  data: BodyType<StatusTransladoRequest>;
+};
+
+/**
+ * @summary A empresa atualiza o status do translado atribuído a ela
+ */
+export const useAlterarStatusTransladoFrota = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof alterarStatusTransladoFrota>>,
+      TError,
+      AlterarStatusTransladoFrotaMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof alterarStatusTransladoFrota>>,
+  TError,
+  AlterarStatusTransladoFrotaMutationVariables,
+  TContext
+> => {
+  return useMutation(getAlterarStatusTransladoFrotaMutationOptions(options), queryClient);
+};
+export const getBaixarDocumentoTransladoFrotaUrl = (id: string, idDocumento: string) => {
+  return `/api/v1/terceiros/translados/${id}/documentos/${idDocumento}/download`;
+};
+
+/**
+ * @summary Link temporário de um documento do translado atribuído à empresa
+ */
+export const baixarDocumentoTransladoFrota = async (
+  id: string,
+  idDocumento: string,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<LinkDocumentoDto> => {
+  return requisicao<LinkDocumentoDto>(getBaixarDocumentoTransladoFrotaUrl(id, idDocumento), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getBaixarDocumentoTransladoFrotaQueryKey = (id: string, idDocumento: string) => {
+  return [`/api/v1/terceiros/translados/${id}/documentos/${idDocumento}/download`] as const;
+};
+
+export const getBaixarDocumentoTransladoFrotaQueryOptions = <
+  TData = Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getBaixarDocumentoTransladoFrotaQueryKey(id, idDocumento);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>> = ({
+    signal,
+  }) => baixarDocumentoTransladoFrota(id, idDocumento, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined && idDocumento !== null && idDocumento !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type BaixarDocumentoTransladoFrotaQueryResult = NonNullable<
+  Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>
+>;
+export type BaixarDocumentoTransladoFrotaQueryError = ErrorType<ProblemDetails>;
+
+export function useBaixarDocumentoTransladoFrota<
+  TData = Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>,
+          TError,
+          Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useBaixarDocumentoTransladoFrota<
+  TData = Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>,
+          TError,
+          Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useBaixarDocumentoTransladoFrota<
+  TData = Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Link temporário de um documento do translado atribuído à empresa
+ */
+
+export function useBaixarDocumentoTransladoFrota<
+  TData = Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  idDocumento: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof baixarDocumentoTransladoFrota>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getBaixarDocumentoTransladoFrotaQueryOptions(id, idDocumento, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export const getMeuCadastroTerceiroUrl = () => {
   return `/api/v1/terceiros/me`;

@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
@@ -22,6 +22,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AceitarTermosRequest,
   AlterarSenhaRequest,
   ConfirmarEmailRequest,
   DefinirSenhaRequest,
@@ -31,6 +32,7 @@ import type {
   LoginRequest,
   LoginResponse,
   ProblemDetails,
+  SituacaoTermosResponse,
 } from '../../modelos';
 
 import { requisicao } from '../../../http/requisicao';
@@ -806,6 +808,226 @@ export const useAlterarSenha = <
   TContext
 > => {
   return useMutation(getAlterarSenhaMutationOptions(options), queryClient);
+};
+export const getSituacaoTermosUrl = () => {
+  return `/api/v1/auth/termos`;
+};
+
+/**
+ * Quando pendente = true, o frontend mostra os textos e pede o aceite (SEG-01).
+ * @summary Versões vigentes dos termos de uso e da política de privacidade e o que o usuário já aceitou
+ */
+export const situacaoTermos = async (
+  options?: Parameters<typeof requisicao>[1],
+): Promise<SituacaoTermosResponse> => {
+  return requisicao<SituacaoTermosResponse>(getSituacaoTermosUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSituacaoTermosQueryKey = () => {
+  return [`/api/v1/auth/termos`] as const;
+};
+
+export const getSituacaoTermosQueryOptions = <
+  TData = Awaited<ReturnType<typeof situacaoTermos>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof situacaoTermos>>, TError, TData>>;
+  request?: SecondParameter<typeof requisicao>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSituacaoTermosQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof situacaoTermos>>> = ({ signal }) =>
+    situacaoTermos({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof situacaoTermos>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SituacaoTermosQueryResult = NonNullable<Awaited<ReturnType<typeof situacaoTermos>>>;
+export type SituacaoTermosQueryError = ErrorType<ProblemDetails>;
+
+export function useSituacaoTermos<
+  TData = Awaited<ReturnType<typeof situacaoTermos>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof situacaoTermos>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof situacaoTermos>>,
+          TError,
+          Awaited<ReturnType<typeof situacaoTermos>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSituacaoTermos<
+  TData = Awaited<ReturnType<typeof situacaoTermos>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof situacaoTermos>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof situacaoTermos>>,
+          TError,
+          Awaited<ReturnType<typeof situacaoTermos>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSituacaoTermos<
+  TData = Awaited<ReturnType<typeof situacaoTermos>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof situacaoTermos>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Versões vigentes dos termos de uso e da política de privacidade e o que o usuário já aceitou
+ */
+
+export function useSituacaoTermos<
+  TData = Awaited<ReturnType<typeof situacaoTermos>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof situacaoTermos>>, TError, TData>>;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSituacaoTermosQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAceitarTermosUrl = () => {
+  return `/api/v1/auth/termos/aceite`;
+};
+
+/**
+ * @summary Registra o aceite das versões vigentes, com data e IP
+ */
+export const aceitarTermos = async (
+  aceitarTermosRequest: AceitarTermosRequest,
+  options?: Parameters<typeof requisicao>[1],
+): Promise<SituacaoTermosResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return requisicao<SituacaoTermosResponse>(getAceitarTermosUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(aceitarTermosRequest),
+  });
+};
+
+export const getAceitarTermosMutationKey = () => ['aceitarTermos'] as const;
+
+export const getAceitarTermosMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof aceitarTermos>>,
+    TError,
+    AceitarTermosMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof requisicao>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof aceitarTermos>>,
+  TError,
+  AceitarTermosMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAceitarTermosMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof aceitarTermos>>,
+    AceitarTermosMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return aceitarTermos(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AceitarTermosMutationResult = NonNullable<Awaited<ReturnType<typeof aceitarTermos>>>;
+export type AceitarTermosMutationBody = BodyType<AceitarTermosRequest>;
+export type AceitarTermosMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AceitarTermosMutationVariables = { data: BodyType<AceitarTermosRequest> };
+
+/**
+ * @summary Registra o aceite das versões vigentes, com data e IP
+ */
+export const useAceitarTermos = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof aceitarTermos>>,
+      TError,
+      AceitarTermosMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof requisicao>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof aceitarTermos>>,
+  TError,
+  AceitarTermosMutationVariables,
+  TContext
+> => {
+  return useMutation(getAceitarTermosMutationOptions(options), queryClient);
 };
 export const getMinhasFunerariasUrl = () => {
   return `/api/v1/auth/minhas-funerarias`;

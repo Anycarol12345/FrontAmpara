@@ -52,6 +52,7 @@ const item = (
   controla_estoque: false,
   quantidade_estoque: null,
   imagem_url: null,
+  id_terceiro_fornecedor: null,
   ativo: true,
   variacoes: variacoes.map(([nomeVariacao, acrescimo], i) => ({
     id_variacao: `${id_item}-v${i + 1}`,
@@ -284,6 +285,7 @@ export function montarContrato(dados: {
       ) / 100,
     carencia_dias: p.carencia_dias,
     id_consultor: null,
+    motivo_cancelamento: null,
     pessoas_cobertas: [
       ...(titularCoberto
         ? [

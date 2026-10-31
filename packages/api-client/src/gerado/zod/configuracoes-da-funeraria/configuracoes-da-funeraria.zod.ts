@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import * as zod from 'zod';
 
@@ -176,6 +176,24 @@ export const ObterConfiguracoesResponse = zod.object({
             .describe('Dias depois do vencimento em que o lembrete de atraso é enviado (COB-04).'),
         })
         .optional(),
+      terceiros: zod
+        .object({
+          prazo_aceite_horas: zod
+            .int()
+            .optional()
+            .describe('Horas que o terceiro tem para aceitar ou recusar um serviço (TER-02).'),
+        })
+        .optional(),
+      certidao: zod
+        .object({
+          modo: zod
+            .enum(['MANUAL', 'SIMULADO'])
+            .optional()
+            .describe(
+              'Como a certidão de óbito é pedida (CER-02). MANUAL no MVP; SIMULADO só onde a configuração permite.',
+            ),
+        })
+        .optional(),
     })
     .describe(
       'Parâmetros do negócio da funerária, em jsonb tipado (TEN-03). Os padrões são os do DEC-01.\nA tabela de preços do translado fica em tabela própria (TRA-02), porque é relacional.',
@@ -288,6 +306,24 @@ export const AtualizarConfiguracoesBody = zod
                 .optional()
                 .describe(
                   'Dias depois do vencimento em que o lembrete de atraso é enviado (COB-04).',
+                ),
+            })
+            .optional(),
+          terceiros: zod
+            .object({
+              prazo_aceite_horas: zod
+                .int()
+                .optional()
+                .describe('Horas que o terceiro tem para aceitar ou recusar um serviço (TER-02).'),
+            })
+            .optional(),
+          certidao: zod
+            .object({
+              modo: zod
+                .enum(['MANUAL', 'SIMULADO'])
+                .optional()
+                .describe(
+                  'Como a certidão de óbito é pedida (CER-02). MANUAL no MVP; SIMULADO só onde a configuração permite.',
                 ),
             })
             .optional(),

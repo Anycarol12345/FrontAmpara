@@ -3,12 +3,14 @@
  * Do not edit manually.
  * Funerária Online API
  * Para testar pelo Swagger: informe o X-Tenant (ex.: demo), faça POST /api/v1/auth/login e cole o access_token em Authorize.
- * OpenAPI spec version: v1
+ * OpenAPI spec version: 0.2.0-dev
  */
 import type { ClienteResponse } from './clienteResponse';
+import type { ContratoDoClienteDto } from './contratoDoClienteDto';
 import type { DependenteResponse } from './dependenteResponse';
 
 export interface ClienteDetalheResponse {
   cliente: ClienteResponse;
   dependentes: DependenteResponse[];
+  contratos: ContratoDoClienteDto[];
 }
