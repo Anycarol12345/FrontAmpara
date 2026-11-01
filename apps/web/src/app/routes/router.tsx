@@ -134,7 +134,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'contratos/:id',
-                lazy: pagina(() => import('@/features/contratos'), 'ContratoPainelPage'),
+                lazy: pagina(() => import('./ContratoComFaturas'), 'ContratoComFaturas'),
               },
               {
                 element: <RotaProtegida perfis={['FUNERARIA', 'FUNCIONARIO']} />,

@@ -1,12 +1,16 @@
 import { useObterContrato } from '@ampara/api-client';
 import { ArrowLeft } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { EstadoConsulta } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { DetalheContrato } from '../../components/DetalheContrato';
 
-/** Detalhe do contrato para a equipe (FE-ADM-03, GET /contratos/{id}). */
-export function ContratoPainelPage() {
+/**
+ * Detalhe do contrato para a equipe (FE-ADM-03, GET /contratos/{id}).
+ * `faturas` vem do app/ (feature financeiro), que conhece as duas features.
+ */
+export function ContratoPainelPage({ faturas }: { faturas?: (idContrato: string) => ReactNode }) {
   const { id = '' } = useParams();
   const [parametros] = useSearchParams();
   const consulta = useObterContrato(id);
@@ -24,7 +28,12 @@ export function ContratoPainelPage() {
         titulo="Detalhes do contrato"
       />
       <EstadoConsulta consulta={consulta}>
-        {(contrato) => <DetalheContrato contrato={contrato} />}
+        {(contrato) => (
+          <>
+            <DetalheContrato contrato={contrato} />
+            {faturas?.(contrato.id_contrato)}
+          </>
+        )}
       </EstadoConsulta>
     </div>
   );
