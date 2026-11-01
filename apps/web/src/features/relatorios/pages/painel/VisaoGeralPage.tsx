@@ -100,17 +100,19 @@ export function VisaoGeralPage() {
             <Button variant="outline" className="border-transparent">
               <Pencil /> Editar painel
             </Button>
-            <Button>
-              Novo atendimento <ArrowRight />
+            <Button asChild>
+              <Link to="/painel/beneficiarios/novo">
+                Novo atendimento <ArrowRight />
+              </Link>
             </Button>
           </>
         }
       />
 
       <Indicadores />
-        {INDICADORES.map((indicador) => (
-          <StatCard key={indicador.rotulo} {...indicador} />
-        ))}
+      {INDICADORES.map((indicador) => (
+        <StatCard key={indicador.rotulo} {...indicador} />
+      ))}
       <Indicadores />
 
       <GraficosFinanceiros />

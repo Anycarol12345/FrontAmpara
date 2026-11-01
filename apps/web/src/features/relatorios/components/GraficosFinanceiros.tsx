@@ -19,8 +19,8 @@ export function GraficosFinanceiros() {
     <EstadoConsulta consulta={dashboard}>
       {(d) => {
         const dados = [
-        { nome: 'Prevista', valor: numero(d.receita_prevista_no_mes) },
-        { nome: 'Recebida', valor: numero(d.receita_recebida_no_mes) },
+          { nome: 'Prevista', valor: numero(d.receita_prevista_no_mes) },
+          { nome: 'Recebida', valor: numero(d.receita_recebida_no_mes) },
         ];
         const emAtraso = Math.min(100, Math.max(0, numero(d.taxa_inadimplencia)));
         const linhas = [
@@ -50,10 +50,7 @@ export function GraficosFinanceiros() {
                   <ChartTooltip
                     cursor={false}
                     content={
-                      <ChartTooltipContent
-                        hideLabel
-                        formatter={(valor) => real(Number(valor))}
-                      />
+                      <ChartTooltipContent hideLabel formatter={(valor) => real(Number(valor))} />
                     }
                   />
                   <Bar dataKey="valor" fill="url(#barra-receita)" radius={10} maxBarSize={96}>
