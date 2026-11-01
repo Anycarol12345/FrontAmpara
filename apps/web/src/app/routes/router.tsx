@@ -141,6 +141,14 @@ export const router = createBrowserRouter([
                 lazy: pagina(() => import('@/features/funeral'), 'RegistrarBeneficiarioPage'),
               },
               {
+  path: 'funerais/novo',
+  lazy: pagina(() => import('@/features/funeral'), 'RegistrarFuneralPage'),
+},
+{
+  path: 'funerais/:id',
+  lazy: pagina(() => import('@/features/funeral'), 'FuneralPainelPage'),
+},
+              {
                 element: <RotaProtegida perfis={['FUNERARIA', 'FUNCIONARIO']} />,
                 children: [
                   {
