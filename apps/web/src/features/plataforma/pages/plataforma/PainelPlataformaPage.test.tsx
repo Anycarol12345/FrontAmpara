@@ -25,7 +25,7 @@ beforeEach(() => {
     http.post('*/api/v1/auth/refresh', () => HttpResponse.json(respostaDeLogin('ADMIN'))),
     http.get('*/api/v1/admin/tenants', ({ request }) => {
       const status = new URL(request.url).searchParams.get('status');
-      const itens = !status || status === 'PENDENTE' ? [PENDENTE] : [];
+      const itens = !status || status === 'Pendente' ? [PENDENTE] : [];
       return HttpResponse.json({ itens, pagina: 1, tamanho: 20, total: itens.length });
     }),
   );

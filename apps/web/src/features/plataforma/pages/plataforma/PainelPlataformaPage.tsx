@@ -49,6 +49,13 @@ const FILTROS = [
   { valor: 'SUSPENSA', rotulo: 'Suspensas' },
 ];
 
+/**
+ * No filtro da URL o backend só aceita o nome do enum como está no código (Ativa), embora o
+ * OpenAPI e o JSON usem ATIVA: sem isso, GET /admin/tenants?status=ATIVA responde 400.
+ */
+const naUrl = (status: StatusFuneraria) =>
+  (status.charAt(0) + status.slice(1).toLowerCase()) as StatusFuneraria;
+
 type Acao = { funeraria: FunerariaListaResponse; para: StatusFuneraria };
 
 const TEXTO_ACAO: Record<StatusFuneraria, { titulo: string; descricao: string; botao: string }> = {
@@ -73,14 +80,14 @@ export function PainelPlataformaPage() {
   const buscaAdiada = useDeferredValue(busca.trim());
   const [pagina, setPagina] = useState(1);
   const consulta = useListarFunerarias({
-    status: status === 'TODAS' ? undefined : (status as StatusFuneraria),
+    status: status === 'TODAS' ? undefined : naUrl(status as StatusFuneraria),
     busca: buscaAdiada || undefined,
     pagina,
     tamanho: TAMANHO,
   });
-  const pendentes = useListarFunerarias({ status: 'PENDENTE', tamanho: 1 });
-  const ativas = useListarFunerarias({ status: 'ATIVA', tamanho: 1 });
-  const suspensas = useListarFunerarias({ status: 'SUSPENSA', tamanho: 1 });
+  const pendentes = useListarFunerarias({ status: naUrl('PENDENTE'), tamanho: 1 });
+  const ativas = useListarFunerarias({ status: naUrl('ATIVA'), tamanho: 1 });
+  const suspensas = useListarFunerarias({ status: naUrl('SUSPENSA'), tamanho: 1 });
   const alterar = useAlterarStatusFuneraria({
     mutation: { meta: { invalida: [getListarFunerariasQueryKey()] } },
   });

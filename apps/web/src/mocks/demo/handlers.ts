@@ -548,7 +548,7 @@ export function handlersDemo(sessao: SessaoDemo) {
     // Plataforma: funerárias (TEN-01, TEN-02).
     http.get('*/api/v1/admin/tenants', ({ request }) => {
       const url = new URL(request.url);
-      const status = url.searchParams.get('status');
+      const status = url.searchParams.get('status')?.toUpperCase();
       const busca = url.searchParams.get('busca')?.toLowerCase();
       const lista = funerarias
         .filter((f) => !status || f.status === status)
