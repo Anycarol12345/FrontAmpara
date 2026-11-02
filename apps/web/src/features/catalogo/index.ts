@@ -1,1 +1,1 @@
-export {};
+export { CatalogoPage } from './pages/painel/CatalogoPage';
