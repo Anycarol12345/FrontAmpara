@@ -194,9 +194,7 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: 'configuracoes',
-                    element: (
-                      <EmConstrucao sobretitulo="Gestão" titulo="Configurações" card="FE-ADM-12" />
-                    ),
+                    lazy: pagina(() => import('@/features/tenants'), 'ConfiguracoesPage'),
                   },
                 ],
               },

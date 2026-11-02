@@ -3,3 +3,5 @@ export {
   useTransladoTempoReal,
   type TransladoStatusAlterado,
 } from './hooks/useTransladoTempoReal';
+export { TabelaPrecosTranslado } from './components/TabelaPrecosTranslado';
+export { TIPO_TRANSLADO } from './components/faixas';

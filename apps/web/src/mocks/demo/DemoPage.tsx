@@ -97,7 +97,7 @@ const GRUPOS: Grupo[] = [
       { titulo: 'Catálogo', rota: '/painel/catalogo', card: 'FE-ADM-09' },
       { titulo: 'Terceiros', rota: '/painel/terceiros', card: 'FE-ADM-14' },
       { titulo: 'Relatórios (em construção)', rota: '/painel/relatorios', card: 'FE-ADM-13' },
-      { titulo: 'Configurações (em construção)', rota: '/painel/configuracoes', card: 'FE-ADM-12' },
+      { titulo: 'Configurações', rota: '/painel/configuracoes', card: 'FE-ADM-12' },
     ],
   },
   {

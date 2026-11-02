@@ -1,4 +1,6 @@
 import type {
+  ConfiguracaoTransladoResponse,
+  ConfiguracoesResponse,
   CategoriaResponse,
   ClienteResponse,
   ContratoDetalheResponse,
@@ -405,3 +407,52 @@ export function criarBanco(cenario: Cenario) {
 }
 
 export type BancoDemo = ReturnType<typeof criarBanco>;
+
+/** Configurações completas da funerária de demonstração (ADM-12). Multa nula: contratação bloqueada. */
+export const configuracoesDemo = (): ConfiguracoesResponse => ({
+  id_tenant: 'tenant-demo',
+  nome_fantasia: FUNERARIA.nome_fantasia,
+  slug: FUNERARIA.slug,
+  status: 'ATIVA',
+  cobranca_configurada: true,
+  identidade_visual: {
+    ...FUNERARIA.identidade_visual,
+    cor_primaria: '#3E5C54',
+    cor_secundaria: '#C9A66B',
+    endereco: {
+      logradouro: 'Rua das Acácias',
+      numero: '120',
+      cidade: 'São Paulo',
+      uf: 'SP',
+      cep: '01310100',
+    },
+  },
+  parametros: {
+    cobranca: {
+      modo_vencimento: 'ESCOLHA_CLIENTE',
+      dia_vencimento_fixo: 10,
+      dias_vencimento_permitidos: [5, 10, 15, 20],
+      tolerancia_dias: 5,
+      multa_percentual: null,
+      juros_mensal_percentual: 1,
+      desconto_anual_percentual: 10,
+      reajuste_anual_percentual: 4.5,
+    },
+    lembretes: { dias_antes: [5, 1, 0], dias_depois: [1, 3, 7] },
+    terceiros: { prazo_aceite_horas: 2 },
+    certidao: { modo: 'MANUAL' },
+  },
+});
+
+export const tabelaKmDemo = (): ConfiguracaoTransladoResponse => ({
+  faixas: [
+    { de_km: 0, ate_km: 30, valor: 250, valor_km_excedente: null },
+    { de_km: 30, ate_km: 100, valor: 600, valor_km_excedente: null },
+    { de_km: 100, ate_km: null, valor: 900, valor_km_excedente: 4.5 },
+  ],
+  documentos_exigidos: {
+    MUNICIPAL: ['Certidão de óbito'],
+    INTERMUNICIPAL: ['Certidão de óbito', 'Autorização de translado'],
+    INTERESTADUAL: ['Certidão de óbito', 'Autorização de translado', 'Atestado de embalsamamento'],
+  },
+});

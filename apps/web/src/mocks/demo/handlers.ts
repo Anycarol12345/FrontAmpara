@@ -1,4 +1,7 @@
 import type {
+  AtualizarConfiguracoesRequest,
+  DocumentosExigidosRequest,
+  TabelaPrecosRequest,
   CadastrarDependenteRequest,
   CancelarContratoRequest,
   IncluirDependenteRequest,
@@ -18,7 +21,9 @@ import {
   CATALOGO,
   CATEGORIAS,
   FUNERARIA,
+  configuracoesDemo,
   criarBanco,
+  tabelaKmDemo,
   montarContrato,
   resumoDoContrato,
 } from './dados';
@@ -49,6 +54,8 @@ const resumoDoPlano = ({ coberturas: _, configuracoes: __, ...plano }: PlanoResp
  */
 export function handlersDemo(sessao: SessaoDemo) {
   const banco = criarBanco(sessao.cenario);
+  const configuracoes = configuracoesDemo();
+  const tabelaKm = tabelaKmDemo();
   const contrato = (id: string) => banco.contratos.find((c) => c.id_contrato === id);
   const dependentesDe = (idCliente: string) =>
     idCliente === banco.meusDados.id_cliente ? banco.dependentes : [];
@@ -115,6 +122,27 @@ export function handlersDemo(sessao: SessaoDemo) {
 
     http.get('*/api/v1/tenant/configuracoes', () => HttpResponse.json(FUNERARIA)),
     http.get('*/api/v1/funerarias/:slug/logo', () => naoEncontrado('Sem logo.')),
+
+    // Configurações da funerária e tabela de km do translado (ADM-12).
+    http.get('*/api/v1/gestao/configuracoes', () => HttpResponse.json(configuracoes)),
+    http.put('*/api/v1/gestao/configuracoes', async ({ request }) => {
+      const dados = (await request.json()) as AtualizarConfiguracoesRequest;
+      if (dados.identidade_visual)
+        Object.assign(configuracoes.identidade_visual, dados.identidade_visual);
+      if (dados.parametros) Object.assign(configuracoes.parametros, dados.parametros);
+      await delay(300);
+      return HttpResponse.json(configuracoes);
+    }),
+    http.get('*/api/v1/gestao/translados/tabela-precos', () => HttpResponse.json(tabelaKm)),
+    http.put('*/api/v1/gestao/translados/tabela-precos', async ({ request }) => {
+      tabelaKm.faixas = ((await request.json()) as TabelaPrecosRequest).faixas ?? [];
+      return semConteudo();
+    }),
+    http.put('*/api/v1/gestao/translados/documentos-exigidos', async ({ request }) => {
+      tabelaKm.documentos_exigidos =
+        ((await request.json()) as DocumentosExigidosRequest).documentos ?? {};
+      return semConteudo();
+    }),
 
     // Cliente: dados e dependentes (CLI-01, CLI-02).
     http.get('*/api/v1/clientes/me', () => HttpResponse.json(banco.meusDados)),
