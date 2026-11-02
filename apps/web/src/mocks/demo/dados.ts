@@ -1,4 +1,9 @@
 import type {
+  EnderecoRequest,
+  FaixaKm,
+  HistoricoTransladoResponse,
+  SimulacaoResponse,
+  StatusTranslado,
   LocalResponse,
   ReservaResponse,
   ConfiguracaoTransladoResponse,
@@ -515,4 +520,61 @@ export function reservasDemo(): ReservaDemo[] {
       nome_falecido: 'Lúcia Ferraz',
     },
   ];
+}
+
+/** Tira os campos nulos de um endereço enviado pela tela. */
+export const limparNulos = (endereco: EnderecoRequest | null) =>
+  Object.fromEntries(Object.entries(endereco ?? {}).filter(([, v]) => v != null)) as Record<
+    string,
+    string
+  >;
+
+export const mudancaTranslado = (
+  de: StatusTranslado,
+  para: StatusTranslado,
+  observacao: string | null | undefined,
+  horas = 0,
+): HistoricoTransladoResponse => ({
+  de,
+  para,
+  id_usuario: 'us-juliana',
+  observacao: observacao ?? null,
+  em: new Date(Date.now() + horas * 3_600_000).toISOString(),
+});
+
+/**
+ * Preço do translado pela tabela de km (TRA-02, TRA-03). Sem distância informada, a demonstração
+ * usa 12 km na mesma cidade, 95 km no mesmo estado e 430 km entre estados. O plano cobre até 50 km.
+ */
+export function simularTransladoDemo(
+  dados: {
+    origem: EnderecoRequest | null;
+    destino: EnderecoRequest | null;
+    distancia_km: number | null;
+  },
+  faixas: FaixaKm[],
+): SimulacaoResponse {
+  const mesmaUf = dados.origem?.uf === dados.destino?.uf;
+  const mesmaCidade =
+    mesmaUf &&
+    dados.origem?.cidade?.trim().toLowerCase() === dados.destino?.cidade?.trim().toLowerCase();
+  const tipo = mesmaCidade ? 'MUNICIPAL' : mesmaUf ? 'INTERMUNICIPAL' : 'INTERESTADUAL';
+  const distancia = dados.distancia_km ?? (mesmaCidade ? 12 : mesmaUf ? 95 : 430);
+  const preco = (km: number) => {
+    const faixa = faixas.find((f) => km >= f.de_km && (f.ate_km == null || km < f.ate_km));
+    if (!faixa) return 0;
+    const excedente =
+      faixa.ate_km == null ? (km - faixa.de_km) * (faixa.valor_km_excedente ?? 0) : 0;
+    return Number(faixa.valor) + excedente;
+  };
+  const valor = preco(distancia);
+  const coberto = Math.min(valor, preco(Math.min(distancia, 50)));
+  return {
+    tipo,
+    distancia_km: distancia,
+    distancia_manual: dados.distancia_km != null,
+    valor,
+    valor_coberto_plano: coberto,
+    valor_a_pagar: valor - coberto,
+  };
 }

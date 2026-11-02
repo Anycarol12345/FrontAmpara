@@ -1,4 +1,10 @@
 import type {
+  AtribuirFrotaRequest,
+  HistoricoTransladoResponse,
+  RegistrarTransladoRequest,
+  SimularTransladoRequest,
+  StatusTransladoRequest,
+  TransladoResponse,
   LocalRequest,
   ReservaRequest,
   StatusLocalRequest,
@@ -26,14 +32,17 @@ import {
   FUNERARIA,
   configuracoesDemo,
   criarBanco,
+  limparNulos,
   locaisDemo,
+  mudancaTranslado,
   reservasDemo,
+  simularTransladoDemo,
   tabelaKmDemo,
   montarContrato,
   resumoDoContrato,
 } from './dados';
 import { alterarEstado, lerEstado } from '../estado';
-import { funeralDeExemplo, ID_FUNERAL_EXEMPLO } from '../exemplos';
+import { funeralDeExemplo, ID_FUNERAL_EXEMPLO, transladoDoExemplo } from '../exemplos';
 import { loginDemo, salvarSessaoDemo, type SessaoDemo } from './sessao';
 
 const naoEncontrado = (detail: string) => HttpResponse.json({ detail }, { status: 404 });
@@ -69,6 +78,14 @@ export function handlersDemo(sessao: SessaoDemo) {
   const tabelaKm = tabelaKmDemo();
   const locais = locaisDemo();
   const reservas = reservasDemo();
+  const translados = [transladoDoExemplo()];
+  const historicoTranslados: Record<string, HistoricoTransladoResponse[]> = {
+    [transladoDoExemplo().id_translado]: [
+      mudancaTranslado('AGENDADO', 'AGENDADO', 'Translado registrado', -5),
+      mudancaTranslado('AGENDADO', 'EM_COLETA', null, -3),
+      mudancaTranslado('EM_COLETA', 'EM_TRANSITO', 'Saiu do hospital', -1),
+    ],
+  };
   const contrato = (id: string) => banco.contratos.find((c) => c.id_contrato === id);
   const dependentesDe = (idCliente: string) =>
     idCliente === banco.meusDados.id_cliente ? banco.dependentes : [];
@@ -233,6 +250,81 @@ export function handlersDemo(sessao: SessaoDemo) {
       const i = reservas.findIndex((r) => r.id_reserva === params.idReserva);
       if (i >= 0) reservas.splice(i, 1);
       return semConteudo();
+    }),
+
+    // Translados do funeral de exemplo (ADM-07).
+    http.get('*/api/v1/funerais/:id/translados', ({ params }) =>
+      HttpResponse.json(translados.filter((t) => t.id_funeral === params.id)),
+    ),
+    http.get('*/api/v1/translados/:id/historico', ({ params }) =>
+      HttpResponse.json(historicoTranslados[String(params.id)] ?? []),
+    ),
+    http.get('*/api/v1/translados/:id/documentos', ({ params }) => {
+      const t = translados.find((x) => x.id_translado === params.id);
+      if (!t) return naoEncontrado('Translado não encontrado.');
+      const exigidos = tabelaKm.documentos_exigidos[t.tipo] ?? [];
+      const documentos = exigidos.map((tipo, i) => ({ tipo, presente: i === 0 }));
+      return HttpResponse.json({
+        tipo: t.tipo,
+        documentos,
+        completo: documentos.every((d) => d.presente),
+      });
+    }),
+    http.get('*/api/v1/translados/:id/empresas-disponiveis', () =>
+      HttpResponse.json([
+        { id_terceiro: 'terceiro-boa-viagem', nome: 'Translados Boa Viagem' },
+        { id_terceiro: 'terceiro-remocoes-paz', nome: 'Remoções Paz' },
+      ]),
+    ),
+    http.post('*/api/v1/translados/simular', async ({ request }) => {
+      const dados = (await request.json()) as SimularTransladoRequest;
+      await delay(400);
+      return HttpResponse.json(simularTransladoDemo(dados, tabelaKm.faixas));
+    }),
+    http.post('*/api/v1/funerais/:id/translados', async ({ request, params }) => {
+      const dados = (await request.json()) as RegistrarTransladoRequest;
+      const simulacao = simularTransladoDemo(dados, tabelaKm.faixas);
+      const id = `translado-${Date.now()}`;
+      const translado: TransladoResponse = {
+        id_translado: id,
+        id_funeral: String(params.id),
+        ...simulacao,
+        status: 'AGENDADO',
+        origem: { endereco: '', cidade: '', uf: '', pais: 'BR', ...limparNulos(dados.origem) },
+        destino: { endereco: '', cidade: '', uf: '', pais: 'BR', ...limparNulos(dados.destino) },
+        data_prevista: dados.data_prevista ?? new Date().toISOString(),
+        id_terceiro_frota: null,
+        nome_frota: null,
+        status_aceite: null,
+        motivo_recusa: null,
+        motorista: null,
+      };
+      translados.push(translado);
+      historicoTranslados[id] = [mudancaTranslado('AGENDADO', 'AGENDADO', 'Translado registrado')];
+      await delay(300);
+      return HttpResponse.json(translado, { status: 201 });
+    }),
+    http.patch('*/api/v1/translados/:id/terceiro', async ({ request, params }) => {
+      const t = translados.find((x) => x.id_translado === params.id);
+      if (!t) return naoEncontrado('Translado não encontrado.');
+      const { id_terceiro } = (await request.json()) as AtribuirFrotaRequest;
+      t.id_terceiro_frota = id_terceiro;
+      t.nome_frota =
+        id_terceiro === 'terceiro-remocoes-paz' ? 'Remoções Paz' : 'Translados Boa Viagem';
+      t.status_aceite = 'PENDENTE';
+      t.motivo_recusa = null;
+      return HttpResponse.json(t);
+    }),
+    http.patch('*/api/v1/translados/:id/status', async ({ request, params }) => {
+      const t = translados.find((x) => x.id_translado === params.id);
+      if (!t) return naoEncontrado('Translado não encontrado.');
+      const { status, observacao } = (await request.json()) as StatusTransladoRequest;
+      if (!status) return naoEncontrado('Status inválido.');
+      (historicoTranslados[t.id_translado] ??= []).push(
+        mudancaTranslado(t.status, status, observacao),
+      );
+      t.status = status;
+      return HttpResponse.json(t);
     }),
 
     // Configurações da funerária e tabela de km do translado (ADM-12).

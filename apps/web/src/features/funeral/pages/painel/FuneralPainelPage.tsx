@@ -3,6 +3,7 @@ import { Badge } from '@ampara/ui/components/badge';
 import { Card } from '@ampara/ui/components/card';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router';
+import { TransladosDoFuneral } from '@/features/translado';
 import { Abas, PainelDaAba } from '@/shared/components/Abas';
 import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -62,7 +63,13 @@ export function FuneralPainelPage() {
               {ativa === 'historico' && <HistoricoDoFuneral historico={funeral.historico} />}
               {ativa === 'itens' && <MontadorDeItens funeral={funeral} />}
               {ativa === 'local' && <LocalEAgenda funeral={funeral} />}
-              {(ativa === 'translado' || ativa === 'documentos') && <EmBreve />}
+              {ativa === 'translado' && (
+                <TransladosDoFuneral
+                  idFuneral={funeral.id_funeral}
+                  dataPrevista={funeral.data_hora_prevista}
+                />
+              )}
+              {ativa === 'documentos' && <EmBreve />}
             </PainelDaAba>
           </>
         )}

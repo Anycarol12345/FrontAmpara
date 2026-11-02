@@ -34,7 +34,10 @@ export function useTransladoTempoReal(
       predicate: ({ queryKey }) => {
         const [rota] = queryKey;
         return (
-          typeof rota === 'string' && ROTAS_TRANSLADO.some((prefixo) => rota.startsWith(prefixo))
+          typeof rota === 'string' &&
+          (ROTAS_TRANSLADO.some((prefixo) => rota.startsWith(prefixo)) ||
+            // Translados do funeral (/api/v1/funerais/{id}/translados).
+            rota.endsWith('/translados'))
         );
       },
     });
