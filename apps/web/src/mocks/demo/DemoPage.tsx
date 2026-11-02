@@ -107,7 +107,7 @@ const GRUPOS: Grupo[] = [
     telas: [
       ...ATENDIMENTO,
       { titulo: 'Agenda', rota: '/painel/agenda', card: 'FE-ADM-06' },
-      { titulo: 'Documentos (em construção)', rota: '/painel/documentos', card: 'FE-ADM-08' },
+      { titulo: 'Documentos', rota: '/painel/documentos', card: 'FE-ADM-08' },
     ],
   },
   {

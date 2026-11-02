@@ -1,4 +1,7 @@
 import type {
+  CertidaoResponse,
+  FuneralResumoResponse,
+  PrazoRegistroResponse,
   EnderecoRequest,
   FaixaKm,
   HistoricoTransladoResponse,
@@ -577,4 +580,57 @@ export function simularTransladoDemo(
     valor_coberto_plano: coberto,
     valor_a_pagar: valor - coberto,
   };
+}
+
+/** Prazo legal do registro do óbito a partir de hoje (CER-03). */
+export function prazoDemo(dias: number): PrazoRegistroResponse {
+  const data = new Date(Date.now() + dias * 86_400_000).toISOString().slice(0, 10);
+  return { data, dias_restantes: dias, vencido: dias < 0 };
+}
+
+export const novaCertidaoDemo = (idBeneficiario: string): CertidaoResponse => ({
+  id_solicitacao: `certidao-${idBeneficiario}`,
+  id_beneficiario: idBeneficiario,
+  status: 'SOLICITADA',
+  modo: 'MANUAL',
+  responsavel: null,
+  protocolo: null,
+  pendencia: null,
+  numero_matricula: null,
+  id_documento_certidao: null,
+  prazo: prazoDemo(1),
+  historico: [
+    {
+      de: 'SOLICITADA',
+      para: 'SOLICITADA',
+      id_usuario: 'us-juliana',
+      observacao: 'Pedido registrado',
+      em: new Date().toISOString(),
+    },
+  ],
+});
+
+/** Os funerais dos outros falecidos que aparecem na agenda (ADM-06). */
+export function outrosFuneraisDemo(): FuneralResumoResponse[] {
+  const hoje = new Date();
+  const as = (h: number) =>
+    new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), h).toISOString();
+  return [
+    {
+      id_funeral: 'funeral-outro-1',
+      id_beneficiario: 'beneficiario-outro-1',
+      nome_falecido: 'José Almeida',
+      status: 'VELORIO',
+      data_hora_prevista: as(8),
+      destinacao: 'CREMACAO',
+    },
+    {
+      id_funeral: 'funeral-outro-2',
+      id_beneficiario: 'beneficiario-outro-2',
+      nome_falecido: 'Lúcia Ferraz',
+      status: 'REGISTRADO',
+      data_hora_prevista: as(15),
+      destinacao: 'SEPULTAMENTO',
+    },
+  ];
 }

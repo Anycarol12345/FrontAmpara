@@ -159,9 +159,7 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: 'documentos',
-                    element: (
-                      <EmConstrucao sobretitulo="Equipe" titulo="Documentos" card="FE-ADM-08" />
-                    ),
+                    lazy: pagina(() => import('@/features/documentos'), 'DocumentosPage'),
                   },
                 ],
               },

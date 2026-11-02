@@ -1,4 +1,9 @@
 import type {
+  CertidaoResponse,
+  DocumentoResponse,
+  FuneralResumoResponse,
+  ResponsavelCertidaoRequest,
+  StatusCertidaoRequest,
   AtribuirFrotaRequest,
   HistoricoTransladoResponse,
   RegistrarTransladoRequest,
@@ -35,6 +40,9 @@ import {
   limparNulos,
   locaisDemo,
   mudancaTranslado,
+  novaCertidaoDemo,
+  outrosFuneraisDemo,
+  prazoDemo,
   reservasDemo,
   simularTransladoDemo,
   tabelaKmDemo,
@@ -42,7 +50,13 @@ import {
   resumoDoContrato,
 } from './dados';
 import { alterarEstado, lerEstado } from '../estado';
-import { funeralDeExemplo, ID_FUNERAL_EXEMPLO, transladoDoExemplo } from '../exemplos';
+import {
+  certidaoDoExemplo,
+  documentosDoExemplo,
+  funeralDeExemplo,
+  ID_FUNERAL_EXEMPLO,
+  transladoDoExemplo,
+} from '../exemplos';
 import { loginDemo, salvarSessaoDemo, type SessaoDemo } from './sessao';
 
 const naoEncontrado = (detail: string) => HttpResponse.json({ detail }, { status: 404 });
@@ -79,6 +93,15 @@ export function handlersDemo(sessao: SessaoDemo) {
   const locais = locaisDemo();
   const reservas = reservasDemo();
   const translados = [transladoDoExemplo()];
+  const documentos: Record<string, DocumentoResponse[]> = {
+    [funeralDeExemplo().id_beneficiario]: documentosDoExemplo(),
+  };
+  const certidoes: Record<string, CertidaoResponse> = {
+    [funeralDeExemplo().id_beneficiario]: {
+      ...certidaoDoExemplo(),
+      historico: [...certidaoDoExemplo().historico],
+    },
+  };
   const historicoTranslados: Record<string, HistoricoTransladoResponse[]> = {
     [transladoDoExemplo().id_translado]: [
       mudancaTranslado('AGENDADO', 'AGENDADO', 'Translado registrado', -5),
@@ -325,6 +348,141 @@ export function handlersDemo(sessao: SessaoDemo) {
       );
       t.status = status;
       return HttpResponse.json(t);
+    }),
+
+    // Funerais do painel e documentos e certidão do falecido (ADM-08).
+    http.get('*/api/v1/gestao/funerais', ({ request }) => {
+      const status = new URL(request.url).searchParams.get('status');
+      const exemplo = funeralDeExemplo();
+      const lista: FuneralResumoResponse[] = [
+        {
+          id_funeral: exemplo.id_funeral,
+          id_beneficiario: exemplo.id_beneficiario,
+          nome_falecido: exemplo.nome_falecido,
+          status: exemplo.status,
+          data_hora_prevista: exemplo.data_hora_prevista,
+          destinacao: exemplo.destinacao,
+        },
+        ...outrosFuneraisDemo(),
+      ].filter((f) => !status || f.status === status);
+      return HttpResponse.json(paginar(lista, new URL(request.url)));
+    }),
+    http.get('*/api/v1/beneficiarios/:id/documentos', ({ params }) =>
+      HttpResponse.json(documentos[String(params.id)] ?? []),
+    ),
+    http.post('*/api/v1/beneficiarios/:id/documentos', async ({ request, params }) => {
+      const form = await request.formData();
+      const arquivo = form.get('arquivo') as File | null;
+      const documento: DocumentoResponse = {
+        id_documento: `doc-${Date.now()}`,
+        tipo: (form.get('tipo') as DocumentoResponse['tipo']) ?? 'OUTRO',
+        nome_original: arquivo?.name ?? 'arquivo.pdf',
+        content_type: arquivo?.type ?? 'application/pdf',
+        tamanho: arquivo?.size ?? 0,
+        enviado_em: new Date().toISOString(),
+      };
+      (documentos[String(params.id)] ??= []).push(documento);
+      await delay(400);
+      return HttpResponse.json(documento, { status: 201 });
+    }),
+    http.delete('*/api/v1/beneficiarios/:id/documentos/:idDocumento', ({ params }) => {
+      const lista = documentos[String(params.id)] ?? [];
+      const i = lista.findIndex((d) => d.id_documento === params.idDocumento);
+      if (i >= 0) lista.splice(i, 1);
+      return semConteudo();
+    }),
+    http.get('*/api/v1/beneficiarios/:id/certidao/checklist', ({ params }) => {
+      const presentes = new Set((documentos[String(params.id)] ?? []).map((d) => d.tipo));
+      const exigidos = [
+        ['DECLARACAO_OBITO', 'Declaração de óbito (DO)'],
+        ['DOCUMENTO_FALECIDO', 'RG ou CNH do falecido'],
+        ['DOCUMENTO_DECLARANTE', 'Documento do declarante'],
+      ] as const;
+      const lista = exigidos.map(([tipo, descricao]) => ({
+        tipo,
+        descricao,
+        presente: presentes.has(tipo),
+      }));
+      return HttpResponse.json({
+        dados: {
+          nome_falecido: 'Falecido(a) da demonstração',
+          data_nascimento: '1948-05-12',
+          data_falecimento: new Date(Date.now() - 86_400_000).toISOString(),
+          local_falecimento: 'Hospital Santa Clara, São Paulo-SP',
+          nome_declarante: 'Ana Souza',
+          telefone_declarante: '(11) 98888-0000',
+        },
+        documentos: lista,
+        prazo: prazoDemo(1),
+        pronto_para_solicitar: lista.every((d) => d.presente),
+      });
+    }),
+    http.get('*/api/v1/beneficiarios/:id/certidao', ({ params }) => {
+      const certidao = certidoes[String(params.id)];
+      return certidao ? HttpResponse.json(certidao) : naoEncontrado('Certidão não pedida.');
+    }),
+    http.post('*/api/v1/beneficiarios/:id/certidao', ({ params }) => {
+      const certidao = novaCertidaoDemo(String(params.id));
+      certidoes[String(params.id)] = certidao;
+      return HttpResponse.json(certidao, { status: 201 });
+    }),
+    http.patch('*/api/v1/beneficiarios/:id/certidao/status', async ({ request, params }) => {
+      const c = certidoes[String(params.id)];
+      if (!c) return naoEncontrado('Certidão não pedida.');
+      const dados = (await request.json()) as StatusCertidaoRequest;
+      if (!dados.status) return naoEncontrado('Status inválido.');
+      c.historico.push({
+        de: c.status,
+        para: dados.status,
+        id_usuario: 'us-juliana',
+        observacao: dados.observacao,
+        em: new Date().toISOString(),
+      });
+      c.status = dados.status;
+      if (dados.protocolo) c.protocolo = dados.protocolo;
+      c.pendencia =
+        dados.status === 'REJEITADA' || dados.status === 'ERRO' ? dados.observacao : null;
+      return semConteudo();
+    }),
+    http.patch('*/api/v1/beneficiarios/:id/certidao/responsavel', async ({ request, params }) => {
+      const c = certidoes[String(params.id)];
+      if (!c) return naoEncontrado('Certidão não pedida.');
+      const dados = (await request.json()) as ResponsavelCertidaoRequest;
+      const membro = banco.equipe.find((m) => m.id_usuario === dados.id_usuario);
+      c.responsavel = {
+        tipo: dados.tipo === 'TERCEIRO' ? 'TERCEIRO' : 'FUNCIONARIO',
+        id_usuario: dados.id_usuario,
+        id_terceiro: dados.id_terceiro,
+        nome: membro?.nome ?? 'Cartório do 2º Ofício',
+      };
+      return semConteudo();
+    }),
+    http.post('*/api/v1/beneficiarios/:id/certidao/emitida', async ({ request, params }) => {
+      const c = certidoes[String(params.id)];
+      if (!c) return naoEncontrado('Certidão não pedida.');
+      const form = await request.formData();
+      const arquivo = form.get('arquivo') as File | null;
+      const id = `doc-certidao-${Date.now()}`;
+      (documentos[String(params.id)] ??= []).push({
+        id_documento: id,
+        tipo: 'CERTIDAO_OBITO',
+        nome_original: arquivo?.name ?? 'certidao.pdf',
+        content_type: arquivo?.type ?? 'application/pdf',
+        tamanho: arquivo?.size ?? 0,
+        enviado_em: new Date().toISOString(),
+      });
+      c.historico.push({
+        de: c.status,
+        para: 'EMITIDA',
+        id_usuario: 'us-juliana',
+        observacao: null,
+        em: new Date().toISOString(),
+      });
+      c.status = 'EMITIDA';
+      c.numero_matricula = String(form.get('numero_matricula') ?? '');
+      c.id_documento_certidao = id;
+      await delay(400);
+      return HttpResponse.json(c);
     }),
 
     // Configurações da funerária e tabela de km do translado (ADM-12).

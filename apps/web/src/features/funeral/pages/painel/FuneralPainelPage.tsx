@@ -1,11 +1,11 @@
 import { useObterFuneral } from '@ampara/api-client';
 import { Badge } from '@ampara/ui/components/badge';
-import { Card } from '@ampara/ui/components/card';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router';
+import { DocumentosDoFuneral } from '@/features/documentos';
 import { TransladosDoFuneral } from '@/features/translado';
 import { Abas, PainelDaAba } from '@/shared/components/Abas';
-import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
+import { EstadoConsulta } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { DadosDoFuneral } from '../../components/DadosDoFuneral';
 import { HistoricoDoFuneral } from '../../components/HistoricoDoFuneral';
@@ -21,14 +21,6 @@ const ABAS = [
   { id: 'documentos', titulo: 'Documentos' },
   { id: 'historico', titulo: 'Histórico' },
 ] as const;
-
-function EmBreve() {
-  return (
-    <Card className="p-6">
-      <Vazio titulo="Em breve" descricao="Esta aba ainda será construída." />
-    </Card>
-  );
-}
 
 /** Página do funeral para a equipe, com abas; a aba ativa fica na URL (?aba=) (FE-ADM-05). */
 export function FuneralPainelPage() {
@@ -69,7 +61,9 @@ export function FuneralPainelPage() {
                   dataPrevista={funeral.data_hora_prevista}
                 />
               )}
-              {ativa === 'documentos' && <EmBreve />}
+              {ativa === 'documentos' && (
+                <DocumentosDoFuneral idBeneficiario={funeral.id_beneficiario} />
+              )}
             </PainelDaAba>
           </>
         )}
