@@ -8,8 +8,8 @@ import {
 } from '@ampara/ui/components/dialog';
 import { toast } from '@ampara/ui/components/sonner';
 import { ExternalLink } from 'lucide-react';
-import { data, numero, real } from '@/shared/lib/formatar';
-import type { FaturaResponse } from '../hooks/faturas';
+import { data, real } from '@/shared/lib/formatar';
+import { encargosDaFatura, type FaturaResponse } from '../hooks/faturas';
 import { competencia } from './rotulos';
 
 type Props = { fatura: FaturaResponse | null; aoFechar: () => void };
@@ -19,7 +19,7 @@ type Props = { fatura: FaturaResponse | null; aoFechar: () => void };
  * e abre a página de pagamento do Stripe. Os dados de pagamento não passam pela nossa API.
  */
 export function PagarFaturaDialog({ fatura, aoFechar }: Props) {
-  const encargos = numero(fatura?.valor_multa_juros);
+  const encargos = fatura ? encargosDaFatura(fatura) : 0;
 
   function irParaPagamento() {
     if (!fatura?.link_pagamento) return;

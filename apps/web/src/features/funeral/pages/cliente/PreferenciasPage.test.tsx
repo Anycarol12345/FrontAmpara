@@ -25,11 +25,11 @@ let salvo: { id: string; corpo: unknown } | undefined;
 beforeEach(() => {
   salvo = undefined;
   servidor.use(
-    http.get('*/api/v1/clientes/me', () =>
-      HttpResponse.json({ id_cliente: 'cl1', nome: 'Ana Souza', cpf: '52998224725' }),
+    http.get('*/api/v1/preferencias-funeral', () =>
+      HttpResponse.json([
+        { id_pessoa: 'cl1', tipo: 'TITULAR', nome: 'Ana Souza', preferencia: null },
+      ]),
     ),
-    http.get('*/api/v1/dependentes', () => HttpResponse.json([])),
-    http.get('*/api/v1/preferencias-funeral', () => HttpResponse.json([])),
     http.put('*/api/v1/preferencias-funeral/:id', async ({ request, params }) => {
       salvo = { id: String(params.id), corpo: await request.json() };
       return HttpResponse.json({ ...(salvo.corpo as object), id_pessoa: params.id });
@@ -93,14 +93,16 @@ describe('PreferenciasPage', () => {
     expect(salvo).toEqual({
       id: 'cl1',
       corpo: {
-        destino: 'CREMACAO',
-        cerimonia: null,
-        itens: [
-          { id_item_catalogo: 'i1', id_variacao: null },
-          { id_item_catalogo: 'i2', id_variacao: 'v1' },
-        ],
-        musicas: null,
+        destinacao: 'CREMACAO',
+        tipo_cerimonia: 'NAO_DEFINIDA',
+        crenca_religiosa: null,
+        musicas: [],
+        mensagens: null,
         observacoes: null,
+        itens: [
+          { id_item_catalogo: 'i1', id_variacao: null, quantidade: 1 },
+          { id_item_catalogo: 'i2', id_variacao: 'v1', quantidade: 1 },
+        ],
       },
     });
   });

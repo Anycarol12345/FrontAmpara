@@ -5,6 +5,7 @@ import { Label } from '@ampara/ui/components/label';
 import { Separator } from '@ampara/ui/components/separator';
 import { ArrowRight } from 'lucide-react';
 import { Controller } from 'react-hook-form';
+import { cn } from '@ampara/ui/lib/utils';
 import { Link } from 'react-router';
 import { AuthSplitLayout } from '@/shared/components/AuthSplitLayout';
 import { Campo, ErroFormulario } from '@/shared/components/Campo';
@@ -31,8 +32,22 @@ const PERFIS_DEMO = [
   },
 ];
 
-export function LoginEquipePage() {
+// Administrador da plataforma criado pelo seed (Seed:AdminEmail), que entra sem funerária.
+const PERFIS_PLATAFORMA = [
+  {
+    nome: 'Plataforma',
+    descricao: 'Funerárias, aprovações e suporte',
+    email: 'admin@funeraria.localhost',
+  },
+];
+
+/**
+ * Login da equipe da funerária (FE-PUB-03). Com `plataforma`, é o login do ADMIN em /admin/entrar:
+ * por estar dentro de /admin, o pedido vai sem X-Tenant, como o backend exige para o ADMIN.
+ */
+export function LoginEquipePage({ plataforma = false }: { plataforma?: boolean }) {
   const { formulario, enviar } = useFormularioLogin(false);
+  const perfis = plataforma ? PERFIS_PLATAFORMA : PERFIS_DEMO;
   const {
     register,
     control,
@@ -43,20 +58,38 @@ export function LoginEquipePage() {
   return (
     <AuthSplitLayout
       variante="equipe"
-      sobretitulo="Portal da equipe"
+      sobretitulo={plataforma ? 'Plataforma Ampara' : 'Portal da equipe'}
       titulo={
-        <>
-          Cada pessoa, <em className="font-light text-brand-300">no seu painel</em>
-        </>
+        plataforma ? (
+          <>
+            Todas as funerárias, <em className="font-light text-brand-300">num só lugar</em>
+          </>
+        ) : (
+          <>
+            Cada pessoa, <em className="font-light text-brand-300">no seu painel</em>
+          </>
+        )
       }
-      descricao="Entre com seu e-mail corporativo e acesse o painel do seu perfil: funcionário, consultor ou administrador."
-      itens={[
-        'Atendimentos, agenda e documentos num só lugar',
-        'Cada perfil vê apenas o que precisa',
-        'Ambiente seguro e restrito à equipe',
-      ]}
+      descricao={
+        plataforma
+          ? 'Acesso do administrador da plataforma: funerárias, aprovações de cadastro e suporte.'
+          : 'Entre com seu e-mail corporativo e acesse o painel do seu perfil: funcionário, consultor ou administrador.'
+      }
+      itens={
+        plataforma
+          ? [
+              'Aprovação de novas funerárias',
+              'Suspensão e reativação',
+              'Acesso restrito à equipe Ampara',
+            ]
+          : [
+              'Atendimentos, agenda e documentos num só lugar',
+              'Cada perfil vê apenas o que precisa',
+              'Ambiente seguro e restrito à equipe',
+            ]
+      }
     >
-      <Eyebrow>Portal da equipe</Eyebrow>
+      <Eyebrow>{plataforma ? 'Plataforma Ampara' : 'Portal da equipe'}</Eyebrow>
       <h2 className="mt-3 text-[44px]/[1.15] font-bold tracking-tight">Bem-vindo de volta</h2>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
         Use seu e-mail corporativo da Ampara. Você entra direto no painel do seu perfil.
@@ -120,8 +153,8 @@ export function LoginEquipePage() {
         Escolha um perfil para preencher o e-mail da funerária de demonstração e informe a senha
         definida no backend.
       </p>
-      <div className="mt-4 grid grid-cols-3 gap-3">
-        {PERFIS_DEMO.map((perfil) => (
+      <div className={cn('mt-4 grid gap-3', plataforma ? 'grid-cols-1' : 'grid-cols-3')}>
+        {perfis.map((perfil) => (
           <button
             key={perfil.nome}
             type="button"
@@ -137,6 +170,17 @@ export function LoginEquipePage() {
       </div>
 
       <p className="mt-8 text-center text-xs text-subtle-foreground">
+        {plataforma ? (
+          <Link to="/equipe/entrar" className="font-semibold hover:underline">
+            Sou da equipe de uma funerária
+          </Link>
+        ) : (
+          <Link to="/admin/entrar" className="font-semibold hover:underline">
+            Sou administrador da plataforma
+          </Link>
+        )}
+      </p>
+      <p className="mt-3 text-center text-xs text-subtle-foreground">
         Portal interno Ampara · Ambiente seguro e restrito à equipe
       </p>
     </AuthSplitLayout>

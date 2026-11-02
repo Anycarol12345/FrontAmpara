@@ -39,9 +39,23 @@ No PowerShell, troque `cp` por `Copy-Item`.
 O `apps/web` conversa com a API pela **mesma origem**: o Vite repassa `/api` e `/hubs` para
 `VITE_API_PROXY` (padrão `http://localhost:5080`). Assim o cookie de refresh funciona sem CORS.
 
-1. Suba o backend (repositório `ArturRibeiroB/Ampara`) seguindo o README dele. Em Development ele cria a
-   funerária `demo` e os usuários `gestor@demo.localhost` e `funcionario@demo.localhost`.
+1. Suba o backend (repositório `ArturRibeiroB/Ampara`, branch `developer`) seguindo o README dele. Em
+   Development ele cria a funerária `demo` e os usuários de demonstração.
 2. Rode `pnpm dev` e abra http://localhost:5173.
+
+| Perfil                      | Onde entrar      | E-mail                       | Senha                                        |
+| --------------------------- | ---------------- | ---------------------------- | -------------------------------------------- |
+| Gestor (Administrador)      | `/equipe/entrar` | `gestor@demo.localhost`      | valor de `SEED_SENHA_DEMO` no `.env` do back |
+| Funcionário                 | `/equipe/entrar` | `funcionario@demo.localhost` | valor de `SEED_SENHA_DEMO`                   |
+| Consultor                   | `/equipe/entrar` | `consultor@demo.localhost`   | valor de `SEED_SENHA_DEMO`                   |
+| Cliente                     | `/entrar`        | `cliente@demo.localhost`     | valor de `SEED_SENHA_DEMO`                   |
+| Parceiro (frota)            | `/equipe/entrar` | `frota@demo.localhost`       | valor de `SEED_SENHA_DEMO`                   |
+| Administrador da plataforma | `/admin/entrar`  | `admin@funeraria.localhost`  | valor de `SEED_ADMIN_SENHA`                  |
+
+A senha é o **valor** da variável (o que vem depois do `=`), não o nome dela. As senhas ficam no `.env` do backend (o `.env.example` dele traz valores de exemplo) ou nos user-secrets
+(`Seed:SenhaDemo` e `Seed:AdminSenha`). O administrador da plataforma não pertence a nenhuma funerária e
+o backend recusa o login dele com `X-Tenant`: por isso ele entra em `/admin/entrar`, que vai sem funerária.
+Depois de 5 tentativas erradas, o backend bloqueia a conta por 5 minutos (padrão do ASP.NET Identity).
 
 A funerária vem do subdomínio (http://demo.localhost:5173). Sem subdomínio, vale `VITE_TENANT_PADRAO`.
 O `/admin` (plataforma) é aberto sem funerária.
@@ -121,17 +135,20 @@ funcionário, consultor, parceiro e plataforma. Cada link entra direto com um us
 
 ## Dados fictícios (desenvolvimento)
 
-Algumas telas da área do cliente usam rotas que o backend ainda não publicou: faturas (COB-01),
-preferências de funeral (FUN-02), funerais (FUN-07) e notificações (NOT-02). Em desenvolvimento, o MSW
-responde só essas rotas no navegador (`apps/web/src/mocks`); todo o resto vai para a API real.
+Fora da página `/demo`, nada é simulado: todas as telas usam a API real.
 
-- As faturas são geradas a partir do contrato real (valor, periodicidade e situação).
+Na demonstração, o MSW (`apps/web/src/mocks`) responde a API inteira no formato do OpenAPI:
+
+- As faturas são geradas a partir do contrato da demonstração (valor, periodicidade e situação).
 - O botão de pagar abre `/pagamento-simulado`, que faz o papel da página do Stripe. Pix e boleto ficam
   "em processamento" por alguns segundos antes de virarem pagos.
-- O estado fica no `localStorage` (`ampara:dados-ficticios`); apague a chave para recomeçar.
-- Para desligar: `VITE_DADOS_FICTICIOS=false` no `.env` do `apps/web`. No build de produção nada disso entra.
-- Quando o backend publicar uma rota, rode `pnpm api:generate`, troque o hook escrito à mão
-  (`features/*/hooks`) pelo do Orval e apague o handler correspondente em `src/mocks/handlers.ts`.
+- Faturas, preferências e notificações ficam no `localStorage` (`ampara:dados-ficticios:v2`); o botão
+  "Recomeçar" da página `/demo` apaga tudo.
+- Única rota que só existe na demonstração: `GET /funerais` (lista dos funerais da família). Enquanto o
+  backend não publicar essa listagem, a tela Atendimentos fica vazia fora da demonstração; o
+  acompanhamento abre pelo link da notificação (`/funerais/{id}`).
+- Para desligar a demonstração de vez: `VITE_DADOS_FICTICIOS=false` no `.env` do `apps/web`. No build de
+  produção nada disso entra.
 
 ## Testes
 

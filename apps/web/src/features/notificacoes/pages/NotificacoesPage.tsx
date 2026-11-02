@@ -4,13 +4,13 @@ import { CheckCheck } from 'lucide-react';
 import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { ListaNotificacoes } from '../components/ListaNotificacoes';
-import { useMarcarComoLida, useNotificacoes } from '../hooks/notificacoes';
+import { foiLida, useMarcarComoLida, useNotificacoes } from '../hooks/notificacoes';
 
 /** Central de notificações (FE-CLI-09, GET /notificacoes). */
 export function NotificacoesPage() {
   const consulta = useNotificacoes();
   const marcar = useMarcarComoLida();
-  const naoLidas = consulta.data?.filter((n) => !n.lida).length ?? 0;
+  const naoLidas = consulta.data?.nao_lidas ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -28,7 +28,7 @@ export function NotificacoesPage() {
       />
       <EstadoConsulta
         consulta={consulta}
-        estaVazio={(lista) => lista.length === 0}
+        estaVazio={(pagina) => pagina.itens.length === 0}
         vazio={
           <Card>
             <Vazio
@@ -38,11 +38,11 @@ export function NotificacoesPage() {
           </Card>
         }
       >
-        {(lista) => (
+        {(pagina) => (
           <Card className="p-3">
             <ListaNotificacoes
-              notificacoes={lista}
-              aoAbrir={(n) => !n.lida && marcar.mutate(n.id_notificacao)}
+              notificacoes={pagina.itens}
+              aoAbrir={(n) => !foiLida(n) && marcar.mutate(n.id_notificacao)}
             />
           </Card>
         )}

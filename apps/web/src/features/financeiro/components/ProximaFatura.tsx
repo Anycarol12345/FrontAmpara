@@ -33,6 +33,10 @@ export function ProximaFatura({ idContrato, plano }: { idContrato: string; plano
           <p className="text-xs text-muted-foreground">
             Não foi possível carregar as faturas agora.
           </p>
+        ) : faturas.data?.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            A primeira fatura aparece aqui assim que for gerada.
+          </p>
         ) : !proxima ? (
           <p className="text-xs text-muted-foreground">Tudo pago. Nenhuma fatura em aberto.</p>
         ) : (

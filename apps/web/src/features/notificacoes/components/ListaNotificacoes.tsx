@@ -1,6 +1,6 @@
 import { cn } from '@ampara/ui/lib/utils';
 import { Link } from 'react-router';
-import { quando, type NotificacaoResponse } from '../hooks/notificacoes';
+import { foiLida, linkDoCliente, quando, type NotificacaoResponse } from '../hooks/notificacoes';
 
 type Props = {
   notificacoes: NotificacaoResponse[];
@@ -13,19 +13,21 @@ export function ListaNotificacoes({ notificacoes, aoAbrir, className }: Props) {
   return (
     <ul className={cn('flex flex-col', className)}>
       {notificacoes.map((n) => {
+        const lida = foiLida(n);
+        const link = linkDoCliente(n.link);
         const conteudo = (
           <>
             <span
               aria-hidden
               className={cn(
                 'mt-1.5 size-2 shrink-0 rounded-full',
-                n.lida ? 'bg-transparent' : 'bg-brand-800',
+                lida ? 'bg-transparent' : 'bg-brand-800',
               )}
             />
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className={cn('text-sm', !n.lida && 'font-semibold')}>
+              <span className={cn('text-sm', !lida && 'font-semibold')}>
                 {n.titulo}
-                {!n.lida && <span className="sr-only"> (não lida)</span>}
+                {!lida && <span className="sr-only"> (não lida)</span>}
               </span>
               <span className="mt-0.5 text-xs text-muted-foreground">{n.mensagem}</span>
               <span className="mt-1 text-[11px] text-subtle-foreground">{quando(n.criada_em)}</span>
@@ -36,8 +38,8 @@ export function ListaNotificacoes({ notificacoes, aoAbrir, className }: Props) {
           'flex w-full gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-muted';
         return (
           <li key={n.id_notificacao}>
-            {n.link ? (
-              <Link to={n.link} className={classe} onClick={() => aoAbrir(n)}>
+            {link ? (
+              <Link to={link} className={classe} onClick={() => aoAbrir(n)}>
                 {conteudo}
               </Link>
             ) : (

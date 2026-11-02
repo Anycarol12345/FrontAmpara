@@ -4,13 +4,13 @@ import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router';
 import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
-import { dataLonga } from '@/shared/lib/formatar';
+import { dataHora } from '@/shared/lib/formatar';
 import { STATUS_FUNERAL } from '../../components/rotulos';
-import { useMeusFunerais } from '../../hooks/funerais';
+import { useFuneraisDaFamilia } from '../../hooks/funerais';
 
 /** Atendimentos de funeral ligados aos contratos do titular (FE-CLI-08, GET /funerais). */
 export function AtendimentosPage() {
-  const consulta = useMeusFunerais();
+  const consulta = useFuneraisDaFamilia();
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,7 +42,7 @@ export function AtendimentosPage() {
                 <div className="flex-1">
                   <p className="text-sm font-semibold">{f.nome_falecido}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Falecimento em {dataLonga(f.data_falecimento)}
+                    Cerimônia prevista para {dataHora(f.data_hora_prevista)}
                   </p>
                 </div>
                 <Badge variant={f.status === 'CONCLUIDO' ? 'neutral' : 'info'}>

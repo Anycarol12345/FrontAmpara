@@ -35,6 +35,8 @@ export const router = createBrowserRouter([
       { path: '/', element: <Navigate to="/entrar" replace /> },
       { path: '/entrar', element: <LoginClientePage /> },
       { path: '/equipe/entrar', element: <LoginEquipePage /> },
+      // Fica dentro de /admin para o pedido ir sem X-Tenant: o ADMIN não é de nenhuma funerária.
+      { path: '/admin/entrar', element: <LoginEquipePage plataforma /> },
       // Links enviados por e-mail pelo backend (LinksIdentidade): /login, /definir-senha,
       // /redefinir-senha e /confirmar-email (FE-PUB-03).
       { path: '/login', element: <IrParaLogin /> },

@@ -14,19 +14,30 @@ const lista = (): NotificacaoResponse[] => [
     id_notificacao: 'n1',
     titulo: 'Sua fatura está disponível',
     mensagem: 'Você pode pagar com Pix, boleto ou cartão.',
+    tipo: 'FATURA',
     link: null,
-    lida: false,
+    lida_em: null,
     criada_em: agora,
   },
   {
     id_notificacao: 'n2',
     titulo: 'Bem-vindo',
     mensagem: 'Sua conta está pronta.',
+    tipo: 'BOAS_VINDAS',
     link: null,
-    lida: true,
+    lida_em: agora,
     criada_em: agora,
   },
 ];
+
+// Formato de GET /notificacoes: página com o total de não lidas.
+const pagina = (itens: NotificacaoResponse[]) => ({
+  itens,
+  pagina: 1,
+  tamanho: 20,
+  total: itens.length,
+  nao_lidas: itens.filter((n) => n.lida_em === null).length,
+});
 
 const rotas = [
   {
@@ -45,10 +56,10 @@ describe('Central de notificações', () => {
     let notificacoes = lista();
     let marcouTodas = false;
     servidor.use(
-      http.get('*/api/v1/notificacoes', () => HttpResponse.json(notificacoes)),
+      http.get('*/api/v1/notificacoes', () => HttpResponse.json(pagina(notificacoes))),
       http.patch('*/api/v1/notificacoes/lidas', () => {
         marcouTodas = true;
-        notificacoes = notificacoes.map((n) => ({ ...n, lida: true }));
+        notificacoes = notificacoes.map((n) => ({ ...n, lida_em: agora }));
         return new HttpResponse(null, { status: 204 });
       }),
     );
@@ -72,7 +83,7 @@ describe('Central de notificações', () => {
   it('marca uma notificação como lida ao abrir', async () => {
     let lida: string | undefined;
     servidor.use(
-      http.get('*/api/v1/notificacoes', () => HttpResponse.json(lista())),
+      http.get('*/api/v1/notificacoes', () => HttpResponse.json(pagina(lista()))),
       http.patch('*/api/v1/notificacoes/:id/lida', ({ params }) => {
         lida = String(params.id);
         return new HttpResponse(null, { status: 204 });

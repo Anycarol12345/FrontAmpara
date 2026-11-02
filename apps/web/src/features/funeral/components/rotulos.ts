@@ -43,6 +43,9 @@ export const ETAPAS_TRANSLADO: { status: StatusTranslado; rotulo: string }[] = [
 
 export const STATUS_CERTIDAO: Record<StatusCertidao, string> = {
   SOLICITADA: 'Solicitada ao cartório',
-  EM_ANDAMENTO: 'Em emissão no cartório',
+  EM_PROCESSAMENTO: 'Em emissão no cartório',
   EMITIDA: 'Emitida',
+  // Rejeição e erro são resolvidos pela funerária: para a família, o pedido segue em andamento.
+  REJEITADA: 'Em emissão no cartório',
+  ERRO: 'Em emissão no cartório',
 };

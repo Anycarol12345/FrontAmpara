@@ -13,6 +13,7 @@ const fatura = (parcial: Partial<FaturaResponse>): FaturaResponse => ({
   competencia: '2026-08',
   valor: 69,
   valor_multa_juros: 0,
+  encargos_estimados: 0,
   data_vencimento: '2026-08-10',
   status: 'PAGA',
   forma_pagamento: 'PIX',

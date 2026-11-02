@@ -1,11 +1,11 @@
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router';
-import { useMeusFunerais } from '../hooks/funerais';
+import { useFuneraisDaFamilia } from '../hooks/funerais';
 import { STATUS_FUNERAL } from './rotulos';
 
 /** Aviso no início da área do cliente quando há um atendimento em andamento (FE-CLI-08). */
 export function AtendimentoEmAndamento() {
-  const consulta = useMeusFunerais();
+  const consulta = useFuneraisDaFamilia();
   const emAndamento = consulta.data?.filter(
     (f) => f.status !== 'CONCLUIDO' && f.status !== 'CANCELADO',
   );

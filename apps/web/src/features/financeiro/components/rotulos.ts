@@ -11,7 +11,7 @@ export const STATUS_FATURA: Record<
   CANCELADA: { rotulo: 'Cancelada', variante: 'neutral' },
 };
 
-export const FORMA_PAGAMENTO: Record<FormaPagamento, string> = {
+export const FORMA_PAGAMENTO: Record<NonNullable<FormaPagamento>, string> = {
   CARTAO: 'cartão',
   PIX: 'Pix',
   BOLETO: 'boleto',

@@ -1,56 +1,51 @@
-import { requisicao } from '@ampara/api-client';
+import {
+  getMinhasNotificacoesQueryKey,
+  marcarNotificacaoLida,
+  marcarTodasLidas,
+  useMinhasNotificacoes,
+  type NotificacaoResponse,
+  type NotificacoesResponse,
+} from '@ampara/api-client';
 import { toast } from '@ampara/ui/components/sonner';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useEventoTempoReal } from '@/shared/tempo-real/contexto';
 
-// Escrito à mão a partir do NOT-02 enquanto o backend não publica o módulo Notificacoes.
-// Quando o endpoint entrar no OpenAPI, troque pelos hooks do Orval (pnpm api:generate).
+export type { NotificacaoResponse } from '@ampara/api-client';
 
-export type NotificacaoResponse = {
-  id_notificacao: string;
-  titulo: string;
-  mensagem: string;
-  /** Tela do sistema relacionada (ex.: /minha-conta/faturas). */
-  link: string | null;
-  lida: boolean;
-  criada_em: string;
-};
+/** Evento do hub /hubs/notificacoes a cada notificação nova (NOT-02, NotificacoesHub.Evento). */
+export const EVENTO_NOTIFICACAO = 'notificacao';
 
-/** Evento do hub /hubs/notificacoes a cada notificação nova (NOT-02). */
-export const EVENTO_NOTIFICACAO = 'NotificacaoRecebida';
+const PARAMETROS = { pagina: 1, tamanho: 20 };
+const chave = (): QueryKey => getMinhasNotificacoesQueryKey(PARAMETROS);
 
-export const getNotificacoesUrl = () => '/api/v1/notificacoes';
-const chave = [getNotificacoesUrl()] as const;
+export const foiLida = (n: NotificacaoResponse) => n.lida_em !== null;
 
+/** As 20 notificações mais recentes e quantas ainda não foram lidas (GET /notificacoes). */
 export function useNotificacoes() {
-  return useQuery({
-    queryKey: chave,
-    queryFn: ({ signal }) => requisicao<NotificacaoResponse[]>(getNotificacoesUrl(), { signal }),
-  });
+  return useMinhasNotificacoes(PARAMETROS);
 }
 
 /** Marca uma notificação como lida, ou todas quando não recebe o id. */
 export function useMarcarComoLida() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id?: string) =>
-      requisicao<void>(
-        id ? `${getNotificacoesUrl()}/${id}/lida` : `${getNotificacoesUrl()}/lidas`,
-        {
-          method: 'PATCH',
-        },
-      ),
+    mutationFn: (id?: string) => (id ? marcarNotificacaoLida(id) : marcarTodasLidas()),
     // A lista muda na hora; se a API falhar, volta como estava.
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: chave });
-      const anterior = queryClient.getQueryData<NotificacaoResponse[]>(chave);
-      queryClient.setQueryData<NotificacaoResponse[]>(chave, (lista) =>
-        lista?.map((n) => (!id || n.id_notificacao === id ? { ...n, lida: true } : n)),
-      );
+      await queryClient.cancelQueries({ queryKey: chave() });
+      const anterior = queryClient.getQueryData<NotificacoesResponse>(chave());
+      const agora = new Date().toISOString();
+      queryClient.setQueryData<NotificacoesResponse>(chave(), (pagina) => {
+        if (!pagina) return pagina;
+        const itens = pagina.itens.map((n) =>
+          !foiLida(n) && (!id || n.id_notificacao === id) ? { ...n, lida_em: agora } : n,
+        );
+        return { ...pagina, itens, nao_lidas: id ? Math.max(0, pagina.nao_lidas - 1) : 0 };
+      });
       return { anterior };
     },
-    onError: (_erro, _id, contexto) => queryClient.setQueryData(chave, contexto?.anterior),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: chave }),
+    onError: (_erro, _id, contexto) => queryClient.setQueryData(chave(), contexto?.anterior),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: chave() }),
   });
 }
 
@@ -58,12 +53,31 @@ export function useMarcarComoLida() {
 export function useNotificacoesTempoReal() {
   const queryClient = useQueryClient();
   useEventoTempoReal<NotificacaoResponse>(EVENTO_NOTIFICACAO, (nova) => {
-    queryClient.setQueryData<NotificacaoResponse[]>(chave, (lista) => [
-      nova,
-      ...(lista ?? []).filter((n) => n.id_notificacao !== nova.id_notificacao),
-    ]);
+    queryClient.setQueryData<NotificacoesResponse>(chave(), (pagina) =>
+      pagina
+        ? {
+            ...pagina,
+            itens: [nova, ...pagina.itens.filter((n) => n.id_notificacao !== nova.id_notificacao)],
+            total: pagina.total + 1,
+            nao_lidas: pagina.nao_lidas + 1,
+          }
+        : pagina,
+    );
     toast(nova.titulo, { description: nova.mensagem });
   });
+}
+
+/**
+ * O backend aponta para o recurso (/contratos/{id}, /faturas/{id}, /funerais/{id});
+ * aqui ele vira a tela da área do cliente.
+ */
+export function linkDoCliente(link: string | null) {
+  if (!link) return null;
+  const [, recurso, id] = link.split('/');
+  if (recurso === 'contratos' && id) return `/minha-conta/contratos/${id}`;
+  if (recurso === 'faturas') return '/minha-conta/faturas';
+  if (recurso === 'funerais' && id) return `/minha-conta/atendimentos/${id}`;
+  return link.startsWith('/minha-conta') ? link : null;
 }
 
 /** "há 5 minutos", "ontem", "12/10/2026" */

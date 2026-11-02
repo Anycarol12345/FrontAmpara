@@ -1,7 +1,13 @@
-import type { ContratoDetalheResponse } from '@ampara/api-client';
-import type { FormaPagamento } from '@/features/financeiro';
-import type { FuneralResponse } from '@/features/funeral';
-import type { NotificacaoResponse } from '@/features/notificacoes';
+import type {
+  CertidaoResponse,
+  ComposicaoItensResponse,
+  ContratoDetalheResponse,
+  DocumentoResponse,
+  FormaPagamento,
+  FuneralResponse,
+  NotificacaoResponse,
+  TransladoResponse,
+} from '@ampara/api-client';
 import type { FaturaFicticia } from './estado';
 
 const iso = (data: Date) => data.toISOString();
@@ -52,9 +58,10 @@ export function gerarFaturas(contrato: ContratoDetalheResponse): FaturaFicticia[
     const base: FaturaFicticia = {
       id_fatura: id,
       id_contrato: contrato.id_contrato,
-      competencia: dia(vencimento).slice(0, 7),
+      competencia: dia(vencimento),
       valor: contrato.valor_total,
       valor_multa_juros: 0,
+      encargos_estimados: 0,
       data_vencimento: dia(vencimento),
       status: 'PAGA',
       forma_pagamento: FORMAS[i % FORMAS.length]!,
@@ -77,7 +84,7 @@ export function gerarFaturas(contrato: ContratoDetalheResponse): FaturaFicticia[
       return {
         ...emAberto,
         status: 'VENCIDA',
-        valor_multa_juros: Math.round(encargos * 100) / 100,
+        encargos_estimados: Math.round(encargos * 100) / 100,
       };
     }
     if (contrato.status === 'A_PAGAR' || vencimento > hoje)
@@ -86,102 +93,220 @@ export function gerarFaturas(contrato: ContratoDetalheResponse): FaturaFicticia[
   });
 }
 
-/** Um atendimento de exemplo, para mostrar a tela de acompanhamento (FE-CLI-08). */
+/** Um atendimento de exemplo no formato de GET /funerais/{id}, para a tela de acompanhamento (FE-CLI-08). */
+export const ID_FUNERAL_EXEMPLO = 'exemplo-1';
+const ID_BENEFICIARIO_EXEMPLO = 'beneficiario-exemplo-1';
+
 export function funeralDeExemplo(): FuneralResponse {
-  const pdf = URL.createObjectURL(new Blob([PDF_FICTICIO], { type: 'application/pdf' }));
   return {
-    id_funeral: 'exemplo-1',
+    id_funeral: ID_FUNERAL_EXEMPLO,
+    id_beneficiario: ID_BENEFICIARIO_EXEMPLO,
+    id_contrato: 'ct-ana-acolher',
     nome_falecido: 'Helena Duarte',
-    data_falecimento: dia(mais(-30)),
     status: 'EM_PREPARACAO',
+    data_hora_prevista: iso(mais(27)),
+    destinacao: 'SEPULTAMENTO',
+    observacoes: null,
+    proximos_status: ['VELORIO', 'CANCELADO'],
+    equipe: [
+      {
+        id_usuario: 'us-carlos',
+        id_funcionario: 'fn-carlos',
+        nome: 'Carlos Menezes',
+        email: 'carlos@ampara.demo',
+        perfil: 'FUNCIONARIO',
+        ativo: true,
+        cpf: null,
+        cargo: 'Atendente',
+        telefone: '(11) 98888-7766',
+      },
+    ],
+    reservas: [
+      {
+        id_reserva: 'reserva-velorio',
+        id_local: 'local-capela',
+        nome_local: 'Capela Ampara Jardim · Sala 2',
+        tipo_local: 'SALA_VELORIO',
+        inicio: iso(mais(18)),
+        fim: iso(mais(26)),
+      },
+      {
+        id_reserva: 'reserva-sepultamento',
+        id_local: 'local-cemiterio',
+        nome_local: 'Cemitério da Paz',
+        tipo_local: 'CEMITERIO',
+        inicio: iso(mais(27)),
+        fim: iso(mais(28)),
+      },
+    ],
     historico: [
-      { status: 'REGISTRADO', data_hora: iso(mais(-28)), observacao: null },
       {
-        status: 'EM_PREPARACAO',
-        data_hora: iso(mais(-20)),
+        de: 'REGISTRADO',
+        para: 'REGISTRADO',
+        id_usuario: 'us-carlos',
+        observacao: null,
+        em: iso(mais(-28)),
+      },
+      {
+        de: 'REGISTRADO',
+        para: 'EM_PREPARACAO',
+        id_usuario: 'us-carlos',
         observacao: 'As flores escolhidas pela família já foram encomendadas.',
+        em: iso(mais(-20)),
       },
     ],
-    velorio: {
-      local: 'Capela Ampara Jardim',
-      endereco: 'Rua das Acácias, 120 - Jardim Paulista, São Paulo - SP',
-      sala: 'Sala 2',
-      inicio: iso(mais(18)),
-      fim: iso(mais(26)),
-    },
-    despedida: {
-      tipo: 'SEPULTAMENTO',
-      local: 'Cemitério da Paz',
-      endereco: 'Av. Prof. Francisco Morato, 2000 - Butantã, São Paulo - SP',
-      data_hora: iso(mais(27)),
-    },
-    itens: [
-      {
-        nome: 'Urna em madeira com acabamento acetinado',
-        categoria: 'Urna',
-        quantidade: 1,
-        coberto: true,
-      },
-      { nome: 'Coroa de flores do campo', categoria: 'Flores', quantidade: 2, coberto: false },
-      { nome: 'Sala de velório por 8 horas', categoria: 'Velório', quantidade: 1, coberto: true },
-      {
-        nome: 'Transmissão online da cerimônia',
-        categoria: 'Transmissão online',
-        quantidade: 1,
-        coberto: false,
-      },
-    ],
-    translado: {
-      id_translado: 'translado-exemplo-1',
-      status: 'EM_TRANSITO',
-      origem: 'Hospital Santa Clara',
-      destino: 'Capela Ampara Jardim',
-      historico: [
-        { status: 'AGENDADO', data_hora: iso(mais(-6)), observacao: null },
-        { status: 'EM_COLETA', data_hora: iso(mais(-1.5)), observacao: null },
-        { status: 'EM_TRANSITO', data_hora: iso(mais(-0.5)), observacao: null },
-      ],
-    },
-    certidao: { status: 'EM_ANDAMENTO', numero_matricula: null, url: null },
-    documentos: [{ id_documento: 'doc-1', nome: 'Declaração de óbito', url: pdf }],
-    responsavel: { nome: 'Carlos Menezes', telefone: '(11) 98888-7766' },
   };
 }
 
-export function notificacoesIniciais(): NotificacaoResponse[] {
+export function itensDoExemplo(): ComposicaoItensResponse {
+  const coberto = (id: string, nome: string, categoria: string, quantidade = 1) => ({
+    id_funeral_item: id,
+    id_item_catalogo: id,
+    nome,
+    categoria,
+    variacao: null,
+    quantidade,
+  });
+  return {
+    itens_cobertos: [
+      coberto('fi-urna', 'Urna sextavada em madeira', 'Urna'),
+      coberto('fi-sala', 'Sala de velório (8 horas)', 'Velório'),
+      coberto('fi-flor', 'Coroa de flores do campo', 'Flores'),
+    ],
+    itens_adicionais: [
+      {
+        ...coberto('fi-transmissao', 'Transmissão online da cerimônia', 'Transmissão online'),
+        preco_unitario: 300,
+        subtotal: 300,
+        somente_diferenca_variacao: false,
+      },
+    ],
+    total_adicional: 300,
+  };
+}
+
+export function transladoDoExemplo(): TransladoResponse {
+  return {
+    id_translado: 'translado-exemplo-1',
+    id_funeral: ID_FUNERAL_EXEMPLO,
+    tipo: 'MUNICIPAL',
+    status: 'EM_TRANSITO',
+    origem: { endereco: 'Hospital Santa Clara', cidade: 'São Paulo', uf: 'SP', pais: 'Brasil' },
+    destino: { endereco: 'Rua das Acácias, 120', cidade: 'São Paulo', uf: 'SP', pais: 'Brasil' },
+    data_prevista: iso(mais(-1)),
+    distancia_km: 38,
+    distancia_manual: false,
+    valor: 450,
+    valor_coberto_plano: 450,
+    valor_a_pagar: 0,
+    id_terceiro_frota: 'terceiro-boa-viagem',
+    nome_frota: 'Translados Boa Viagem',
+    status_aceite: 'ACEITO',
+    motivo_recusa: null,
+    motorista: {
+      nome: 'Edson Lima',
+      telefone: '(11) 97777-1234',
+      placa: 'FTR-2B41',
+      modelo: 'Furgão funerário',
+    },
+  };
+}
+
+export function certidaoDoExemplo(): CertidaoResponse {
+  return {
+    id_solicitacao: 'certidao-exemplo-1',
+    id_beneficiario: ID_BENEFICIARIO_EXEMPLO,
+    status: 'EM_PROCESSAMENTO',
+    modo: 'MANUAL',
+    responsavel: {
+      tipo: 'TERCEIRO',
+      id_usuario: null,
+      id_terceiro: 'cartorio-2',
+      nome: 'Cartório do 2º Ofício',
+    },
+    protocolo: '2026-118734',
+    pendencia: null,
+    numero_matricula: null,
+    id_documento_certidao: null,
+    prazo: { data: dia(mais(72)), dias_restantes: 3, vencido: false },
+    historico: [],
+  };
+}
+
+export function documentosDoExemplo(): DocumentoResponse[] {
   return [
     {
-      id_notificacao: 'n-1',
-      titulo: 'Translado a caminho',
-      mensagem: 'O translado de Helena Duarte saiu do hospital e está a caminho da capela.',
-      link: '/minha-conta/atendimentos/exemplo-1',
-      lida: false,
-      criada_em: iso(mais(-0.5)),
+      id_documento: 'doc-declaracao',
+      tipo: 'DECLARACAO_OBITO',
+      nome_original: 'Declaração de óbito.pdf',
+      content_type: 'application/pdf',
+      tamanho: 48_000,
+      enviado_em: iso(mais(-26)),
     },
-    {
-      id_notificacao: 'n-2',
-      titulo: 'Sua fatura está disponível',
-      mensagem: 'Você pode pagar com Pix, boleto ou cartão.',
-      link: '/minha-conta/faturas',
-      lida: false,
-      criada_em: iso(mais(-26)),
-    },
-    {
-      id_notificacao: 'n-3',
-      titulo: 'Registre suas preferências',
-      mensagem: 'Deixar suas escolhas registradas ajuda sua família no momento da despedida.',
-      link: '/minha-conta/preferencias',
-      lida: true,
-      criada_em: iso(mais(-24 * 6)),
-    },
-    {
-      id_notificacao: 'n-4',
-      titulo: 'Bem-vindo à área do cliente',
-      mensagem: 'Aqui você acompanha seu plano, seus pagamentos e quem está protegido.',
-      link: null,
-      lida: true,
-      criada_em: iso(mais(-24 * 20)),
-    },
+  ];
+}
+
+let pdf: string | undefined;
+/** Link temporário de download (GET .../documentos/{id}/download): um PDF de exemplo. */
+export const linkDoPdfDeExemplo = () =>
+  (pdf ??= URL.createObjectURL(new Blob([PDF_FICTICIO], { type: 'application/pdf' })));
+
+/** Notificações no formato de GET /notificacoes; os links seguem os do backend (/funerais/{id}, /faturas/{id}). */
+export function notificacoesIniciais(): NotificacaoResponse[] {
+  const notificacao = (
+    id: string,
+    tipo: string,
+    titulo: string,
+    mensagem: string,
+    link: string | null,
+    horas: number,
+    lida: boolean,
+  ): NotificacaoResponse => ({
+    id_notificacao: id,
+    tipo,
+    titulo,
+    mensagem,
+    link,
+    criada_em: iso(mais(horas)),
+    lida_em: lida ? iso(mais(horas + 1)) : null,
+  });
+  return [
+    notificacao(
+      'n-1',
+      'TRANSLADO',
+      'Translado a caminho',
+      'O translado de Helena Duarte saiu do hospital e está a caminho da capela.',
+      `/funerais/${ID_FUNERAL_EXEMPLO}`,
+      -0.5,
+      false,
+    ),
+    notificacao(
+      'n-2',
+      'FATURA',
+      'Sua fatura está disponível',
+      'Você pode pagar com Pix, boleto ou cartão.',
+      '/faturas/ultima',
+      -26,
+      false,
+    ),
+    notificacao(
+      'n-3',
+      'PREFERENCIAS',
+      'Registre suas preferências',
+      'Deixar suas escolhas registradas ajuda sua família no momento da despedida.',
+      '/minha-conta/preferencias',
+      -24 * 6,
+      true,
+    ),
+    notificacao(
+      'n-4',
+      'BOAS_VINDAS',
+      'Bem-vindo à área do cliente',
+      'Aqui você acompanha seu plano, seus pagamentos e quem está protegido.',
+      null,
+      -24 * 20,
+      true,
+    ),
   ];
 }
 

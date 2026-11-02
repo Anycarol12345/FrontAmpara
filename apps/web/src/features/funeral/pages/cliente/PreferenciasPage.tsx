@@ -1,10 +1,14 @@
 import {
+  getListarPreferenciasFuneralQueryKey,
+  useDefinirPreferenciaFuneral,
   useListarCatalogo,
   useListarCategoriasCatalogo,
-  useListarDependentes,
-  useObterMeusDados,
+  useListarPreferenciasFuneral,
   type CategoriaResponse,
+  type Destinacao,
   type ItemResponse,
+  type PessoaPreferenciaResponse,
+  type TipoCerimonia,
 } from '@ampara/api-client';
 import { Badge } from '@ampara/ui/components/badge';
 import { Button } from '@ampara/ui/components/button';
@@ -14,54 +18,49 @@ import { toast } from '@ampara/ui/components/sonner';
 import { cn } from '@ampara/ui/lib/utils';
 import { ImageOff, Lock } from 'lucide-react';
 import { useState } from 'react';
-import { Carregando, Vazio } from '@/shared/components/EstadoConsulta';
+import { Carregando, EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Filtros } from '@/shared/components/Tabela';
 import { env } from '@/shared/lib/env';
-import { data, numero, real } from '@/shared/lib/formatar';
+import { numero, real } from '@/shared/lib/formatar';
 import { useCoberturasPorPessoa, type CoberturaDaPessoa } from '../../hooks/coberturas';
-import {
-  usePreferenciasFuneral,
-  useSalvarPreferencias,
-  type DestinoFuneral,
-  type ItemPreferido,
-  type PreferenciaFuneralRequest,
-  type PreferenciaFuneralResponse,
-} from '../../hooks/preferencias';
 
-const DESTINOS: { valor: DestinoFuneral | null; rotulo: string }[] = [
+type ItemEscolhido = { id_item_catalogo: string; id_variacao: string | null };
+
+type Escolhas = {
+  destinacao: Destinacao;
+  tipo_cerimonia: TipoCerimonia;
+  crenca_religiosa: string;
+  /** Uma música por linha. */
+  musicas: string;
+  mensagens: string;
+  observacoes: string;
+  itens: ItemEscolhido[];
+};
+
+const DESTINOS: { valor: Destinacao; rotulo: string }[] = [
   { valor: 'SEPULTAMENTO', rotulo: 'Sepultamento' },
   { valor: 'CREMACAO', rotulo: 'Cremação' },
-  { valor: null, rotulo: 'Deixar para a família decidir' },
+  { valor: 'NAO_DEFINIDA', rotulo: 'Deixar para a família decidir' },
 ];
 
-const CERIMONIAS = [
-  'Religiosa',
-  'Ecumênica',
-  'Sem cerimônia religiosa',
-  'Somente para a família',
-] as const;
+const CERIMONIAS: { valor: TipoCerimonia; rotulo: string }[] = [
+  { valor: 'NAO_DEFINIDA', rotulo: 'Sem preferência' },
+  { valor: 'RELIGIOSA', rotulo: 'Religiosa' },
+  { valor: 'ECUMENICA', rotulo: 'Ecumênica' },
+  { valor: 'CIVIL', rotulo: 'Civil' },
+  { valor: 'SEM_CERIMONIA', rotulo: 'Sem cerimônia' },
+];
 
 const classeCampo =
   'w-full rounded-lg border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15';
 
 /** Preferências de funeral em vida (FE-CLI-07, GET/PUT /preferencias-funeral). */
 export function PreferenciasPage() {
-  const titular = useObterMeusDados();
-  const dependentes = useListarDependentes();
-  const preferencias = usePreferenciasFuneral();
-  const coberturas = useCoberturasPorPessoa(titular.data?.id_cliente);
+  const preferencias = useListarPreferenciasFuneral();
+  const idTitular = preferencias.data?.find((p) => p.tipo === 'TITULAR')?.id_pessoa;
+  const coberturas = useCoberturasPorPessoa(idTitular);
   const [idPessoa, setIdPessoa] = useState<string | null>(null);
-
-  const pessoas = titular.data
-    ? [
-        { valor: titular.data.id_cliente, rotulo: `${titular.data.nome.split(' ')[0]} (você)` },
-        ...(dependentes.data ?? []).map((d) => ({ valor: d.id_dependente, rotulo: d.nome })),
-      ]
-    : [];
-  const selecionada = idPessoa ?? pessoas[0]?.valor;
-  const carregando =
-    titular.isPending || dependentes.isPending || preferencias.isPending || coberturas.carregando;
 
   return (
     <div className="flex flex-col gap-6">
@@ -70,53 +69,71 @@ export function PreferenciasPage() {
         titulo="Preferências de funeral"
         descricao="Registre, com calma, como você gostaria que fosse a despedida. Essas escolhas orientam sua família e a funerária quando chegar o momento, e podem ser mudadas quando quiser."
       />
-
-      {carregando || !selecionada ? (
-        <Card>
-          <Carregando />
-        </Card>
-      ) : (
-        <>
-          {pessoas.length > 1 && (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs text-muted-foreground">Preferências de</p>
-              <Filtros opcoes={pessoas} valor={selecionada} aoMudar={setIdPessoa} />
-            </div>
-          )}
-          <Formulario
-            // Trocar de pessoa recomeça o formulário com as preferências dela.
-            key={selecionada}
-            idPessoa={selecionada}
-            atual={preferencias.data?.find((p) => p.id_pessoa === selecionada)}
-            cobertura={coberturas.porPessoa.get(selecionada)}
-          />
-        </>
-      )}
+      <EstadoConsulta consulta={preferencias} estaVazio={(pessoas) => pessoas.length === 0}>
+        {(pessoas) => {
+          const selecionada = pessoas.find((p) => p.id_pessoa === idPessoa) ?? pessoas[0]!;
+          if (coberturas.carregando) {
+            return (
+              <Card>
+                <Carregando />
+              </Card>
+            );
+          }
+          return (
+            <>
+              {pessoas.length > 1 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs text-muted-foreground">Preferências de</p>
+                  <Filtros
+                    opcoes={pessoas.map((p) => ({
+                      valor: p.id_pessoa,
+                      rotulo: p.tipo === 'TITULAR' ? `${p.nome.split(' ')[0]} (você)` : p.nome,
+                    }))}
+                    valor={selecionada.id_pessoa}
+                    aoMudar={setIdPessoa}
+                  />
+                </div>
+              )}
+              <Formulario
+                // Trocar de pessoa recomeça o formulário com as preferências dela.
+                key={selecionada.id_pessoa}
+                pessoa={selecionada}
+                cobertura={coberturas.porPessoa.get(selecionada.id_pessoa)}
+              />
+            </>
+          );
+        }}
+      </EstadoConsulta>
     </div>
   );
 }
 
 function Formulario({
-  idPessoa,
-  atual,
+  pessoa,
   cobertura,
 }: {
-  idPessoa: string;
-  atual: PreferenciaFuneralResponse | undefined;
+  pessoa: PessoaPreferenciaResponse;
   cobertura: CoberturaDaPessoa | undefined;
 }) {
   const categorias = useListarCategoriasCatalogo();
   const catalogo = useListarCatalogo();
-  const salvar = useSalvarPreferencias();
-  const [dados, setDados] = useState<PreferenciaFuneralRequest>({
-    destino: atual?.destino ?? null,
-    cerimonia: atual?.cerimonia ?? null,
-    itens: atual?.itens ?? [],
-    musicas: atual?.musicas ?? null,
-    observacoes: atual?.observacoes ?? null,
+  const salvar = useDefinirPreferenciaFuneral({
+    mutation: { meta: { invalida: [getListarPreferenciasFuneralQueryKey()] } },
   });
-  const atualizar = (parcial: Partial<PreferenciaFuneralRequest>) =>
-    setDados((d) => ({ ...d, ...parcial }));
+  const atual = pessoa.preferencia;
+  const [dados, setDados] = useState<Escolhas>({
+    destinacao: atual?.destinacao ?? 'NAO_DEFINIDA',
+    tipo_cerimonia: atual?.tipo_cerimonia ?? 'NAO_DEFINIDA',
+    crenca_religiosa: atual?.crenca_religiosa ?? '',
+    musicas: atual?.musicas.join('\n') ?? '',
+    mensagens: atual?.mensagens ?? '',
+    observacoes: atual?.observacoes ?? '',
+    itens: (atual?.itens ?? []).map(({ id_item_catalogo, id_variacao }) => ({
+      id_item_catalogo,
+      id_variacao,
+    })),
+  });
+  const atualizar = (parcial: Partial<Escolhas>) => setDados((d) => ({ ...d, ...parcial }));
 
   const itens = (catalogo.data ?? []).filter((i) => i.ativo);
   const coberto = (id: string) => cobertura?.itens.has(id) ?? false;
@@ -148,13 +165,22 @@ function Formulario({
   }
 
   async function enviar() {
-    const vazioParaNulo = (valor: string | null) => valor?.trim() || null;
+    const vazioParaNulo = (valor: string) => valor.trim() || null;
     await salvar.mutateAsync({
-      idPessoa,
-      dados: {
-        ...dados,
-        musicas: vazioParaNulo(dados.musicas),
+      idPessoa: pessoa.id_pessoa,
+      data: {
+        destinacao: dados.destinacao,
+        tipo_cerimonia: dados.tipo_cerimonia,
+        // A crença só vale numa cerimônia religiosa (dado sensível, LGPD).
+        crenca_religiosa:
+          dados.tipo_cerimonia === 'RELIGIOSA' ? vazioParaNulo(dados.crenca_religiosa) : null,
+        musicas: dados.musicas
+          .split('\n')
+          .map((m) => m.trim())
+          .filter(Boolean),
+        mensagens: vazioParaNulo(dados.mensagens),
         observacoes: vazioParaNulo(dados.observacoes),
+        itens: dados.itens.map((i) => ({ ...i, quantidade: 1 })),
       },
     });
     toast.success('Preferências salvas.');
@@ -173,20 +199,20 @@ function Formulario({
             <div className="mt-2 flex flex-wrap gap-2">
               {DESTINOS.map(({ valor, rotulo }) => (
                 <label
-                  key={rotulo}
+                  key={valor}
                   className={cn(
                     'cursor-pointer rounded-full border px-4 py-2 text-xs transition-colors has-focus-visible:ring-3 has-focus-visible:ring-ring/30',
-                    dados.destino === valor
+                    dados.destinacao === valor
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-border bg-card hover:bg-muted',
                   )}
                 >
                   <input
                     type="radio"
-                    name="destino"
+                    name="destinacao"
                     className="sr-only"
-                    checked={dados.destino === valor}
-                    onChange={() => atualizar({ destino: valor })}
+                    checked={dados.destinacao === valor}
+                    onChange={() => atualizar({ destinacao: valor })}
                   />
                   {rotulo}
                 </label>
@@ -197,31 +223,56 @@ function Formulario({
             Tipo de cerimônia
             <select
               className={cn(classeCampo, 'h-11 font-normal')}
-              value={dados.cerimonia ?? ''}
-              onChange={(e) => atualizar({ cerimonia: e.target.value || null })}
+              value={dados.tipo_cerimonia}
+              onChange={(e) => atualizar({ tipo_cerimonia: e.target.value as TipoCerimonia })}
             >
-              <option value="">Sem preferência</option>
-              {CERIMONIAS.map((c) => (
-                <option key={c}>{c}</option>
+              {CERIMONIAS.map(({ valor, rotulo }) => (
+                <option key={valor} value={valor}>
+                  {rotulo}
+                </option>
               ))}
             </select>
           </label>
+          {dados.tipo_cerimonia === 'RELIGIOSA' ? (
+            <label className="flex flex-col gap-2 text-sm font-semibold">
+              Crença religiosa
+              <input
+                className={cn(classeCampo, 'h-11 font-normal')}
+                placeholder="Ex.: católica, evangélica, espírita"
+                value={dados.crenca_religiosa}
+                onChange={(e) => atualizar({ crenca_religiosa: e.target.value })}
+              />
+            </label>
+          ) : (
+            <span aria-hidden className="hidden sm:block" />
+          )}
           <label className="flex flex-col gap-2 text-sm font-semibold">
             Músicas
-            <input
-              className={cn(classeCampo, 'h-11 font-normal')}
-              placeholder="Ex.: Ave Maria, Como é grande o meu amor por você"
-              value={dados.musicas ?? ''}
-              onChange={(e) => atualizar({ musicas: e.target.value })}
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm font-semibold sm:col-span-2">
-            Mensagens e observações
             <textarea
               rows={3}
               className={cn(classeCampo, 'py-2.5 font-normal')}
+              placeholder="Uma por linha. Ex.: Ave Maria"
+              value={dados.musicas}
+              onChange={(e) => atualizar({ musicas: e.target.value })}
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-semibold">
+            Mensagens para a família
+            <textarea
+              rows={3}
+              className={cn(classeCampo, 'py-2.5 font-normal')}
+              placeholder="Palavras que você gostaria que fossem lidas."
+              value={dados.mensagens}
+              onChange={(e) => atualizar({ mensagens: e.target.value })}
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-semibold sm:col-span-2">
+            Observações
+            <textarea
+              rows={2}
+              className={cn(classeCampo, 'py-2.5 font-normal')}
               placeholder="Algo que a família e a funerária devem saber."
-              value={dados.observacoes ?? ''}
+              value={dados.observacoes}
               onChange={(e) => atualizar({ observacoes: e.target.value })}
             />
           </label>
@@ -280,11 +331,6 @@ function Formulario({
           <Button className="mt-5 w-full" carregando={salvar.isPending} onClick={enviar}>
             Salvar preferências
           </Button>
-          {atual?.atualizado_em && (
-            <p className="mt-3 text-center text-[11px] text-subtle-foreground">
-              Salvas pela última vez em {data(atual.atualizado_em)}
-            </p>
-          )}
         </Card>
       </aside>
     </div>
@@ -301,7 +347,7 @@ function Categoria({
 }: {
   categoria: CategoriaResponse;
   itens: ItemResponse[];
-  escolhidos: ItemPreferido[];
+  escolhidos: ItemEscolhido[];
   coberto: (id: string) => boolean;
   aoAlternar: (item: ItemResponse) => void;
   aoEscolherVariacao: (idItem: string, idVariacao: string | null) => void;

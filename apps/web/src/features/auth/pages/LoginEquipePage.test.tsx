@@ -9,6 +9,8 @@ import { LoginEquipePage } from './LoginEquipePage';
 
 const rotas = [
   { path: '/equipe/entrar', element: <LoginEquipePage /> },
+  { path: '/admin/entrar', element: <LoginEquipePage plataforma /> },
+  { path: '/admin', element: <p>Painel da plataforma</p> },
   { path: '/painel', element: <p>Área da funerária</p> },
   { path: '/painel/agenda', element: <p>Agenda</p> },
 ];
@@ -72,5 +74,17 @@ describe('LoginEquipePage', () => {
     await usuario.click(screen.getByRole('button', { name: /administrador/i }));
 
     expect(screen.getByLabelText('E-mail corporativo')).toHaveValue('gestor@demo.localhost');
+  });
+
+  it('o administrador da plataforma entra pelo login próprio e vai para /admin', async () => {
+    servidor.use(getLoginMockHandler(respostaDeLogin('ADMIN')));
+    const { usuario, router } = renderizar(rotas, { caminho: '/admin/entrar' });
+
+    expect(
+      screen.getByRole('link', { name: 'Sou da equipe de uma funerária' }),
+    ).toBeInTheDocument();
+    await preencherEEnviar(usuario);
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin'));
   });
 });

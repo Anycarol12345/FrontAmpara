@@ -7,10 +7,11 @@ import { useState } from 'react';
 import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Filtros } from '@/shared/components/Tabela';
-import { data, numero, real } from '@/shared/lib/formatar';
+import { data, real } from '@/shared/lib/formatar';
 import { PagarFaturaDialog } from '../../components/PagarFaturaDialog';
 import { competencia, FORMA_PAGAMENTO, podePagar, STATUS_FATURA } from '../../components/rotulos';
 import {
+  encargosDaFatura,
   faturaEmDestaque,
   useFaturasDosContratos,
   type FaturaResponse,
@@ -120,7 +121,7 @@ function LinhaFatura({
   aoPagar: () => void;
 }) {
   const status = STATUS_FATURA[fatura.status];
-  const encargos = numero(fatura.valor_multa_juros);
+  const encargos = encargosDaFatura(fatura);
 
   return (
     <article

@@ -1,12 +1,22 @@
-import type { ContratoDetalheResponse } from '@ampara/api-client';
+import type { ContratoDetalheResponse, PessoaCobertaDetalheResponse } from '@ampara/api-client';
 import { Badge } from '@ampara/ui/components/badge';
+import { Button } from '@ampara/ui/components/button';
 import { Card } from '@ampara/ui/components/card';
 import { Clock, UserRound } from 'lucide-react';
 import { cpf, data, numero, real } from '@/shared/lib/formatar';
 import { COBERTURA, PERIODICIDADE, STATUS_CONTRATO } from './rotulos';
 
-/** Detalhe do contrato, usado pelo cliente (FE-CLI-05) e pela funerária (FE-ADM-03). */
-export function DetalheContrato({ contrato }: { contrato: ContratoDetalheResponse }) {
+/**
+ * Detalhe do contrato, usado pelo cliente (FE-CLI-05) e pela funerária (FE-ADM-03).
+ * Com `aoRemoverDependente`, cada dependente ganha o botão de remover (CON-02).
+ */
+export function DetalheContrato({
+  contrato,
+  aoRemoverDependente,
+}: {
+  contrato: ContratoDetalheResponse;
+  aoRemoverDependente?: (pessoa: PessoaCobertaDetalheResponse) => void;
+}) {
   const status = STATUS_CONTRATO[contrato.status];
   const sufixo = PERIODICIDADE[contrato.periodicidade].sufixo;
   const hoje = new Date().toISOString().slice(0, 10);
@@ -69,6 +79,16 @@ export function DetalheContrato({ contrato }: { contrato: ContratoDetalheRespons
                       ? 'Coberto'
                       : `Coberto a partir de ${data(pessoa.carencia_cumprida_em)}`}
                   </Badge>
+                  {aoRemoverDependente && pessoa.tipo === 'DEPENDENTE' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => aoRemoverDependente(pessoa)}
+                      aria-label={`Remover ${pessoa.nome} do contrato`}
+                    >
+                      Remover
+                    </Button>
+                  )}
                 </li>
               );
             })}
@@ -104,6 +124,7 @@ export function DetalheContrato({ contrato }: { contrato: ContratoDetalheRespons
         {contrato.data_fim && (
           <p className="mt-4 text-xs text-muted-foreground">
             Encerrado em {data(contrato.data_fim)}.
+            {contrato.motivo_cancelamento && ` Motivo: ${contrato.motivo_cancelamento}`}
           </p>
         )}
       </Card>

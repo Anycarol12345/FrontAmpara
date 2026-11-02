@@ -11,6 +11,8 @@ import { cn } from '@ampara/ui/lib/utils';
 import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import {
+  foiLida,
+  linkDoCliente,
   quando,
   useMarcarComoLida,
   useNotificacoes,
@@ -26,8 +28,8 @@ export function SinoNotificacoes({ todas }: { todas: string }) {
   const marcar = useMarcarComoLida();
   useNotificacoesTempoReal();
 
-  const lista = consulta.data ?? [];
-  const naoLidas = lista.filter((n) => !n.lida).length;
+  const lista = consulta.data?.itens ?? [];
+  const naoLidas = consulta.data?.nao_lidas ?? 0;
 
   return (
     <DropdownMenu>
@@ -73,19 +75,20 @@ export function SinoNotificacoes({ todas }: { todas: string }) {
               key={n.id_notificacao}
               className="items-start gap-3 py-2.5"
               onSelect={() => {
-                if (!n.lida) marcar.mutate(n.id_notificacao);
-                if (n.link) void navigate(n.link);
+                if (!foiLida(n)) marcar.mutate(n.id_notificacao);
+                const link = linkDoCliente(n.link);
+                if (link) void navigate(link);
               }}
             >
               <span
                 aria-hidden
                 className={cn(
                   'mt-1.5 size-2 shrink-0 rounded-full',
-                  n.lida ? 'bg-transparent' : 'bg-brand-800',
+                  foiLida(n) ? 'bg-transparent' : 'bg-brand-800',
                 )}
               />
               <span className="flex min-w-0 flex-col">
-                <span className={cn('text-xs', !n.lida && 'font-semibold')}>{n.titulo}</span>
+                <span className={cn('text-xs', !foiLida(n) && 'font-semibold')}>{n.titulo}</span>
                 <span className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
                   {n.mensagem}
                 </span>

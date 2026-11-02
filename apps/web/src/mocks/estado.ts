@@ -1,6 +1,4 @@
-import type { FaturaResponse } from '@/features/financeiro';
-import type { PreferenciaFuneralResponse } from '@/features/funeral';
-import type { NotificacaoResponse } from '@/features/notificacoes';
+import type { FaturaResponse, NotificacaoResponse, PreferenciaResponse } from '@ampara/api-client';
 
 /**
  * Estado dos dados fictícios, guardado no localStorage: sobrevive ao recarregar a página
@@ -15,11 +13,13 @@ type Estado = {
   faturas: Record<string, FaturaFicticia>;
   /** Contratos cujas faturas já foram geradas. */
   contratos: string[];
-  preferencias: Record<string, PreferenciaFuneralResponse>;
+  /** Por id da pessoa (titular ou dependente). */
+  preferencias: Record<string, PreferenciaResponse>;
   notificacoes: NotificacaoResponse[] | null;
 };
 
-const CHAVE = 'ampara:dados-ficticios';
+// v2: formato da API publicada (notificações com lida_em, preferências por pessoa).
+const CHAVE = 'ampara:dados-ficticios:v2';
 const vazio = (): Estado => ({ faturas: {}, contratos: [], preferencias: {}, notificacoes: null });
 
 export function lerEstado(): Estado {

@@ -35,8 +35,9 @@ export function PainelLayout() {
   const menu = MENU_DO_PERFIL[usuario.perfil] ?? [];
   const daEquipe = ['FUNERARIA', 'FUNCIONARIO', 'CONSULTOR'].includes(usuario.perfil);
   async function encerrar() {
+    const login = usuario?.perfil === 'ADMIN' ? '/admin/entrar' : '/equipe/entrar';
     await sair();
-    await navigate('/equipe/entrar', { replace: true });
+    await navigate(login, { replace: true });
   }
 
   return (
