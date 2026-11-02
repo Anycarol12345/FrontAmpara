@@ -22,10 +22,7 @@ export function AdicionarItemAoFuneral({ idFuneral }: { idFuneral: string }) {
   const adicionar = useAdicionarItemFuneral({
     mutation: {
       meta: {
-        invalida: [
-          getItensFuneralQueryKey(idFuneral),
-          getObterOrcamentoFuneralQueryKey(idFuneral),
-        ],
+        invalida: [getItensFuneralQueryKey(idFuneral), getObterOrcamentoFuneralQueryKey(idFuneral)],
       },
     },
   });

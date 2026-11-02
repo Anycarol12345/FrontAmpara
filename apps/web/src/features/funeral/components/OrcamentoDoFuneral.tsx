@@ -29,11 +29,7 @@ import { Campo, ErroFormulario } from '@/shared/components/Campo';
 import { Vazio } from '@/shared/components/EstadoConsulta';
 import { dataHora, real } from '@/shared/lib/formatar';
 import { aplicarErrosDaApi } from '@/shared/lib/formularios';
-import {
-  aprovacaoSchema,
-  type AprovacaoForm,
-  type AprovacaoValidada,
-} from '../schemas/orcamento';
+import { aprovacaoSchema, type AprovacaoForm, type AprovacaoValidada } from '../schemas/orcamento';
 
 const STATUS_ORCAMENTO: Record<
   StatusOrcamento,
@@ -167,7 +163,9 @@ function Detalhe({ orcamento }: { orcamento: OrcamentoResponse }) {
         <span>Total</span>
         <span>{real(orcamento.total)}</span>
       </p>
-      <p className="mt-3 text-xs text-muted-foreground">Gerado em {dataHora(orcamento.gerado_em)}</p>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Gerado em {dataHora(orcamento.gerado_em)}
+      </p>
 
       {orcamento.status === 'APROVADO' && (
         <div className="mt-4 rounded-lg bg-muted/60 p-4 text-sm">

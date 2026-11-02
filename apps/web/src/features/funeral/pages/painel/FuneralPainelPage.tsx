@@ -60,7 +60,9 @@ export function FuneralPainelPage() {
               {ativa === 'dados' && <DadosDoFuneral funeral={funeral} />}
               {ativa === 'historico' && <HistoricoDoFuneral historico={funeral.historico} />}
               {ativa === 'itens' && <MontadorDeItens funeral={funeral} />}
-{(ativa === 'local' || ativa === 'translado' || ativa === 'documentos') && <EmBreve />}
+              {(ativa === 'local' || ativa === 'translado' || ativa === 'documentos') && (
+                <EmBreve />
+              )}
             </PainelDaAba>
           </>
         )}

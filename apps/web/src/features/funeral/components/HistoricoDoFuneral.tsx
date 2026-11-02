@@ -11,7 +11,9 @@ export function HistoricoDoFuneral({ historico }: { historico: HistoricoStatusRe
   return (
     <Card className="p-6">
       <h2 className="text-lg font-bold">Histórico de situação</h2>
-      <p className="text-[11px] text-subtle-foreground">Da mudança mais recente para a mais antiga</p>
+      <p className="text-[11px] text-subtle-foreground">
+        Da mudança mais recente para a mais antiga
+      </p>
       {mudancas.length === 0 ? (
         <Vazio titulo="Sem mudanças ainda" descricao="As mudanças de situação aparecem aqui." />
       ) : (

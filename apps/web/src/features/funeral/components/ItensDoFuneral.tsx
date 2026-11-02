@@ -38,7 +38,9 @@ export function ItensDoFuneral({ idFuneral, somenteLeitura }: Props) {
       const resultado = await importar.mutateAsync({ id: idFuneral });
       setImportacao(resultado);
       toast.success(
-        resultado.importados === 1 ? '1 item importado.' : `${resultado.importados} itens importados.`,
+        resultado.importados === 1
+          ? '1 item importado.'
+          : `${resultado.importados} itens importados.`,
       );
     } catch {
       // O aviso de erro já aparece na tela.
@@ -68,9 +70,7 @@ export function ItensDoFuneral({ idFuneral, somenteLeitura }: Props) {
 
       {importacao && importacao.ignorados.length > 0 && (
         <div className="mt-4 rounded-lg bg-muted/60 p-4 text-sm">
-          <p className="font-semibold">
-            {importacao.importados} importado(s). Não entraram:
-          </p>
+          <p className="font-semibold">{importacao.importados} importado(s). Não entraram:</p>
           <ul className="mt-2 flex flex-col gap-1 text-muted-foreground">
             {importacao.ignorados.map((ignorado) => (
               <li key={ignorado.id_item_catalogo}>
