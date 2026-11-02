@@ -212,10 +212,12 @@ export const router = createBrowserRouter([
                 lazy: pagina(() => import('@/features/terceiros'), 'InicioParceiroPage'),
               },
               {
+                path: 'atribuicoes/:id',
+                lazy: pagina(() => import('@/features/terceiros'), 'AtribuicaoPage'),
+              },
+              {
                 path: 'cadastro',
-                element: (
-                  <EmConstrucao sobretitulo="Parceiro" titulo="Meu cadastro" card="FE-TER-01" />
-                ),
+                lazy: pagina(() => import('@/features/terceiros'), 'MeuCadastroParceiroPage'),
               },
             ],
           },

@@ -122,7 +122,7 @@ const GRUPOS: Grupo[] = [
     perfil: 'TERCEIRO',
     telas: [
       { titulo: 'Atribuições', rota: '/parceiro', card: 'FE-TER-01' },
-      { titulo: 'Meu cadastro (em construção)', rota: '/parceiro/cadastro', card: 'FE-TER-01' },
+      { titulo: 'Meu cadastro', rota: '/parceiro/cadastro', card: 'FE-TER-01' },
     ],
   },
   {

@@ -1,4 +1,7 @@
 import type {
+  AtribuicaoResponse,
+  TerceiroResponse,
+  TransladoFrotaResponse,
   CertidaoResponse,
   FuneralResumoResponse,
   PrazoRegistroResponse,
@@ -632,5 +635,82 @@ export function outrosFuneraisDemo(): FuneralResumoResponse[] {
       data_hora_prevista: as(15),
       destinacao: 'SEPULTAMENTO',
     },
+  ];
+}
+
+/** Cadastro da empresa de translado que entra no portal do parceiro (TER-01). */
+export const parceiroDemo = (): TerceiroResponse => ({
+  id_terceiro: 'terceiro-boa-viagem',
+  tipo: 'FROTA',
+  nome_razao_social: 'Translados Boa Viagem',
+  cpf_cnpj: '12.345.678/0001-90',
+  telefone: '(11) 3222-1100',
+  email: 'operacao@boaviagem.demo',
+  area_atuacao: { ufs: ['SP'], cidades: [] },
+  categorias_atendidas: [],
+  status: 'ATIVO',
+});
+
+const ORIGEM = {
+  endereco: 'Hospital Municipal Vila Nova',
+  cidade: 'Campinas',
+  uf: 'SP',
+  pais: 'BR',
+};
+const DESTINO = { endereco: 'Rua das Acácias, 120', cidade: 'São Paulo', uf: 'SP', pais: 'BR' };
+
+/** Um translado novo para responder e outro já aceito, sem motorista (TER-02, TRA-04). */
+export function atribuicoesDemo(): AtribuicaoResponse[] {
+  const daqui = (horas: number) => new Date(Date.now() + horas * 3_600_000).toISOString();
+  const resumo = (nome: string, horas: number) =>
+    ({
+      nome_falecido: nome,
+      origem: `${ORIGEM.endereco}, ${ORIGEM.cidade}-${ORIGEM.uf}`,
+      destino: `${DESTINO.endereco}, ${DESTINO.cidade}-${DESTINO.uf}`,
+      data_hora: daqui(horas),
+      contato: { nome: 'Juliana Rocha', telefone: '(11) 3333-4444' },
+      documentos: [{ nome: 'Declaração de óbito', id_documento: 'doc-declaracao' }],
+    }) as AtribuicaoResponse['resumo'];
+  return [
+    {
+      id_atribuicao: 'atribuicao-nova',
+      tipo: 'TRANSLADO',
+      id_origem: 'translado-frota-novo',
+      status: 'PENDENTE',
+      prazo_aceite: daqui(1.5),
+      respondida_em: null,
+      motivo_recusa: null,
+      resumo: resumo('José Almeida', 5),
+    },
+    {
+      id_atribuicao: 'atribuicao-aceita',
+      tipo: 'TRANSLADO',
+      id_origem: 'translado-frota-aceito',
+      status: 'ACEITA',
+      prazo_aceite: daqui(-2),
+      respondida_em: daqui(-3),
+      motivo_recusa: null,
+      resumo: resumo('Lúcia Ferraz', 2),
+    },
+  ];
+}
+
+export function transladosDaFrotaDemo(): TransladoFrotaResponse[] {
+  const daqui = (horas: number) => new Date(Date.now() + horas * 3_600_000).toISOString();
+  const translado = (id: string, nome: string, horas: number): TransladoFrotaResponse => ({
+    id_translado: id,
+    nome_falecido: nome,
+    status: 'AGENDADO',
+    origem: ORIGEM,
+    destino: DESTINO,
+    data_prevista: daqui(horas),
+    contato_nome: 'Juliana Rocha',
+    contato_telefone: '(11) 3333-4444',
+    status_aceite: 'ACEITO',
+    motorista: null,
+  });
+  return [
+    translado('translado-frota-novo', 'José Almeida', 5),
+    translado('translado-frota-aceito', 'Lúcia Ferraz', 2),
   ];
 }

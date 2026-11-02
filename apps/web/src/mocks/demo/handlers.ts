@@ -1,4 +1,6 @@
 import type {
+  MotoristaRequest,
+  RecusarAtribuicaoRequest,
   CertidaoResponse,
   DocumentoResponse,
   FuneralResumoResponse,
@@ -42,6 +44,9 @@ import {
   mudancaTranslado,
   novaCertidaoDemo,
   outrosFuneraisDemo,
+  parceiroDemo,
+  atribuicoesDemo,
+  transladosDaFrotaDemo,
   prazoDemo,
   reservasDemo,
   simularTransladoDemo,
@@ -93,6 +98,8 @@ export function handlersDemo(sessao: SessaoDemo) {
   const locais = locaisDemo();
   const reservas = reservasDemo();
   const translados = [transladoDoExemplo()];
+  const atribuicoes = atribuicoesDemo();
+  const transladosDaFrota = transladosDaFrotaDemo();
   const documentos: Record<string, DocumentoResponse[]> = {
     [funeralDeExemplo().id_beneficiario]: documentosDoExemplo(),
   };
@@ -483,6 +490,52 @@ export function handlersDemo(sessao: SessaoDemo) {
       c.id_documento_certidao = id;
       await delay(400);
       return HttpResponse.json(c);
+    }),
+
+    // Portal do parceiro: empresa de translado (TER-01, TER-02).
+    http.get('*/api/v1/terceiros/me', () => HttpResponse.json(parceiroDemo())),
+    http.get('*/api/v1/terceiros/atribuicoes', () => HttpResponse.json(atribuicoes)),
+    http.post('*/api/v1/terceiros/atribuicoes/:id/aceite', ({ params }) => {
+      const a = atribuicoes.find((x) => x.id_atribuicao === params.id);
+      if (!a) return naoEncontrado('Atribuição não encontrada.');
+      a.status = 'ACEITA';
+      a.respondida_em = new Date().toISOString();
+      return HttpResponse.json(a);
+    }),
+    http.post('*/api/v1/terceiros/atribuicoes/:id/recusa', async ({ request, params }) => {
+      const a = atribuicoes.find((x) => x.id_atribuicao === params.id);
+      if (!a) return naoEncontrado('Atribuição não encontrada.');
+      a.status = 'RECUSADA';
+      a.respondida_em = new Date().toISOString();
+      a.motivo_recusa = ((await request.json()) as RecusarAtribuicaoRequest).motivo;
+      return HttpResponse.json(a);
+    }),
+    http.get('*/api/v1/terceiros/translados/:id', ({ params }) => {
+      const t = transladosDaFrota.find((x) => x.id_translado === params.id);
+      return t ? HttpResponse.json(t) : naoEncontrado('Translado não encontrado.');
+    }),
+    http.put('*/api/v1/terceiros/translados/:id/motorista', async ({ request, params }) => {
+      const t = transladosDaFrota.find((x) => x.id_translado === params.id);
+      if (!t) return naoEncontrado('Translado não encontrado.');
+      const m = (await request.json()) as MotoristaRequest;
+      t.motorista = {
+        nome: m.nome ?? '',
+        telefone: m.telefone ?? '',
+        placa: m.placa ?? '',
+        modelo: m.modelo ?? '',
+      };
+      return semConteudo();
+    }),
+    http.patch('*/api/v1/terceiros/translados/:id/status', async ({ request, params }) => {
+      const t = transladosDaFrota.find((x) => x.id_translado === params.id);
+      if (!t) return naoEncontrado('Translado não encontrado.');
+      const { status } = (await request.json()) as StatusTransladoRequest;
+      if (status) t.status = status;
+      if (status === 'ENTREGUE') {
+        const a = atribuicoes.find((x) => x.id_origem === t.id_translado);
+        if (a) a.status = 'CONCLUIDA';
+      }
+      return HttpResponse.json(t);
     }),
 
     // Configurações da funerária e tabela de km do translado (ADM-12).
