@@ -16,6 +16,24 @@ export function cpfValido(valor: string) {
   return digito(cpf.slice(0, 9)) === Number(cpf[9]) && digito(cpf.slice(0, 10)) === Number(cpf[10]);
 }
 
+export function cnpjValido(valor: string) {
+  const cnpj = somenteDigitos(valor);
+  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+
+  const digito = (base: string) => {
+    const pesos =
+      base.length === 12
+        ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const resto = [...base].reduce((soma, n, i) => soma + Number(n) * pesos[i]!, 0) % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+
+  return (
+    digito(cnpj.slice(0, 12)) === Number(cnpj[12]) && digito(cnpj.slice(0, 13)) === Number(cnpj[13])
+  );
+}
+
 /** Política de senha do ASP.NET Core Identity no backend (AUT-01), também mostrada ao digitar. */
 export const REGRAS_SENHA = [
   {

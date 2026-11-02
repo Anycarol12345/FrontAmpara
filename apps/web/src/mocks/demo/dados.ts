@@ -1,4 +1,5 @@
 import type {
+  FunerariaListaResponse,
   AtribuicaoResponse,
   TerceiroResponse,
   TransladoFrotaResponse,
@@ -713,4 +714,73 @@ export function transladosDaFrotaDemo(): TransladoFrotaResponse[] {
     translado('translado-frota-novo', 'José Almeida', 5),
     translado('translado-frota-aceito', 'Lúcia Ferraz', 2),
   ];
+}
+
+/** Funerárias da plataforma: duas aguardando aprovação do auto-cadastro (TEN-01). */
+export function funerariasDemo(): FunerariaListaResponse[] {
+  const dias = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
+  return (
+    [
+      [
+        'tenant-demo',
+        'Funerária Ampara Demonstração',
+        'Ampara Demonstração Ltda',
+        '11222333000181',
+        'demo',
+        'ATIVA',
+        'ADMIN',
+        120,
+      ],
+      [
+        'tenant-sao-jose',
+        'Funerária São José',
+        'São José Serviços Póstumos Ltda',
+        '45723174000110',
+        'sao-jose',
+        'PENDENTE',
+        'AUTO',
+        1,
+      ],
+      [
+        'tenant-ipe',
+        'Ipê Assistência Funeral',
+        'Ipê Assistência Ltda',
+        '33000167000101',
+        'ipe',
+        'PENDENTE',
+        'AUTO',
+        2,
+      ],
+      [
+        'tenant-paz',
+        'Grupo Paz Eterna',
+        'Paz Eterna Funerária S/A',
+        '60746948000112',
+        'paz-eterna',
+        'ATIVA',
+        'CONSULTOR',
+        40,
+      ],
+      [
+        'tenant-luz',
+        'Funerária Luz Divina',
+        'Luz Divina ME',
+        '19131243000197',
+        'luz-divina',
+        'SUSPENSA',
+        'AUTO',
+        90,
+      ],
+    ] as const
+  ).map(([id_tenant, nome_fantasia, razao_social, cnpj, slug, status, origem_cadastro, idade]) => ({
+    id_tenant,
+    nome_fantasia,
+    razao_social,
+    cnpj,
+    slug,
+    email_contato: `contato@${slug}.com.br`,
+    status,
+    origem_cadastro,
+    criada_em: dias(idade),
+  }));
 }

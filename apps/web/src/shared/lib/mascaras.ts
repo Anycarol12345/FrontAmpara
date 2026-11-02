@@ -9,6 +9,15 @@ export function mascararCpf(valor: string) {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
+/** 00.000.000/0000-00 */
+export const mascararCnpj = (valor: string) =>
+  somenteDigitos(valor)
+    .slice(0, 14)
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
+
 /** (00) 0000-0000 ou (00) 00000-0000 */
 export function mascararTelefone(valor: string) {
   const digitos = somenteDigitos(valor).slice(0, 11);

@@ -1,4 +1,7 @@
 import type {
+  AlterarStatusFunerariaRequest,
+  CadastrarFunerariaRequest,
+  FunerariaListaResponse,
   MotoristaRequest,
   RecusarAtribuicaoRequest,
   CertidaoResponse,
@@ -45,6 +48,7 @@ import {
   novaCertidaoDemo,
   outrosFuneraisDemo,
   parceiroDemo,
+  funerariasDemo,
   atribuicoesDemo,
   transladosDaFrotaDemo,
   prazoDemo,
@@ -99,6 +103,7 @@ export function handlersDemo(sessao: SessaoDemo) {
   const reservas = reservasDemo();
   const translados = [transladoDoExemplo()];
   const atribuicoes = atribuicoesDemo();
+  const funerarias = funerariasDemo();
   const transladosDaFrota = transladosDaFrotaDemo();
   const documentos: Record<string, DocumentoResponse[]> = {
     [funeralDeExemplo().id_beneficiario]: documentosDoExemplo(),
@@ -536,6 +541,47 @@ export function handlersDemo(sessao: SessaoDemo) {
         if (a) a.status = 'CONCLUIDA';
       }
       return HttpResponse.json(t);
+    }),
+
+    // Plataforma: funerárias (TEN-01, TEN-02).
+    http.get('*/api/v1/admin/tenants', ({ request }) => {
+      const url = new URL(request.url);
+      const status = url.searchParams.get('status');
+      const busca = url.searchParams.get('busca')?.toLowerCase();
+      const lista = funerarias
+        .filter((f) => !status || f.status === status)
+        .filter(
+          (f) =>
+            !busca ||
+            [f.nome_fantasia, f.cnpj, f.slug].some((v) => v.toLowerCase().includes(busca)),
+        );
+      return HttpResponse.json(paginar(lista, url));
+    }),
+    http.post('*/api/v1/admin/tenants', async ({ request }) => {
+      const dados = (await request.json()) as CadastrarFunerariaRequest;
+      const nova: FunerariaListaResponse = {
+        id_tenant: `tenant-${Date.now()}`,
+        nome_fantasia: dados.nome_fantasia ?? '',
+        razao_social: dados.razao_social ?? '',
+        cnpj: dados.cnpj ?? '',
+        slug: dados.slug ?? '',
+        email_contato: dados.email_contato ?? '',
+        status: 'ATIVA',
+        origem_cadastro: 'ADMIN',
+        criada_em: new Date().toISOString(),
+      };
+      funerarias.unshift(nova);
+      await delay(400);
+      return HttpResponse.json(
+        { id_tenant: nova.id_tenant, slug: nova.slug, status: nova.status },
+        { status: 201 },
+      );
+    }),
+    http.patch('*/api/v1/admin/tenants/:id/status', async ({ request, params }) => {
+      const f = funerarias.find((x) => x.id_tenant === params.id);
+      if (!f) return naoEncontrado('Funerária não encontrada.');
+      f.status = ((await request.json()) as AlterarStatusFunerariaRequest).status ?? f.status;
+      return semConteudo();
     }),
 
     // Configurações da funerária e tabela de km do translado (ADM-12).
