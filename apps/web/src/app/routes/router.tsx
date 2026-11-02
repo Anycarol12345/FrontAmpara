@@ -9,7 +9,6 @@ import {
   RedefinirSenhaPage,
   RotaProtegida,
 } from '@/features/auth';
-import { EmConstrucao } from '@/shared/components/EmConstrucao';
 import { NaoEncontradoPage, TelaCarregando } from '@/shared/components/PaginaErro';
 import { IrParaLogin } from './IrParaLogin';
 import { ClienteLayout } from '../layouts/ClienteLayout';
@@ -186,9 +185,7 @@ export const router = createBrowserRouter([
                   { path: 'fornecedores', element: <Navigate to="/painel/terceiros" replace /> },
                   {
                     path: 'relatorios',
-                    element: (
-                      <EmConstrucao sobretitulo="Gestão" titulo="Relatórios" card="FE-ADM-13" />
-                    ),
+                    lazy: pagina(() => import('@/features/relatorios'), 'RelatoriosPage'),
                   },
                   {
                     path: 'configuracoes',

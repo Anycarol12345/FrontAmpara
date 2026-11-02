@@ -1,4 +1,5 @@
 import type {
+  RegistroAuditoriaResponse,
   FunerariaListaResponse,
   AtribuicaoResponse,
   TerceiroResponse,
@@ -783,4 +784,87 @@ export function funerariasDemo(): FunerariaListaResponse[] {
     origem_cadastro,
     criada_em: dias(idade),
   }));
+}
+
+/** Conteúdo de exemplo dos relatórios em CSV (ponto e vírgula, como o backend). */
+export function csvDemo(relatorio: string) {
+  const linhas: Record<string, string[]> = {
+    financeiro: [
+      'fatura;titular;vencimento;valor;status',
+      'ft-1;Ana Souza;10/11/2026;54,90;PENDENTE',
+      'ft-2;Carlos Menezes;05/11/2026;89,90;PAGA',
+    ],
+    contratos: [
+      'contrato;titular;plano;inicio;status',
+      'ct-1;Ana Souza;Acolher;12/03/2025;ATIVO',
+      'ct-2;Paulo Reis;Essencial;01/10/2026;A_PAGAR',
+    ],
+    funerais: [
+      'funeral;falecido;cerimonia;destinacao;status',
+      'fu-1;Helena Duarte;03/11/2026;SEPULTAMENTO;EM_PREPARACAO',
+    ],
+  };
+  return `\uFEFF${(linhas[relatorio] ?? ['sem dados']).join('\n')}`;
+}
+
+/** Ações recentes da equipe na funerária de demonstração (REL-03). */
+export function auditoriaDemo(): RegistroAuditoriaResponse[] {
+  const horas = (n: number) => new Date(Date.now() - n * 3_600_000).toISOString();
+  const registro = (
+    id: string,
+    h: number,
+    acao: string,
+    entidade: string,
+    nome: string,
+    antes: object | null,
+    depois: object | null,
+  ): RegistroAuditoriaResponse => ({
+    id_auditoria: id,
+    data_hora: horas(h),
+    acao,
+    entidade,
+    id_entidade: `${entidade.toLowerCase()}-1`,
+    id_usuario: 'us-marcos',
+    nome_usuario: nome,
+    ip: '177.38.12.4',
+    valores_anteriores: antes,
+    valores_novos: depois,
+  });
+  return [
+    registro(
+      'au-1',
+      1,
+      'FATURA_BAIXA_MANUAL',
+      'Fatura',
+      'Juliana Rocha',
+      { status: 'VENCIDA' },
+      { status: 'PAGA', forma: 'PIX' },
+    ),
+    registro(
+      'au-2',
+      3,
+      'PLANO_ALTERADO',
+      'Plano',
+      'Marcos Lima',
+      { valor_mensal: 49.9 },
+      { valor_mensal: 54.9 },
+    ),
+    registro(
+      'au-3',
+      5,
+      'FUNERAL_STATUS_ALTERADO',
+      'Funeral',
+      'Juliana Rocha',
+      { status: 'REGISTRADO' },
+      { status: 'EM_PREPARACAO' },
+    ),
+    registro('au-4', 26, 'CONTRATO_CRIADO', 'Contrato', 'Rafael Nunes', null, {
+      plano: 'Essencial',
+      titular: 'Paulo Reis',
+    }),
+    registro('au-5', 50, 'RELATORIO_EXPORTADO', 'Relatorio', 'Marcos Lima', null, {
+      relatorio: 'financeiro',
+      formato: 'csv',
+    }),
+  ];
 }

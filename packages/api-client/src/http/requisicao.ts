@@ -12,6 +12,28 @@ let renovacaoEmAndamento: Promise<string | null> | null = null;
  * e, ao receber 401, renova a sessão uma única vez antes de deslogar.
  */
 export async function requisicao<T>(url: string, opcoes: RequestInit = {}): Promise<T> {
+  return lerResposta<T>(await executar(url, opcoes));
+}
+
+/**
+ * Baixa um arquivo (ex.: relatório em CSV) com a mesma sessão e o mesmo X-Tenant da API.
+ * Devolve o conteúdo e o nome sugerido pelo backend (Content-Disposition), quando houver.
+ */
+export async function baixarArquivo(
+  url: string,
+  opcoes: RequestInit = {},
+): Promise<{ arquivo: Blob; nome: string | null }> {
+  const resposta = await executar(url, {
+    ...opcoes,
+    headers: { Accept: '*/*', ...opcoes.headers },
+  });
+  if (!resposta.ok) throw await paraErro(resposta);
+  const disposicao = resposta.headers.get('Content-Disposition') ?? '';
+  const nome = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposicao)?.[1];
+  return { arquivo: await resposta.blob(), nome: nome ? decodeURIComponent(nome) : null };
+}
+
+async function executar(url: string, opcoes: RequestInit) {
   const resposta = await enviar(url, opcoes);
 
   if (resposta.status === 401 && !ROTAS_SEM_RENOVACAO.some((rota) => url.includes(rota))) {
@@ -20,10 +42,10 @@ export async function requisicao<T>(url: string, opcoes: RequestInit = {}): Prom
       obterConfiguracao().aoSessaoExpirar();
       throw await paraErro(resposta);
     }
-    return lerResposta<T>(await enviar(url, opcoes, token));
+    return enviar(url, opcoes, token);
   }
 
-  return lerResposta<T>(resposta);
+  return resposta;
 }
 
 /** Requisições que chegam juntas com 401 esperam a mesma renovação (fila). */
@@ -40,7 +62,7 @@ function renovarUmaVez() {
 async function enviar(url: string, opcoes: RequestInit, token?: string) {
   const { baseUrl, obterToken, obterTenant } = obterConfiguracao();
   const cabecalhos = new Headers(opcoes.headers);
-  cabecalhos.set('Accept', 'application/json');
+  if (!cabecalhos.has('Accept')) cabecalhos.set('Accept', 'application/json');
 
   const accessToken = token ?? obterToken();
   if (accessToken) cabecalhos.set('Authorization', `Bearer ${accessToken}`);

@@ -3,7 +3,7 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { configurarCliente } from './configuracao';
 import { ApiError } from './erros';
-import { requisicao } from './requisicao';
+import { baixarArquivo, requisicao } from './requisicao';
 
 const API = 'http://api.teste';
 const servidor = setupServer();
@@ -134,5 +134,28 @@ describe('requisicao', () => {
     );
 
     await expect(requisicao('/api/v1/auth/logout', { method: 'POST' })).resolves.toBeUndefined();
+  });
+});
+
+describe('baixarArquivo', () => {
+  it('baixa o arquivo com o token e lê o nome do Content-Disposition', async () => {
+    let autorizacao: string | null = null;
+    servidor.use(
+      http.get(`${API}/api/v1/gestao/relatorios/financeiro`, ({ request }) => {
+        autorizacao = request.headers.get('Authorization');
+        return new HttpResponse('id;valor\n1;10', {
+          headers: {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename="financeiro-2026-11.csv"',
+          },
+        });
+      }),
+    );
+
+    const { arquivo, nome } = await baixarArquivo('/api/v1/gestao/relatorios/financeiro');
+
+    expect(autorizacao).toBe('Bearer token-velho');
+    expect(nome).toBe('financeiro-2026-11.csv');
+    expect(await arquivo.text()).toBe('id;valor\n1;10');
   });
 });

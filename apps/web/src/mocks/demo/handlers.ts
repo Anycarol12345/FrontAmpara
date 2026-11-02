@@ -48,6 +48,8 @@ import {
   novaCertidaoDemo,
   outrosFuneraisDemo,
   parceiroDemo,
+  auditoriaDemo,
+  csvDemo,
   funerariasDemo,
   atribuicoesDemo,
   transladosDaFrotaDemo,
@@ -582,6 +584,27 @@ export function handlersDemo(sessao: SessaoDemo) {
       if (!f) return naoEncontrado('Funerária não encontrada.');
       f.status = ((await request.json()) as AlterarStatusFunerariaRequest).status ?? f.status;
       return semConteudo();
+    }),
+
+    // Relatórios em CSV e auditoria (ADM-13).
+    http.get('*/api/v1/gestao/relatorios/:relatorio', ({ params, request }) => {
+      const url = new URL(request.url);
+      const nome = `${String(params.relatorio)}-${url.searchParams.get('de') ?? hoje().slice(0, 7)}.csv`;
+      return new HttpResponse(csvDemo(String(params.relatorio)), {
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${nome}"`,
+        },
+      });
+    }),
+    http.get('*/api/v1/gestao/auditoria', ({ request }) => {
+      const url = new URL(request.url);
+      const acao = url.searchParams.get('acao');
+      const entidade = url.searchParams.get('entidade')?.toLowerCase();
+      const lista = auditoriaDemo()
+        .filter((r) => !acao || r.acao.includes(acao))
+        .filter((r) => !entidade || r.entidade.toLowerCase().includes(entidade));
+      return HttpResponse.json(paginar(lista, url));
     }),
 
     // Configurações da funerária e tabela de km do translado (ADM-12).
