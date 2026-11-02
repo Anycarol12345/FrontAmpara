@@ -107,6 +107,12 @@ describe('FaturasPage', () => {
     const dialogo = await screen.findByRole('dialog');
     expect(dialogo).toHaveTextContent('Multa e juros pelo atraso');
     expect(dialogo).toHaveTextContent('R$ 4,15');
+    expect(
+      within(dialogo).getByRole('img', { name: 'QR Code da página de pagamento' }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialogo).getByRole('button', { name: /copiar link de pagamento/i }),
+    ).toBeInTheDocument();
     await usuario.click(within(dialogo).getByRole('button', { name: /ir para o pagamento/i }));
 
     expect(abrir).toHaveBeenCalledWith(

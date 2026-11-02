@@ -7,7 +7,8 @@ import {
   DialogTitle,
 } from '@ampara/ui/components/dialog';
 import { toast } from '@ampara/ui/components/sonner';
-import { ExternalLink } from 'lucide-react';
+import { Copy, ExternalLink } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { data, real } from '@/shared/lib/formatar';
 import { encargosDaFatura, type FaturaResponse } from '../hooks/faturas';
 import { competencia } from './rotulos';
@@ -20,6 +21,21 @@ type Props = { fatura: FaturaResponse | null; aoFechar: () => void };
  */
 export function PagarFaturaDialog({ fatura, aoFechar }: Props) {
   const encargos = fatura ? encargosDaFatura(fatura) : 0;
+
+  // Link absoluto: o QR Code é lido por outro aparelho.
+  const link = fatura?.link_pagamento
+    ? new URL(fatura.link_pagamento, window.location.origin).toString()
+    : null;
+
+  async function copiarLink() {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Link de pagamento copiado.');
+    } catch {
+      toast.error('Não foi possível copiar. Selecione o link e copie manualmente.');
+    }
+  }
 
   function irParaPagamento() {
     if (!fatura?.link_pagamento) return;
@@ -60,6 +76,36 @@ export function PagarFaturaDialog({ fatura, aoFechar }: Props) {
                 A multa e os juros não entram neste pagamento: eles são cobrados na sua próxima
                 fatura.
               </p>
+            )}
+            {link && (
+              // O Stripe gera o Pix na página de pagamento: a API não devolve o código do Pix.
+              <section
+                aria-label="Pagar pelo celular"
+                className="mt-5 flex flex-wrap items-center gap-4 rounded-lg border border-border p-4"
+              >
+                <QRCodeSVG
+                  value={link}
+                  size={112}
+                  marginSize={1}
+                  role="img"
+                  aria-label="QR Code da página de pagamento"
+                />
+                <div className="flex min-w-48 flex-1 flex-col gap-2">
+                  <p className="text-sm font-semibold">Pagar pelo celular</p>
+                  <p className="text-xs text-muted-foreground">
+                    Aponte a câmera para abrir a página de pagamento. Lá você escolhe Pix e vê o QR
+                    Code e o código copia e cola do Pix.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="self-start"
+                    onClick={() => void copiarLink()}
+                  >
+                    <Copy /> Copiar link de pagamento
+                  </Button>
+                </div>
+              </section>
             )}
             <DialogFooter>
               <Button variant="outline" onClick={aoFechar}>
