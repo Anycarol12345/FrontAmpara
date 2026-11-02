@@ -1,35 +1,8 @@
 import { z } from 'zod';
+import { UFS } from '@/shared/lib/ufs';
 import { esquemas } from '@/shared/lib/validacao';
 
-export const UFS = [
-  'AC',
-  'AL',
-  'AP',
-  'AM',
-  'BA',
-  'CE',
-  'DF',
-  'ES',
-  'GO',
-  'MA',
-  'MT',
-  'MS',
-  'MG',
-  'PA',
-  'PB',
-  'PR',
-  'PE',
-  'PI',
-  'RJ',
-  'RN',
-  'RS',
-  'RO',
-  'RR',
-  'SC',
-  'SP',
-  'SE',
-  'TO',
-] as const;
+export { UFS };
 
 // Mensagens iguais às do backend (CadastrarClienteCommandValidator).
 export const cadastroSchema = z

@@ -41,7 +41,7 @@ export const MENU_DO_PERFIL: Partial<Record<Perfil, ItemMenu[]>> = {
     { rotulo: 'Equipe', para: '/painel/equipe', icone: IdCard },
     { rotulo: 'Planos', para: '/painel/planos', icone: ShieldCheck },
     { rotulo: 'Catálogo', para: '/painel/catalogo', icone: Flower2 },
-    { rotulo: 'Fornecedores', para: '/painel/fornecedores', icone: Package },
+    { rotulo: 'Terceiros', para: '/painel/terceiros', icone: Package },
     { rotulo: 'Relatórios', para: '/painel/relatorios', icone: BarChart3 },
     { rotulo: 'Configurações', para: '/painel/configuracoes', icone: Settings },
   ],

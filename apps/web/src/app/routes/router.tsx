@@ -179,16 +179,13 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: 'catalogo',
-                    element: (
-                      <EmConstrucao sobretitulo="Gestão" titulo="Catálogo" card="FE-ADM-09" />
-                    ),
+                    lazy: pagina(() => import('@/features/catalogo'), 'CatalogoPage'),
                   },
                   {
-                    path: 'fornecedores',
-                    element: (
-                      <EmConstrucao sobretitulo="Gestão" titulo="Fornecedores" card="FE-ADM-14" />
-                    ),
+                    path: 'terceiros',
+                    lazy: pagina(() => import('@/features/terceiros'), 'TerceirosPage'),
                   },
+                  { path: 'fornecedores', element: <Navigate to="/painel/terceiros" replace /> },
                   {
                     path: 'relatorios',
                     element: (
