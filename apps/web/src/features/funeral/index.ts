@@ -10,3 +10,4 @@ export {
 export { RegistrarBeneficiarioPage } from './pages/painel/RegistrarBeneficiarioPage';
 export { FuneralPainelPage } from './pages/painel/FuneralPainelPage';
 export { RegistrarFuneralPage } from './pages/painel/RegistrarFuneralPage';
+export { AgendaPage } from './pages/painel/AgendaPage';

@@ -9,6 +9,7 @@ import { PageHeader } from '@/shared/components/PageHeader';
 import { DadosDoFuneral } from '../../components/DadosDoFuneral';
 import { HistoricoDoFuneral } from '../../components/HistoricoDoFuneral';
 import { STATUS_DO_FUNERAL } from '../../components/rotulosPainel';
+import { LocalEAgenda } from '../../components/LocalEAgenda';
 import { MontadorDeItens } from '../../components/MontadorDeItens';
 
 const ABAS = [
@@ -60,9 +61,8 @@ export function FuneralPainelPage() {
               {ativa === 'dados' && <DadosDoFuneral funeral={funeral} />}
               {ativa === 'historico' && <HistoricoDoFuneral historico={funeral.historico} />}
               {ativa === 'itens' && <MontadorDeItens funeral={funeral} />}
-              {(ativa === 'local' || ativa === 'translado' || ativa === 'documentos') && (
-                <EmBreve />
-              )}
+              {ativa === 'local' && <LocalEAgenda funeral={funeral} />}
+              {(ativa === 'translado' || ativa === 'documentos') && <EmBreve />}
             </PainelDaAba>
           </>
         )}

@@ -1,4 +1,6 @@
 import type {
+  LocalResponse,
+  ReservaResponse,
   ConfiguracaoTransladoResponse,
   ConfiguracoesResponse,
   CategoriaResponse,
@@ -11,6 +13,7 @@ import type {
   MembroEquipeResponse,
   PlanoResponse,
 } from '@ampara/api-client';
+import { funeralDeExemplo, ID_FUNERAL_EXEMPLO } from '../exemplos';
 import type { Cenario } from './sessao';
 
 // Uma funerária de demonstração coerente: os mesmos planos, catálogo, clientes e contratos
@@ -456,3 +459,60 @@ export const tabelaKmDemo = (): ConfiguracaoTransladoResponse => ({
     INTERESTADUAL: ['Certidão de óbito', 'Autorização de translado', 'Atestado de embalsamamento'],
   },
 });
+
+/** Salas e locais da demonstração (ADM-06). */
+export const locaisDemo = (): LocalResponse[] =>
+  (
+    [
+      ['local-capela', 'Capela Ampara Jardim · Sala 2', 'SALA_VELORIO', true, 60, true],
+      ['local-sala1', 'Capela Ampara Jardim · Sala 1', 'SALA_VELORIO', true, 60, true],
+      ['local-ipe', 'Sala Ipê', 'SALA_VELORIO', true, 90, true],
+      ['local-cemiterio', 'Cemitério da Paz', 'CEMITERIO', false, 0, true],
+      ['local-igreja', 'Paróquia São José', 'IGREJA', false, 0, false],
+    ] as const
+  ).map(([id_local, nome, tipo, proprio, intervalo, ativo]) => ({
+    id_local,
+    nome,
+    tipo,
+    endereco: proprio ? 'Rua das Acácias, 120' : null,
+    proprio,
+    intervalo_preparacao_minutos: intervalo,
+    ativo,
+  }));
+
+type ReservaDemo = ReservaResponse & { id_funeral: string; nome_falecido: string };
+
+/** As reservas do funeral de exemplo e mais duas de outros funerais, para a agenda ter movimento. */
+export function reservasDemo(): ReservaDemo[] {
+  const agora = new Date();
+  const as = (dias: number, h: number) =>
+    new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + dias, h).toISOString();
+  const exemplo = funeralDeExemplo();
+  return [
+    ...exemplo.reservas.map((r) => ({
+      ...r,
+      id_funeral: ID_FUNERAL_EXEMPLO,
+      nome_falecido: exemplo.nome_falecido,
+    })),
+    {
+      id_reserva: 'reserva-outro-1',
+      id_local: 'local-sala1',
+      nome_local: 'Capela Ampara Jardim · Sala 1',
+      tipo_local: 'SALA_VELORIO',
+      inicio: as(0, 8),
+      fim: as(0, 14),
+      id_funeral: 'funeral-outro-1',
+      nome_falecido: 'José Almeida',
+    },
+    {
+      id_reserva: 'reserva-outro-2',
+      id_local: 'local-ipe',
+      nome_local: 'Sala Ipê',
+      tipo_local: 'SALA_VELORIO',
+      inicio: as(0, 15),
+      fim: as(0, 21),
+      id_funeral: 'funeral-outro-2',
+      nome_falecido: 'Lúcia Ferraz',
+    },
+  ];
+}

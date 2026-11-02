@@ -1,4 +1,7 @@
 import type {
+  LocalRequest,
+  ReservaRequest,
+  StatusLocalRequest,
   AtualizarConfiguracoesRequest,
   DocumentosExigidosRequest,
   TabelaPrecosRequest,
@@ -23,16 +26,24 @@ import {
   FUNERARIA,
   configuracoesDemo,
   criarBanco,
+  locaisDemo,
+  reservasDemo,
   tabelaKmDemo,
   montarContrato,
   resumoDoContrato,
 } from './dados';
 import { alterarEstado, lerEstado } from '../estado';
+import { funeralDeExemplo, ID_FUNERAL_EXEMPLO } from '../exemplos';
 import { loginDemo, salvarSessaoDemo, type SessaoDemo } from './sessao';
 
 const naoEncontrado = (detail: string) => HttpResponse.json({ detail }, { status: 404 });
 const semConteudo = () => new HttpResponse(null, { status: 204 });
 const hoje = () => new Date().toISOString().slice(0, 10);
+/** Dia (aaaa-mm-dd) de um ISO no fuso de quem usa a demonstração. */
+const diaLocal = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 /** Fatia uma lista no formato de paginação do INF-17. */
 function paginar<T>(lista: T[], url: URL) {
@@ -56,6 +67,8 @@ export function handlersDemo(sessao: SessaoDemo) {
   const banco = criarBanco(sessao.cenario);
   const configuracoes = configuracoesDemo();
   const tabelaKm = tabelaKmDemo();
+  const locais = locaisDemo();
+  const reservas = reservasDemo();
   const contrato = (id: string) => banco.contratos.find((c) => c.id_contrato === id);
   const dependentesDe = (idCliente: string) =>
     idCliente === banco.meusDados.id_cliente ? banco.dependentes : [];
@@ -122,6 +135,105 @@ export function handlersDemo(sessao: SessaoDemo) {
 
     http.get('*/api/v1/tenant/configuracoes', () => HttpResponse.json(FUNERARIA)),
     http.get('*/api/v1/funerarias/:slug/logo', () => naoEncontrado('Sem logo.')),
+
+    // Salas, agenda e reservas do funeral de exemplo (ADM-06).
+    http.get('*/api/v1/gestao/locais', ({ request }) => {
+      const ativos = new URL(request.url).searchParams.get('ativos') === 'true';
+      return HttpResponse.json(locais.filter((l) => !ativos || l.ativo));
+    }),
+    http.post('*/api/v1/gestao/locais', async ({ request }) => {
+      const dados = (await request.json()) as LocalRequest;
+      const local = {
+        id_local: `local-${Date.now()}`,
+        nome: dados.nome ?? '',
+        tipo: dados.tipo ?? 'OUTRO',
+        endereco: dados.endereco,
+        proprio: dados.proprio,
+        intervalo_preparacao_minutos: dados.intervalo_preparacao_minutos ?? 0,
+        ativo: true,
+      };
+      locais.push(local);
+      return HttpResponse.json(local, { status: 201 });
+    }),
+    http.put('*/api/v1/gestao/locais/:id', async ({ request, params }) => {
+      const local = locais.find((l) => l.id_local === params.id);
+      if (!local) return naoEncontrado('Local não encontrado.');
+      Object.assign(local, await request.json());
+      return HttpResponse.json(local);
+    }),
+    http.patch('*/api/v1/gestao/locais/:id/status', async ({ request, params }) => {
+      const local = locais.find((l) => l.id_local === params.id);
+      if (!local) return naoEncontrado('Local não encontrado.');
+      local.ativo = Boolean(((await request.json()) as StatusLocalRequest).ativo);
+      return semConteudo();
+    }),
+    http.get('*/api/v1/gestao/locais/:id/agenda', ({ request, params }) => {
+      const local = locais.find((l) => l.id_local === params.id);
+      if (!local) return naoEncontrado('Local não encontrado.');
+      const dia = new URL(request.url).searchParams.get('data') ?? hoje();
+      const intervalo = local.intervalo_preparacao_minutos * 60_000;
+      return HttpResponse.json({
+        local,
+        data: dia,
+        reservas: reservas
+          .filter((r) => r.id_local === local.id_local && diaLocal(r.inicio) === dia)
+          .map((r) => ({
+            id_reserva: r.id_reserva,
+            id_funeral: r.id_funeral,
+            nome_falecido: r.nome_falecido,
+            inicio: r.inicio,
+            fim: r.fim,
+            ocupado_ate: new Date(new Date(r.fim).getTime() + intervalo).toISOString(),
+          })),
+      });
+    }),
+    http.get('*/api/v1/funerais/:id', async ({ params }) => {
+      if (params.id !== ID_FUNERAL_EXEMPLO) return;
+      await delay(300);
+      return HttpResponse.json({
+        ...funeralDeExemplo(),
+        reservas: reservas.filter((r) => r.id_funeral === ID_FUNERAL_EXEMPLO),
+      });
+    }),
+    http.post('*/api/v1/funerais/:id/reservas', async ({ request, params }) => {
+      const dados = (await request.json()) as ReservaRequest;
+      const local = locais.find((l) => l.id_local === dados.id_local);
+      if (!local || !dados.inicio || !dados.fim) return naoEncontrado('Local não encontrado.');
+      const intervalo = local.intervalo_preparacao_minutos * 60_000;
+      const ini = new Date(dados.inicio).getTime();
+      const fim = new Date(dados.fim).getTime();
+      const conflito =
+        local.proprio &&
+        reservas.some(
+          (r) =>
+            r.id_local === local.id_local &&
+            ini < new Date(r.fim).getTime() + intervalo &&
+            new Date(r.inicio).getTime() < fim + intervalo,
+        );
+      await delay(300);
+      if (conflito)
+        return HttpResponse.json(
+          { title: 'Horário ocupado', detail: 'O local já está reservado nesse horário.' },
+          { status: 409 },
+        );
+      const reserva = {
+        id_reserva: `reserva-${Date.now()}`,
+        id_local: local.id_local,
+        nome_local: local.nome,
+        tipo_local: local.tipo,
+        inicio: dados.inicio,
+        fim: dados.fim,
+        id_funeral: String(params.id),
+        nome_falecido: funeralDeExemplo().nome_falecido,
+      };
+      reservas.push(reserva);
+      return HttpResponse.json(reserva, { status: 201 });
+    }),
+    http.delete('*/api/v1/funerais/:id/reservas/:idReserva', ({ params }) => {
+      const i = reservas.findIndex((r) => r.id_reserva === params.idReserva);
+      if (i >= 0) reservas.splice(i, 1);
+      return semConteudo();
+    }),
 
     // Configurações da funerária e tabela de km do translado (ADM-12).
     http.get('*/api/v1/gestao/configuracoes', () => HttpResponse.json(configuracoes)),

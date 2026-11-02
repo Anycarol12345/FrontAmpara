@@ -155,7 +155,7 @@ export const router = createBrowserRouter([
                 children: [
                   {
                     path: 'agenda',
-                    element: <EmConstrucao sobretitulo="Equipe" titulo="Agenda" card="FE-ADM-04" />,
+                    lazy: pagina(() => import('@/features/funeral'), 'AgendaPage'),
                   },
                   {
                     path: 'documentos',

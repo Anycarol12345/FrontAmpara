@@ -106,7 +106,7 @@ const GRUPOS: Grupo[] = [
     perfil: 'FUNCIONARIO',
     telas: [
       ...ATENDIMENTO,
-      { titulo: 'Agenda (em construção)', rota: '/painel/agenda', card: 'FE-ADM-04' },
+      { titulo: 'Agenda', rota: '/painel/agenda', card: 'FE-ADM-06' },
       { titulo: 'Documentos (em construção)', rota: '/painel/documentos', card: 'FE-ADM-08' },
     ],
   },
