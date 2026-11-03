@@ -56,6 +56,26 @@ A senha é o **valor** da variável (o que vem depois do `=`), não o nome dela.
 (`Seed:SenhaDemo` e `Seed:AdminSenha`). O administrador da plataforma não pertence a nenhuma funerária e
 o backend recusa o login dele com `X-Tenant`: por isso ele entra em `/admin/entrar`, que vai sem funerária.
 Depois de 5 tentativas erradas, o backend bloqueia a conta por 5 minutos (padrão do ASP.NET Identity).
+Abrir uma tela de login encerra a demonstração do `/demo`: o login sempre vai para o backend.
+
+#### Clientes de teste para as faturas
+
+O backend só cria faturas quando o Stripe avisa; sem Stripe configurado, nenhum cliente tem faturas.
+Para ver a área do cliente em cada situação, rode (com o backend e o Postgres do Docker no ar):
+
+```bash
+pnpm clientes-de-teste
+```
+
+| E-mail (entra em `/entrar`) | Situação                                                                 |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `a-pagar@demo.localhost`    | aguardando o 1º pagamento: fatura em aberto vencendo em 5 dias           |
+| `em-dia@demo.localhost`     | contrato ativo, as três últimas faturas pagas                            |
+| `atrasado@demo.localhost`   | contrato suspenso: uma fatura paga e outra vencida há 12 dias, com multa |
+
+Os clientes e os contratos são criados pela API; as faturas vão direto no banco. A senha dos três é gerada
+na primeira vez e fica em `scripts/.env.clientes-teste` (fora do git). Rodar de novo recria as faturas
+com as datas de hoje.
 
 A funerária vem do subdomínio (http://demo.localhost:5173). Sem subdomínio, vale `VITE_TENANT_PADRAO`.
 O `/admin` (plataforma) é aberto sem funerária.
