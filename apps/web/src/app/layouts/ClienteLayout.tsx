@@ -12,7 +12,6 @@ const MENU = [
   { rotulo: 'Pagamentos', para: '/minha-conta/faturas', fim: false },
   { rotulo: 'Pessoas protegidas', para: '/minha-conta/dependentes', fim: false },
   { rotulo: 'Preferências', para: '/minha-conta/preferencias', fim: false },
-  { rotulo: 'Atendimentos', para: '/minha-conta/atendimentos', fim: false },
   { rotulo: 'Meus dados', para: '/minha-conta/dados', fim: false },
 ];
 

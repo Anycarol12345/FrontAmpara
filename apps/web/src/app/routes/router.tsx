@@ -89,10 +89,9 @@ export const router = createBrowserRouter([
                 path: 'preferencias',
                 lazy: pagina(() => import('@/features/funeral'), 'PreferenciasPage'),
               },
-              {
-                path: 'atendimentos',
-                lazy: pagina(() => import('@/features/funeral'), 'AtendimentosPage'),
-              },
+              // O backend não lista os funerais da família: o acompanhamento abre pelo aviso
+              // (notificação) ou pelo destaque no início, quando há um funeral em andamento.
+              { path: 'atendimentos', element: <Navigate to="/minha-conta" replace /> },
               {
                 path: 'atendimentos/:id',
                 lazy: pagina(() => import('@/features/funeral'), 'AcompanhamentoPage'),

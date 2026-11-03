@@ -29,7 +29,6 @@ const CLIENTE: Tela[] = [
   },
   { titulo: 'Pagamentos', rota: '/minha-conta/faturas', card: 'FE-CLI-06' },
   { titulo: 'Preferências de funeral', rota: '/minha-conta/preferencias', card: 'FE-CLI-07' },
-  { titulo: 'Atendimentos', rota: '/minha-conta/atendimentos', card: 'FE-CLI-08' },
   {
     titulo: 'Acompanhamento do funeral',
     rota: '/minha-conta/atendimentos/exemplo-1',

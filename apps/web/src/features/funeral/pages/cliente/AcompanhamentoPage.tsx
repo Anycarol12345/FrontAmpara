@@ -43,10 +43,10 @@ export function AcompanhamentoPage() {
   return (
     <div className="flex flex-col gap-6">
       <Link
-        to="/minha-conta/atendimentos"
+        to="/minha-conta"
         className="inline-flex items-center gap-2 self-start text-xs text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" /> Atendimentos
+        <ArrowLeft className="size-3.5" /> Início
       </Link>
       <EstadoConsulta consulta={consulta}>
         {(funeral) => <Detalhe funeral={funeral} />}
