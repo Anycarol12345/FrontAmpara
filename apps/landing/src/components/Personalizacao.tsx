@@ -81,6 +81,14 @@ export function Personalizacao({ itens, linkSalvar }: PersonalizacaoProps) {
                       : 'border-transparent',
                   )}
                 >
+                  {item.imagem_url && (
+                    // Foto enviada pela funerária no catálogo, servida pela API: <img> simples em vez do next/image.
+                    <img
+                      src={item.imagem_url}
+                      alt=""
+                      className="mb-5 aspect-[4/3] w-full rounded-lg object-cover"
+                    />
+                  )}
                   <span className="flex items-start justify-between">
                     <span className="grid size-7 place-items-center rounded-md bg-info text-brand-800">
                       <Icone className="size-3.5" strokeWidth={1.75} />
