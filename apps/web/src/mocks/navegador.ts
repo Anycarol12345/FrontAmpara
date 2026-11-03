@@ -16,10 +16,17 @@ export async function iniciarDadosFicticios() {
   if (TELAS_DE_LOGIN.includes(window.location.pathname)) salvarSessaoDemo(null);
   const demo = lerSessaoDemo();
   if (!demo) return;
-  await setupWorker(...handlersDemo(demo), ...handlersFicticios).start({
-    onUnhandledFrame: 'bypass',
-    quiet: true,
-  });
+  try {
+    await setupWorker(...handlersDemo(demo), ...handlersFicticios).start({
+      onUnhandledFrame: 'bypass',
+      quiet: true,
+    });
+  } catch (erro) {
+    // Sem o service worker não há demonstração: o app abre com o backend real, em vez da tela em branco.
+    salvarSessaoDemo(null);
+    console.warn('[Ampara] Não foi possível ligar a demonstração; usando o backend.', erro);
+    return;
+  }
   console.info(
     `[Ampara] Demonstração ligada (${demo.perfil}): a API inteira é simulada. Saia pelo botão "Sair".`,
   );
