@@ -14,12 +14,12 @@ import { NOME_PERFIL, useAuth, type Perfil } from '@/features/auth';
 import { IndicadorConexao } from '@/shared/tempo-real/IndicadorConexao';
 import { ETIQUETA_DO_PERFIL, MENU_DO_PERFIL } from './menus';
 
-// Os três perfis da equipe mostrados no topo do protótipo. O ativo é o da sessão.
-const PERFIS_DA_EQUIPE: { rotulo: string; perfis: Perfil[] }[] = [
-  { rotulo: 'Funcionário', perfis: ['FUNCIONARIO'] },
-  { rotulo: 'Consultor', perfis: ['CONSULTOR'] },
-  { rotulo: 'Administrador', perfis: ['FUNERARIA'] },
-];
+// Perfil da equipe mostrado no topo: só o de quem está logado.
+const PERFIL_DA_EQUIPE: Partial<Record<Perfil, string>> = {
+  FUNCIONARIO: 'Funcionário',
+  CONSULTOR: 'Consultor',
+  FUNERARIA: 'Administrador',
+};
 
 /**
  * Layout da área interna (FE-03): topo com busca e usuário, menu lateral e conteúdo.
@@ -33,7 +33,8 @@ export function PainelLayout() {
   if (!usuario) return null;
 
   const menu = MENU_DO_PERFIL[usuario.perfil] ?? [];
-  const daEquipe = ['FUNERARIA', 'FUNCIONARIO', 'CONSULTOR'].includes(usuario.perfil);
+  const perfilDaEquipe = PERFIL_DA_EQUIPE[usuario.perfil];
+  const daEquipe = Boolean(perfilDaEquipe);
   async function encerrar() {
     const login = usuario?.perfil === 'ADMIN' ? '/admin/entrar' : '/equipe/entrar';
     await sair();
@@ -60,24 +61,10 @@ export function PainelLayout() {
           />
         </label>
 
-        {daEquipe && (
-          <ul aria-label="Perfis da equipe" className="ml-auto hidden items-center gap-1 lg:flex">
-            {PERFIS_DA_EQUIPE.map(({ rotulo, perfis }) => {
-              const ativo = perfis.includes(usuario.perfil);
-              return (
-                <li
-                  key={rotulo}
-                  aria-current={ativo || undefined}
-                  className={cn(
-                    'rounded-full px-4 py-2 text-xs font-semibold',
-                    ativo ? 'bg-primary text-primary-foreground' : 'text-muted-foreground',
-                  )}
-                >
-                  {rotulo}
-                </li>
-              );
-            })}
-          </ul>
+        {perfilDaEquipe && (
+          <span className="ml-auto hidden rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground lg:inline">
+            {perfilDaEquipe}
+          </span>
         )}
 
         <IndicadorConexao className={daEquipe ? undefined : 'ml-auto'} />

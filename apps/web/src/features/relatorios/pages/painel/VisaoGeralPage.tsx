@@ -10,14 +10,13 @@ import {
   Check,
   ChevronRight,
   FileText,
-  Pencil,
   Percent,
   UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { NOME_PERFIL, useAuth } from '@/features/auth';
+import { NOME_PERFIL, useAuth, usePermissao } from '@/features/auth';
 import { EstadoConsulta } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '@/shared/components/StatCard';
@@ -25,14 +24,7 @@ import { numero } from '@/shared/lib/formatar';
 import { GraficosFinanceiros } from '@/features/relatorios/components/GraficosFinanceiros';
 import { FuneraisEmAndamento } from '@/features/relatorios/components/FuneraisEmAndamento';
 
-// Dados fixos do protótipo. Passam a vir da API quando os endpoints de relatórios (REL-01) existirem.
 // Atividades e prioridades ainda são dados fixos do protótipo.
-const INDICADORES = [
-  { rotulo: 'Atendimentos hoje', valor: '08', detalhe: '3 em andamento', icone: UsersRound },
-  { rotulo: 'Tarefas pendentes', valor: '05', detalhe: '2 com prioridade', icone: Check },
-  { rotulo: 'Cerimônias', valor: '03', detalhe: 'Próxima às 14h', icone: CalendarDays },
-  { rotulo: 'Documentos', valor: '12', detalhe: '4 para revisar', icone: FileText },
-];
 
 type Status = 'Concluído' | 'Em andamento' | 'Agendado';
 
@@ -87,6 +79,9 @@ const PRIORIDADES = [
 
 export function VisaoGeralPage() {
   const { usuario } = useAuth();
+  // Indicadores, gráficos e registro de atendimento são da equipe (gestor e funcionário):
+  // o backend nega ao consultor (política EquipeFuneraria).
+  const { ehEquipe } = usePermissao();
   const primeiroNome = usuario?.nome.split(' ')[0] ?? '';
 
   return (
@@ -94,35 +89,81 @@ export function VisaoGeralPage() {
       <PageHeader
         sobretitulo={`${usuario ? NOME_PERFIL[usuario.perfil] : ''} · Painel`}
         titulo={`${saudacao()}, ${primeiroNome}`}
-        descricao="Aqui está um resumo dos atendimentos e atividades da sua equipe."
+        descricao={
+          ehEquipe
+            ? 'Aqui está um resumo dos atendimentos e atividades da sua equipe.'
+            : 'Seus clientes e contratações, e os funerais em andamento na funerária.'
+        }
         acoes={
-          <>
-            <Button variant="outline" className="border-transparent">
-              <Pencil /> Editar painel
-            </Button>
+          ehEquipe ? (
             <Button asChild>
               <Link to="/painel/beneficiarios/novo">
                 Novo atendimento <ArrowRight />
               </Link>
             </Button>
-          </>
+          ) : (
+            <Button asChild>
+              <Link to="/painel/clientes">
+                Atender um cliente <ArrowRight />
+              </Link>
+            </Button>
+          )
         }
       />
 
-      <Indicadores />
-      {INDICADORES.map((indicador) => (
-        <StatCard key={indicador.rotulo} {...indicador} />
-      ))}
-      <Indicadores />
-
-      <GraficosFinanceiros />
+      {ehEquipe ? (
+        <>
+          <Indicadores />
+          <GraficosFinanceiros />
+        </>
+      ) : (
+        <AtalhosDoConsultor />
+      )}
 
       <FuneraisEmAndamento />
 
-      <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
-        <AtividadesRecentes />
-        <PrioridadesDoDia />
-      </div>
+      {ehEquipe && (
+        <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
+          <AtividadesRecentes />
+          <PrioridadesDoDia />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Início do consultor: os atalhos do que ele faz no dia a dia (DEC-11). */
+function AtalhosDoConsultor() {
+  const atalhos = [
+    {
+      titulo: 'Clientes',
+      descricao: 'Cadastre clientes e consulte os dados de quem você atende.',
+      para: '/painel/clientes',
+      icone: UsersRound,
+    },
+    {
+      titulo: 'Contratos',
+      descricao: 'Acompanhe as contratações e a situação de cada plano.',
+      para: '/painel/contratos',
+      icone: FileText,
+    },
+  ];
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
+      {atalhos.map(({ titulo, descricao, para, icone: Icone }) => (
+        <Link key={para} to={para} className="group">
+          <Card className="flex h-full items-center gap-4 p-6 transition-colors group-hover:bg-muted/40">
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+              <Icone className="size-5" strokeWidth={1.75} />
+            </span>
+            <span className="flex flex-1 flex-col">
+              <span className="text-base font-bold">{titulo}</span>
+              <span className="text-xs text-muted-foreground">{descricao}</span>
+            </span>
+            <ChevronRight className="size-4 text-subtle-foreground" />
+          </Card>
+        </Link>
+      ))}
     </div>
   );
 }
