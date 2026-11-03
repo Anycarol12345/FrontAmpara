@@ -6,6 +6,7 @@ import { EstadoConsulta } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { IdentidadeVisualForm } from '../../components/IdentidadeVisualForm';
 import { CobrancaForm, OperacaoForm } from '../../components/ParametrosForm';
+import { RecebimentosStripe } from '../../components/RecebimentosStripe';
 
 const ABAS = [
   { id: 'identidade', titulo: 'Identidade visual' },
@@ -41,7 +42,12 @@ export function ConfiguracoesPage() {
             {(configuracoes) => (
               <>
                 {ativa === 'identidade' && <IdentidadeVisualForm configuracoes={configuracoes} />}
-                {ativa === 'cobranca' && <CobrancaForm configuracoes={configuracoes} />}
+                {ativa === 'cobranca' && (
+                  <>
+                    <RecebimentosStripe />
+                    <CobrancaForm configuracoes={configuracoes} />
+                  </>
+                )}
                 {ativa === 'operacao' && <OperacaoForm configuracoes={configuracoes} />}
               </>
             )}

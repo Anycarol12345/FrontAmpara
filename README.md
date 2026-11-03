@@ -77,6 +77,17 @@ Os clientes e os contratos são criados pela API; as faturas vão direto no banc
 na primeira vez e fica em `scripts/.env.clientes-teste` (fora do git). Rodar de novo recria as faturas
 com as datas de hoje.
 
+#### Pagamentos com o Stripe (modo de teste)
+
+1. No `.env` do backend, coloque `STRIPE_SECRET_KEY=sk_test_...` (a chave de teste da conta Stripe).
+2. Instale o Stripe CLI e grave o segredo do webhook no `.env` do backend:
+   `powershell -ExecutionPolicy Bypass -File scripts/instalar-stripe-cli.ps1` e depois
+   `powershell -ExecutionPolicy Bypass -File scripts/configurar-stripe-backend.ps1`. Recrie a API.
+3. Deixe os eventos indo para o backend enquanto testa:
+   `powershell -ExecutionPolicy Bypass -File scripts/stripe-webhook.ps1`.
+4. Como gestor, em Configurações › Cobrança, clique em **Cadastrar no Stripe** e preencha a página do
+   Stripe (no modo de teste, dados fictícios servem). Sem esse cadastro, os planos não são cobrados.
+
 A funerária vem do subdomínio (http://demo.localhost:5173). Sem subdomínio, vale `VITE_TENANT_PADRAO`.
 O `/admin` (plataforma) é aberto sem funerária.
 
