@@ -52,16 +52,15 @@ export function Hero() {
 }
 
 /**
- * Céu com nuvens feito em CSS, no lugar da foto do protótipo.
- * Troque por <Image> quando o grupo exportar a imagem do Figma.
+ * Céu com nuvens do protótipo do Figma (ampara-hero-clouds, 2816×1584). A foto já é clara à esquerda,
+ * onde fica o texto; o degradê só garante a leitura em telas estreitas.
  */
 function Ceu() {
   return (
     <div aria-hidden className="absolute inset-0">
-      <div className="absolute inset-y-0 right-0 w-[70%] bg-[radial-gradient(ellipse_at_85%_15%,#c9d8ea_0%,transparent_45%),radial-gradient(ellipse_at_60%_30%,#f3e4e2_0%,transparent_40%),radial-gradient(ellipse_at_80%_65%,#f1ddd6_0%,transparent_45%),radial-gradient(ellipse_at_45%_75%,#eadfe0_0%,transparent_40%),linear-gradient(180deg,#dfe7f1_0%,#efe6e6_55%,#fbfaf7_100%)]" />
-      <div className="absolute inset-y-0 right-0 w-[70%] bg-[radial-gradient(circle_at_70%_25%,rgba(255,255,255,0.9)_0%,transparent_12%),radial-gradient(circle_at_78%_55%,rgba(255,255,255,0.7)_0%,transparent_16%),radial-gradient(circle_at_58%_45%,rgba(255,255,255,0.6)_0%,transparent_14%)] blur-xl" />
-      <div className="absolute inset-0 bg-linear-to-r from-surface from-30% via-surface/70 via-45% to-transparent to-70%" />
-      <div className="absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-surface to-transparent" />
+      <div className="absolute inset-0 bg-[url(/ceu-nuvens.jpg)] bg-cover bg-[position:70%_center]" />
+      <div className="absolute inset-0 bg-linear-to-r from-surface/90 from-15% via-surface/40 via-40% to-transparent to-65%" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-surface to-transparent" />
     </div>
   );
 }
