@@ -8,6 +8,34 @@ type LogoProps = ComponentProps<'span'> & {
   nome?: string;
 };
 
+/**
+ * Símbolo da Ampara do protótipo do Figma: um círculo com duas metades de folha.
+ * Usa a cor do texto (currentColor), então acompanha o fundo claro ou escuro de cada tela.
+ */
+function SimboloAmpara({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 36 36" fill="none" aria-hidden className={className}>
+      <circle
+        cx="18"
+        cy="18"
+        r="17.1"
+        stroke="currentColor"
+        strokeOpacity="0.5"
+        strokeWidth="1.31"
+      />
+      <path
+        d="M18 7.04C14.32 9.9 12.44 13.91 12.44 18.08C12.44 22.5 14.73 25.94 18 27.41V7.04Z"
+        fill="currentColor"
+        fillOpacity="0.42"
+      />
+      <path
+        d="M18 7.04C21.68 9.9 23.56 13.91 23.56 18.08C23.56 22.5 21.27 25.94 18 27.41V7.04Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 function Logo({ className, font = 'sans', nome = 'Ampara', ...props }: LogoProps) {
   return (
     <span
@@ -18,10 +46,7 @@ function Logo({ className, font = 'sans', nome = 'Ampara', ...props }: LogoProps
       )}
       {...props}
     >
-      <span className="grid size-6 place-items-center rounded-full border border-current text-[11px] font-semibold">
-        {/* O símbolo da Ampara no protótipo; outras marcas usam a inicial do nome. */}
-        {nome === 'Ampara' ? 'V' : nome.charAt(0).toUpperCase()}
-      </span>
+      <SimboloAmpara className="size-[1.6em] shrink-0" />
       {nome}
     </span>
   );
