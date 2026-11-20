@@ -13,7 +13,7 @@ import { Badge } from '@ampara/ui/components/badge';
 import { Button } from '@ampara/ui/components/button';
 import { Card } from '@ampara/ui/components/card';
 import { cn } from '@ampara/ui/lib/utils';
-import { ArrowDown, ArrowUp, Pencil, Plus } from 'lucide-react';
+import { ArrowDown, ArrowUp, ImageOff, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -241,10 +241,19 @@ function TabelaItens({
     {
       titulo: 'Item',
       celula: (i) => (
-        <span className="flex flex-col">
-          <span className="font-semibold">{i.nome}</span>
-          <span className="text-xs text-muted-foreground">
-            {nomeDaCategoria.get(i.id_categoria)}
+        <span className="flex items-center gap-3">
+          <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-md bg-muted">
+            {i.imagem_url ? (
+              <img src={i.imagem_url} alt="" className="size-full object-cover" />
+            ) : (
+              <ImageOff className="size-4 text-subtle-foreground" aria-label="Sem foto" />
+            )}
+          </span>
+          <span className="flex flex-col">
+            <span className="font-semibold">{i.nome}</span>
+            <span className="text-xs text-muted-foreground">
+              {nomeDaCategoria.get(i.id_categoria)}
+            </span>
           </span>
         </span>
       ),

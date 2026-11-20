@@ -67,6 +67,21 @@ describe('CatalogoPage', () => {
         quantidade_estoque: 5,
       }),
     );
+
+    // Depois de criar, a janela continua aberta para enviar a foto, e a foto aparece em seguida.
+    servidor.use(
+      http.post('*/api/v1/gestao/catalogo/i2/imagem', () =>
+        HttpResponse.json({ ...ITEM, id_item: 'i2', imagem_url: 'http://api/foto-i2.png?v=1' }),
+      ),
+    );
+    const foto = new File(['png'], 'urna.png', { type: 'image/png' });
+    await usuario.upload(await within(dialogo).findByLabelText(/escolher foto/i), foto);
+
+    expect(await within(dialogo).findByAltText(/foto de/i)).toHaveAttribute(
+      'src',
+      'http://api/foto-i2.png?v=1',
+    );
+    expect(within(dialogo).getByRole('button', { name: 'Concluir' })).toBeInTheDocument();
   });
 
   it('desativa um item', async () => {

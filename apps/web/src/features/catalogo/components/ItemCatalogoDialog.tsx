@@ -52,7 +52,7 @@ const classeSelect =
 
 /** Criação e edição de item do catálogo, com variações, imagem e fornecedor (FE-ADM-09, FUN-01). */
 export function ItemCatalogoDialog({
-  item,
+  item: itemInicial,
   categorias,
   categoriaInicial,
   aoFechar,
@@ -63,6 +63,8 @@ export function ItemCatalogoDialog({
   categoriaInicial?: string;
   aoFechar: () => void;
 }) {
+  // Depois de criar, a janela continua aberta com o item salvo, para enviar a foto e as variações.
+  const [item, setItem] = useState(itemInicial);
   const invalida = { mutation: { meta: { invalida: [getListarCatalogoGestaoQueryKey()] } } };
   const criar = useCriarItemCatalogo(invalida);
   const atualizar = useAtualizarItemCatalogo(invalida);
@@ -110,10 +112,14 @@ export function ItemCatalogoDialog({
         : {}),
     };
     try {
-      if (item) await atualizar.mutateAsync({ id: item.id_item, data: corpo });
-      else await criar.mutateAsync({ data: corpo });
-      toast.success(item ? 'Item atualizado.' : 'Item criado. Agora você pode enviar a foto.');
-      aoFechar();
+      if (item) {
+        await atualizar.mutateAsync({ id: item.id_item, data: corpo });
+        toast.success('Item atualizado.');
+        aoFechar();
+      } else {
+        setItem(await criar.mutateAsync({ data: corpo }));
+        toast.success('Item criado. Agora envie a foto e as variações, se quiser.');
+      }
     } catch (erro) {
       if (!aplicarErrosDaApi(erro, setError, CAMPOS)) throw erro;
     }
@@ -198,7 +204,7 @@ export function ItemCatalogoDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={aoFechar}>
-              Cancelar
+              {item && !itemInicial ? 'Concluir' : 'Cancelar'}
             </Button>
             <Button type="submit" carregando={isSubmitting}>
               Salvar item
@@ -214,6 +220,8 @@ function Imagem({ item }: { item: ItemResponse }) {
   const enviar = useEnviarImagemItemCatalogo({
     mutation: { meta: { invalida: [getListarCatalogoGestaoQueryKey()] } },
   });
+  // A resposta do envio traz o endereço novo da foto (com versão, para o navegador não usar a antiga).
+  const [foto, setFoto] = useState(item.imagem_url);
   const [erro, setErro] = useState<string>();
 
   async function escolher(arquivo: File | undefined) {
@@ -221,29 +229,43 @@ function Imagem({ item }: { item: ItemResponse }) {
     if (!arquivo) return;
     if (!TIPOS_IMAGEM.includes(arquivo.type)) return setErro('Use uma imagem JPG, PNG ou WebP.');
     if (arquivo.size > TAMANHO_MAXIMO_IMAGEM) return setErro('A imagem deve ter até 5 MB.');
-    await enviar.mutateAsync({ id: item.id_item, data: { arquivo } });
-    toast.success('Foto atualizada.');
+    const atualizado = await enviar.mutateAsync({ id: item.id_item, data: { arquivo } });
+    setFoto(atualizado.imagem_url);
+    toast.success('Foto atualizada. Ela já aparece no site da funerária.');
   }
 
   return (
-    <section className="flex flex-col gap-2 rounded-lg border border-border p-4">
-      <p className="text-sm font-semibold">Foto</p>
-      <p className="text-xs text-muted-foreground">
-        {item.imagem_url
-          ? 'O item já tem foto. Envie outra para trocar.'
-          : 'O item ainda não tem foto.'}
-      </p>
-      <label className="inline-flex cursor-pointer items-center gap-2 self-start rounded-full border border-input px-3.5 py-1.5 text-xs font-semibold hover:bg-muted has-focus-visible:ring-3 has-focus-visible:ring-ring/30">
-        <ImagePlus className="size-4" aria-hidden />
-        {enviar.isPending ? 'Enviando...' : 'Escolher imagem'}
-        <input
-          type="file"
-          accept={TIPOS_IMAGEM.join(',')}
-          className="sr-only"
-          onChange={(e) => void escolher(e.target.files?.[0])}
-        />
-      </label>
-      {erro && <p className="text-xs text-destructive">{erro}</p>}
+    <section className="flex flex-wrap items-center gap-4 rounded-lg border border-border p-4">
+      <span className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted">
+        {foto ? (
+          <img src={foto} alt={`Foto de ${item.nome}`} className="size-full object-cover" />
+        ) : (
+          <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
+        )}
+      </span>
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-semibold">Foto</p>
+        <p className="text-xs text-muted-foreground">
+          {foto
+            ? 'Aparece no site da funerária. Envie outra para trocar.'
+            : 'O item ainda não tem foto.'}
+        </p>
+        <label className="inline-flex cursor-pointer items-center gap-2 self-start rounded-full border border-input px-3.5 py-1.5 text-xs font-semibold hover:bg-muted has-focus-visible:ring-3 has-focus-visible:ring-ring/30">
+          <ImagePlus className="size-4" aria-hidden />
+          {enviar.isPending ? 'Enviando...' : foto ? 'Trocar foto' : 'Escolher foto'}
+          <input
+            type="file"
+            accept={TIPOS_IMAGEM.join(',')}
+            className="sr-only"
+            onChange={(e) => {
+              void escolher(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+        </label>
+        <p className="text-[11px] text-subtle-foreground">JPG, PNG ou WebP, até 5 MB.</p>
+        {erro && <p className="text-xs text-destructive">{erro}</p>}
+      </div>
     </section>
   );
 }
