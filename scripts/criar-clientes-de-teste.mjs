@@ -3,11 +3,14 @@
  * Cria no backend local três clientes de teste da funerária "demo", um para cada situação de fatura:
  *
  *   a-pagar@demo.localhost    contrato aguardando o 1º pagamento, fatura em aberto vencendo em 5 dias
- *   em-dia@demo.localhost     contrato ativo, as três últimas faturas pagas
+ *   em-dia@demo.localhost     contrato ativo há 4 meses, as três últimas faturas pagas e a carência
+ *                             cumprida (dá para registrar o falecimento dele no painel)
  *   atrasado@demo.localhost   contrato suspenso, uma fatura paga e outra vencida há 12 dias
  *
  * O cliente e o contrato são criados pela API, como no app. As faturas vão direto no banco,
  * porque o backend só as cria quando o Stripe avisa (sem Stripe configurado, nenhuma é gerada).
+ * A data da contratação também é ajustada no banco para combinar com as faturas: a carência
+ * conta a partir dela, então um contrato "em dia" criado hoje ficaria meses sem cobertura.
  * Rodar de novo apaga e recria as faturas desses três clientes.
  *
  * Uso (com o backend e o Postgres do Docker no ar):
@@ -177,6 +180,7 @@ function planoDeFaturas(situacao, valor) {
   if (situacao === 'a-pagar')
     return {
       contrato: 'APagar',
+      contratadoHaDias: 0,
       assinatura: 'Ativa',
       inadimplente: false,
       faturas: [{ vencimento: dia(5), status: 'Pendente', forma: null, pagaEm: null, encargos: 0 }],
@@ -184,12 +188,15 @@ function planoDeFaturas(situacao, valor) {
   if (situacao === 'em-dia')
     return {
       contrato: 'Ativo',
+      // Antes da 1ª fatura paga (há 3 meses) e além da carência dos planos (até 90 dias).
+      contratadoHaDias: 120,
       assinatura: 'Ativa',
       inadimplente: false,
       faturas: [paga(3), paga(2), paga(1)],
     };
   return {
     contrato: 'Suspenso',
+    contratadoHaDias: 75,
     assinatura: 'Ativa',
     inadimplente: true,
     faturas: [
@@ -228,8 +235,11 @@ function gravarFaturas(idContrato, situacao) {
   sql(`begin;
     delete from financeiro.faturas where id_contrato = ${literal(idContrato)};
     ${inserts}
-    update contratos.contratos set status = ${literal(plano.contrato)}, updated_at = now()
+    update contratos.contratos set status = ${literal(plano.contrato)},
+      data_contratacao = ${literal(dia(-plano.contratadoHaDias))}, updated_at = now()
       where id_contrato = ${literal(idContrato)};
+    update contratos.pessoas_cobertas set data_inclusao = ${literal(dia(-plano.contratadoHaDias))}
+      where id_contrato = ${literal(idContrato)} and data_remocao is null;
     update financeiro.assinaturas set status = ${literal(plano.assinatura)},
       inadimplente = ${plano.inadimplente},
       inadimplente_desde = ${plano.inadimplente ? literal(dia(-12)) : 'null'}, updated_at = now()

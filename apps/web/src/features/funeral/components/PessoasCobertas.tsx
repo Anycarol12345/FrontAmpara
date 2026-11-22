@@ -67,6 +67,8 @@ export function PessoasCobertas({
                     {!pessoa.elegivel && ` · ${motivoLegivel(pessoa.motivo)}`}
                     {!pessoa.elegivel &&
                       carenciaFutura &&
+                      // O motivo do backend às vezes já traz a data ("Em carência até 31/01/2027.").
+                      !(pessoa.motivo ?? '').includes(data(pessoa.carencia_cumprida_em)) &&
                       ` · carência cumprida em ${data(pessoa.carencia_cumprida_em)}`}
                   </span>
                 </span>
