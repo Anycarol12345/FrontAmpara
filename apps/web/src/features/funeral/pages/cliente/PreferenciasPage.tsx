@@ -427,13 +427,16 @@ function Imagem({ item }: { item: ItemResponse }) {
       </div>
     );
   }
+  // Quadro fixo com a foto inteira (sem cortar o produto), para os cards ficarem alinhados.
   return (
-    <img
-      src={url}
-      alt=""
-      loading="lazy"
-      onError={() => setFalhou(true)}
-      className="aspect-[4/3] w-full bg-muted object-cover"
-    />
+    <div className="aspect-[4/3] w-full bg-muted">
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        onError={() => setFalhou(true)}
+        className="size-full object-contain p-3"
+      />
+    </div>
   );
 }

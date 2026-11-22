@@ -24,6 +24,8 @@ ENV NODE_ENV=production \
     APP_URL=http://localhost:8080
 COPY --from=build --chown=node:node /repo/apps/landing/.next/standalone ./
 COPY --from=build --chown=node:node /repo/apps/landing/.next/static ./apps/landing/.next/static
+# O standalone não leva a pasta public (foto das nuvens, logos): sem ela, essas imagens davam 404.
+COPY --from=build --chown=node:node /repo/apps/landing/public ./apps/landing/public
 USER node
 EXPOSE 3000
 CMD ["node", "apps/landing/server.js"]

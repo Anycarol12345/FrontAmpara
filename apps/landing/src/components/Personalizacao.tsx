@@ -29,6 +29,31 @@ const ICONES: [RegExp, LucideIcon][] = [
 ];
 const iconeDo = (nome: string) => ICONES.find(([regra]) => regra.test(nome))?.[1] ?? Sparkles;
 
+/**
+ * Foto do item num quadro de tamanho fixo, para todos os cards ficarem alinhados.
+ * A foto aparece inteira (object-contain) sobre um fundo claro, sem cortar o produto.
+ * Sem foto (ou se ela falhar), o quadro mostra o ícone do item.
+ */
+function FotoDoItem({ url, Icone }: { url: string | null | undefined; Icone: LucideIcon }) {
+  const [falhou, setFalhou] = useState(false);
+  return (
+    <span className="mb-5 grid aspect-[4/3] w-full place-items-center overflow-hidden rounded-lg bg-[#f4f6fa]">
+      {url && !falhou ? (
+        // Foto enviada pela funerária no catálogo, servida pela API: <img> simples em vez do next/image.
+        <img
+          src={url}
+          alt=""
+          loading="lazy"
+          onError={() => setFalhou(true)}
+          className="size-full object-contain p-3"
+        />
+      ) : (
+        <Icone className="size-10 text-brand-800/30" strokeWidth={1.25} aria-hidden />
+      )}
+    </span>
+  );
+}
+
 type PersonalizacaoProps = {
   itens: ItemResponse[];
   /** Endereço para salvar as escolhas (cadastro no apps/web). */
@@ -75,20 +100,13 @@ export function Personalizacao({ itens, linkSalvar }: PersonalizacaoProps) {
                   aria-pressed={ativo}
                   onClick={() => alternar(item.id_item)}
                   className={cn(
-                    'flex flex-col rounded-xl border-2 bg-white p-6 text-left transition-colors',
+                    'flex flex-col rounded-xl border-2 bg-white p-5 text-left transition-colors',
                     ativo
                       ? 'border-brand-800/60 shadow-md shadow-brand-800/10'
                       : 'border-transparent',
                   )}
                 >
-                  {item.imagem_url && (
-                    // Foto enviada pela funerária no catálogo, servida pela API: <img> simples em vez do next/image.
-                    <img
-                      src={item.imagem_url}
-                      alt=""
-                      className="mb-5 aspect-[4/3] w-full rounded-lg object-cover"
-                    />
-                  )}
+                  <FotoDoItem url={item.imagem_url} Icone={Icone} />
                   <span className="flex items-start justify-between">
                     <span className="grid size-7 place-items-center rounded-md bg-info text-brand-800">
                       <Icone className="size-3.5" strokeWidth={1.75} />

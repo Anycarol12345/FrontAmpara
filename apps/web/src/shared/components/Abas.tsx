@@ -19,7 +19,7 @@ export function Abas({
     <div
       role="tablist"
       aria-label={rotulo}
-      className="flex gap-1 overflow-x-auto border-b border-border/60"
+      className="flex gap-1 overflow-x-auto overflow-y-hidden border-b border-border/60 [scrollbar-width:none]"
     >
       {abas.map((aba) => {
         const selecionada = aba.id === ativa;

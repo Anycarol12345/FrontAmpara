@@ -1,8 +1,13 @@
-import { useAgendaLocal, type LocalResponse } from '@ampara/api-client';
+import {
+  getAgendaLocalQueryOptions,
+  type LocalResponse,
+  type ReservaAgendaResponse,
+} from '@ampara/api-client';
 import { Card } from '@ampara/ui/components/card';
+import { useQueries } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { Carregando } from '@/shared/components/EstadoConsulta';
-import { hora, posicaoNoDia } from './locais';
+import { diasUtcDoDia, hora, limitesDoDia, posicaoNoDia, tocaODia } from './locais';
 
 const MARCAS = [0, 6, 12, 18, 24];
 
@@ -44,8 +49,14 @@ function LinhaDaSala({
   local: LocalResponse;
   destacar: string | undefined;
 }) {
-  const agenda = useAgendaLocal(local.id_local, { data: dia });
-  const reservas = agenda.data?.reservas ?? [];
+  const agenda = useReservasDoDia(local.id_local, dia);
+  const reservas = agenda.reservas;
+  const inicioDoDia = limitesDoDia(dia).inicio;
+  // Reserva que começou num dia anterior mostra a data junto da hora.
+  const horario = (iso: string) =>
+    new Date(iso) < inicioDoDia
+      ? `${new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} ${hora(iso)}`
+      : hora(iso);
   return (
     <Card key={local.id_local} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
       <div className="w-[134px] shrink-0">
@@ -56,7 +67,7 @@ function LinhaDaSala({
             : `${reservas.length} ${reservas.length === 1 ? 'reserva' : 'reservas'}`}
         </p>
       </div>
-      {agenda.isPending ? (
+      {agenda.carregando ? (
         <Carregando className="py-2" />
       ) : (
         <div className="flex flex-1 flex-col gap-2">
@@ -89,7 +100,7 @@ function LinhaDaSala({
               {reservas.map((r) => (
                 <li key={r.id_reserva} className="flex flex-wrap gap-x-2">
                   <span className="font-semibold">
-                    {hora(r.inicio)}–{hora(r.fim)}
+                    {horario(r.inicio)}–{hora(r.fim)}
                   </span>
                   <Link
                     to={`/painel/funerais/${r.id_funeral}?aba=local`}
@@ -108,4 +119,24 @@ function LinhaDaSala({
       )}
     </Card>
   );
+}
+
+/**
+ * Reservas que ocupam a sala no dia local, contando o intervalo de preparação.
+ * A API consulta por dia em UTC; aqui juntamos os dias UTC que cobrem o dia local e
+ * descartamos o que não toca nele (sem isso, a reserva das 22h aparecia também no dia seguinte).
+ */
+function useReservasDoDia(idLocal: string, dia: string) {
+  const consultas = useQueries({
+    queries: diasUtcDoDia(dia).map((data) => getAgendaLocalQueryOptions(idLocal, { data })),
+  });
+  const vistas = new Set<string>();
+  const reservas: ReservaAgendaResponse[] = [];
+  for (const r of consultas.flatMap((c) => c.data?.reservas ?? [])) {
+    if (vistas.has(r.id_reserva) || !tocaODia(r.inicio, r.ocupado_ate, dia)) continue;
+    vistas.add(r.id_reserva);
+    reservas.push(r);
+  }
+  reservas.sort((a, b) => a.inicio.localeCompare(b.inicio));
+  return { reservas, carregando: consultas.some((c) => c.isPending) };
 }

@@ -29,6 +29,29 @@ export const somarDias = (dia: string, dias: number) => {
   return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
 };
 
+/** Início e fim (exclusivo) do dia "aaaa-mm-dd" no fuso de quem está vendo. */
+export const limitesDoDia = (dia: string) => {
+  const [a, m, d] = dia.split('-').map(Number);
+  return { inicio: new Date(a!, m! - 1, d!), fim: new Date(a!, m! - 1, d! + 1) };
+};
+
+/**
+ * Dias em UTC ("aaaa-mm-dd") que cobrem o dia local. A API devolve a agenda por dia em UTC:
+ * no Brasil (UTC-3), o dia local vai das 03:00 de um dia UTC às 03:00 do seguinte, então são dois.
+ */
+export const diasUtcDoDia = (dia: string) => {
+  const { inicio, fim } = limitesDoDia(dia);
+  const primeiro = inicio.toISOString().slice(0, 10);
+  const ultimo = new Date(fim.getTime() - 1).toISOString().slice(0, 10);
+  return primeiro === ultimo ? [primeiro] : [primeiro, ultimo];
+};
+
+/** Se o intervalo [inicio, fim) toca o dia local. */
+export const tocaODia = (inicio: string, fim: string, dia: string) => {
+  const limites = limitesDoDia(dia);
+  return new Date(inicio) < limites.fim && new Date(fim) > limites.inicio;
+};
+
 /** Posição de um horário dentro do dia, de 0 a 100 (para a barra da agenda). */
 export const posicaoNoDia = (iso: string, dia: string) => {
   const [a, m, d] = dia.split('-').map(Number);

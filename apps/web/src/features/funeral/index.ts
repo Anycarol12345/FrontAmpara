@@ -10,3 +10,4 @@ export { RegistrarBeneficiarioPage } from './pages/painel/RegistrarBeneficiarioP
 export { FuneralPainelPage } from './pages/painel/FuneralPainelPage';
 export { RegistrarFuneralPage } from './pages/painel/RegistrarFuneralPage';
 export { AgendaPage } from './pages/painel/AgendaPage';
+export { DESTINACAO, STATUS_DO_FUNERAL } from './components/rotulosPainel';

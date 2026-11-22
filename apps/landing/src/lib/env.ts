@@ -11,6 +11,9 @@ export const env = {
    * Para a Ampara, a funerária de demonstração com a marca dela.
    */
   tenantPadrao: process.env.TENANT_PADRAO || '',
-  /** Quanto tempo (s) as páginas guardam os dados da API antes de buscar de novo. */
-  revalidar: Number(process.env.REVALIDAR_SEGUNDOS || 300),
+  /**
+   * Quanto tempo (s) as páginas guardam os dados da API antes de buscar de novo.
+   * Curto de propósito: o que o gestor muda no catálogo e nos planos aparece no site em segundos.
+   */
+  revalidar: Number(process.env.REVALIDAR_SEGUNDOS || 15),
 } as const;

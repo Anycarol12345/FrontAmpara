@@ -5,7 +5,9 @@ import {
   type FuneralResumoResponse,
 } from '@ampara/api-client';
 import { Badge } from '@ampara/ui/components/badge';
+import { Button } from '@ampara/ui/components/button';
 import { Card } from '@ampara/ui/components/card';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
@@ -74,7 +76,37 @@ export function DocumentosPage() {
                 ? p.itens.filter((f) => f.status !== 'CONCLUIDO' && f.status !== 'CANCELADO')
                 : p.itens;
             return itens.length === 0 ? (
-              <Vazio titulo="Nenhum funeral por aqui" />
+              <Vazio
+                titulo={
+                  situacao === 'CONCLUIDO'
+                    ? 'Nenhum funeral concluído ainda'
+                    : situacao === 'ANDAMENTO'
+                      ? 'Nenhum funeral em andamento'
+                      : 'Nenhum funeral registrado'
+                }
+                descricao="Os documentos ficam dentro de cada funeral. Registre um atendimento para começar, ou veja os outros funerais."
+                acao={
+                  <span className="flex flex-wrap justify-center gap-2">
+                    <Button asChild size="sm">
+                      <Link to="/painel/beneficiarios/novo">
+                        <Plus /> Novo atendimento
+                      </Link>
+                    </Button>
+                    {situacao !== 'TODOS' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSituacao('TODOS');
+                          setPagina(1);
+                        }}
+                      >
+                        Ver todos os funerais
+                      </Button>
+                    )}
+                  </span>
+                }
+              />
             ) : (
               <>
                 <Tabela colunas={colunas} linhas={itens} chave={(f) => f.id_funeral} />

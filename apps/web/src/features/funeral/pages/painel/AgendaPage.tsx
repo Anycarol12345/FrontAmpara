@@ -148,7 +148,18 @@ function ListaDeLocais({
     },
     { titulo: 'Tipo', celula: (l) => TIPO_LOCAL[l.tipo] },
     { titulo: 'Da funerária', celula: (l) => (l.proprio ? 'Sim' : 'Não') },
-    { titulo: 'Preparação', celula: (l) => `${l.intervalo_preparacao_minutos} min` },
+    {
+      titulo: 'Preparação',
+      // Só os locais da funerária têm agenda; nos outros o intervalo não se aplica.
+      celula: (l) =>
+        l.proprio ? (
+          `${l.intervalo_preparacao_minutos} min`
+        ) : (
+          <span className="text-muted-foreground" title="Local de fora: sem agenda nem intervalo">
+            Não se aplica
+          </span>
+        ),
+    },
     {
       titulo: 'Situação',
       celula: (l) => (

@@ -1,4 +1,4 @@
-import { useDashboardFuneraria } from '@ampara/api-client';
+import { useDashboardFuneraria, useListarFunerais } from '@ampara/api-client';
 import { Badge } from '@ampara/ui/components/badge';
 import { Button } from '@ampara/ui/components/button';
 import { Card } from '@ampara/ui/components/card';
@@ -12,64 +12,19 @@ import {
   FileText,
   Percent,
   UsersRound,
-  type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { NOME_PERFIL, useAuth, usePermissao } from '@/features/auth';
-import { EstadoConsulta } from '@/shared/components/EstadoConsulta';
+import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '@/shared/components/StatCard';
-import { numero } from '@/shared/lib/formatar';
+import { dataHora, numero } from '@/shared/lib/formatar';
+import { DESTINACAO, STATUS_DO_FUNERAL } from '@/features/funeral';
 import { GraficosFinanceiros } from '@/features/relatorios/components/GraficosFinanceiros';
 import { FuneraisEmAndamento } from '@/features/relatorios/components/FuneraisEmAndamento';
 
-// Atividades e prioridades ainda são dados fixos do protótipo.
-
-type Status = 'Concluído' | 'Em andamento' | 'Agendado';
-
-const VARIANTE_STATUS = {
-  Concluído: 'success',
-  'Em andamento': 'warning',
-  Agendado: 'info',
-} as const satisfies Record<Status, string>;
-
-const ATIVIDADES: {
-  familia: string;
-  descricao: string;
-  status: Status;
-  quando: string;
-  icone: LucideIcon;
-}[] = [
-  {
-    familia: 'Família Martins',
-    descricao: 'Documentação recebida',
-    status: 'Concluído',
-    quando: 'há 12 min',
-    icone: UsersRound,
-  },
-  {
-    familia: 'Família Oliveira',
-    descricao: 'Ornamentação confirmada',
-    status: 'Concluído',
-    quando: 'há 35 min',
-    icone: FileText,
-  },
-  {
-    familia: 'Família Santos',
-    descricao: 'Aguardando traslado',
-    status: 'Em andamento',
-    quando: 'há 1 hora',
-    icone: UsersRound,
-  },
-  {
-    familia: 'Família Lima',
-    descricao: 'Cerimônia agendada',
-    status: 'Agendado',
-    quando: 'há 2 horas',
-    icone: FileText,
-  },
-];
+// As prioridades do dia ainda são dados fixos do protótipo.
 
 const PRIORIDADES = [
   'Confirmar flores da cerimônia Martins',
@@ -168,42 +123,72 @@ function AtalhosDoConsultor() {
   );
 }
 
+/** Últimos funerais da funerária; cada linha abre o funeral (status, documentos, agenda). */
 function AtividadesRecentes() {
+  const consulta = useListarFunerais({ pagina: 1, tamanho: 20 });
+  const funerais = [...(consulta.data?.itens ?? [])]
+    .sort((a, b) => b.data_hora_prevista.localeCompare(a.data_hora_prevista))
+    .slice(0, 5);
+
   return (
     <Card className="p-6">
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-lg font-bold">Atividades recentes</h2>
-          <p className="text-[11px] text-subtle-foreground">Atualizado há poucos minutos</p>
+          <p className="text-[11px] text-subtle-foreground">
+            Últimos funerais registrados. Clique para abrir.
+          </p>
         </div>
-        <Link to="/painel/clientes" className="mt-1 text-xs font-semibold hover:underline">
+        <Link to="/painel/documentos" className="mt-1 text-xs font-semibold hover:underline">
           Ver todas
         </Link>
       </div>
 
-      <ul className="mt-4 flex flex-col">
-        {ATIVIDADES.map(({ familia, descricao, status, quando, icone: Icone }) => (
-          <li key={familia}>
-            <a
-              href="#"
-              className="flex items-center gap-4 rounded-lg py-3.5 transition-colors hover:bg-muted/50"
-            >
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-                <Icone className="size-4" strokeWidth={1.75} />
-              </span>
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="text-sm font-bold">{familia}</span>
-                <span className="text-xs text-muted-foreground">{descricao}</span>
-              </span>
-              <span className="flex flex-col items-end gap-1">
-                <Badge variant={VARIANTE_STATUS[status]}>{status}</Badge>
-                <span className="text-[10px] text-subtle-foreground">{quando}</span>
-              </span>
-              <ChevronRight className="size-4 text-subtle-foreground" />
-            </a>
-          </li>
-        ))}
-      </ul>
+      {consulta.isPending ? (
+        <p className="mt-4 text-sm text-muted-foreground">Carregando…</p>
+      ) : consulta.isError ? (
+        <p className="mt-4 text-sm text-destructive">Não foi possível carregar as atividades.</p>
+      ) : funerais.length === 0 ? (
+        <Vazio
+          className="py-8"
+          titulo="Nenhuma atividade ainda"
+          descricao="Quando a equipe registrar um atendimento, ele aparece aqui."
+          acao={
+            <Button asChild size="sm">
+              <Link to="/painel/beneficiarios/novo">
+                Novo atendimento <ArrowRight />
+              </Link>
+            </Button>
+          }
+        />
+      ) : (
+        <ul className="mt-4 flex flex-col">
+          {funerais.map((f) => {
+            const status = STATUS_DO_FUNERAL[f.status];
+            const Icone = f.status === 'CONCLUIDO' ? FileText : UsersRound;
+            return (
+              <li key={f.id_funeral}>
+                <Link
+                  to={`/painel/funerais/${f.id_funeral}`}
+                  className="-mx-2 flex items-center gap-4 rounded-lg px-2 py-3.5 transition-colors hover:bg-muted/50"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+                    <Icone className="size-4" strokeWidth={1.75} />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-sm font-bold">{f.nome_falecido}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {DESTINACAO[f.destinacao]} · cerimônia {dataHora(f.data_hora_prevista)}
+                    </span>
+                  </span>
+                  <Badge variant={status.variante}>{status.rotulo}</Badge>
+                  <ChevronRight className="size-4 text-subtle-foreground" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Card>
   );
 }

@@ -17,7 +17,7 @@ import { Input } from '@ampara/ui/components/input';
 import { Label } from '@ampara/ui/components/label';
 import { toast } from '@ampara/ui/components/sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { Campo, ErroFormulario } from '@/shared/components/Campo';
 import { aplicarErrosDaApi } from '@/shared/lib/formularios';
@@ -70,6 +70,8 @@ export function LocalDialog({
     },
   });
 
+  const proprio = useWatch({ control, name: 'proprio' });
+
   const enviar = handleSubmit(async (d) => {
     const corpo = { ...d, endereco: d.endereco || null };
     try {
@@ -106,14 +108,6 @@ export function LocalDialog({
           <Campo id="local-endereco" label="Endereço (opcional)" erro={errors.endereco?.message}>
             <Input {...register('endereco')} />
           </Campo>
-          <Campo
-            id="local-intervalo"
-            label="Intervalo de preparação (minutos)"
-            dica="Tempo de limpeza e arrumação entre um uso e o próximo."
-            erro={errors.intervalo_preparacao_minutos?.message}
-          >
-            <Input type="number" min="0" step="15" {...register('intervalo_preparacao_minutos')} />
-          </Campo>
           <div className="flex items-center gap-2">
             <Controller
               control={control}
@@ -128,6 +122,26 @@ export function LocalDialog({
             />
             <Label htmlFor="local-proprio">Local da própria funerária</Label>
           </div>
+          {proprio ? (
+            <Campo
+              id="local-intervalo"
+              label="Intervalo de preparação (minutos)"
+              dica="Tempo de limpeza e arrumação entre um uso e o próximo. A sala só fica livre depois dele."
+              erro={errors.intervalo_preparacao_minutos?.message}
+            >
+              <Input
+                type="number"
+                min="0"
+                step="15"
+                {...register('intervalo_preparacao_minutos')}
+              />
+            </Campo>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Local de fora da funerária (igreja, cemitério de terceiros...): a reserva fica
+              registrada no funeral, mas sem agenda nem intervalo de preparação.
+            </p>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={aoFechar}>
               Cancelar

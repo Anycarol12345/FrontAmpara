@@ -1,7 +1,8 @@
 import { useListarFunerais } from '@ampara/api-client';
 import { Badge } from '@ampara/ui/components/badge';
 import { Card } from '@ampara/ui/components/card';
-import { UsersRound } from 'lucide-react';
+import { ChevronRight, UsersRound } from 'lucide-react';
+import { Link } from 'react-router';
 import { dataHora } from '@/shared/lib/formatar';
 
 const STATUS = {
@@ -44,23 +45,37 @@ export function FuneraisEmAndamento() {
       ) : comErro ? (
         <p className="mt-4 text-sm text-destructive">Não foi possível carregar os funerais.</p>
       ) : funerais.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">Nenhum funeral em andamento.</p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Nenhum funeral em andamento.{' '}
+          <Link
+            to="/painel/beneficiarios/novo"
+            className="font-semibold text-foreground hover:underline"
+          >
+            Registrar um atendimento
+          </Link>
+        </p>
       ) : (
         <ul className="mt-4 flex flex-col">
           {funerais.map((f) => {
             const status = STATUS[f.status as StatusAberto];
             return (
-              <li key={f.id_funeral} className="flex items-center gap-4 py-3.5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-                  <UsersRound className="size-4" strokeWidth={1.75} />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-sm font-bold">{f.nome_falecido}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {DESTINACAO[f.destinacao] ?? f.destinacao} · {dataHora(f.data_hora_prevista)}
+              <li key={f.id_funeral}>
+                <Link
+                  to={`/painel/funerais/${f.id_funeral}`}
+                  className="-mx-2 flex items-center gap-4 rounded-lg px-2 py-3.5 transition-colors hover:bg-muted/50"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+                    <UsersRound className="size-4" strokeWidth={1.75} />
                   </span>
-                </span>
-                <Badge variant={status.variante}>{status.rotulo}</Badge>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-sm font-bold">{f.nome_falecido}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {DESTINACAO[f.destinacao] ?? f.destinacao} · {dataHora(f.data_hora_prevista)}
+                    </span>
+                  </span>
+                  <Badge variant={status.variante}>{status.rotulo}</Badge>
+                  <ChevronRight className="size-4 text-subtle-foreground" />
+                </Link>
               </li>
             );
           })}
