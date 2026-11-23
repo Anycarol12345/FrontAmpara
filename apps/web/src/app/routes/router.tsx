@@ -136,6 +136,15 @@ export const router = createBrowserRouter([
                 path: 'contratos/:id',
                 lazy: pagina(() => import('./ContratoComFaturas'), 'ContratoComFaturas'),
               },
+              // Área do consultor (simulador e desempenho); a equipe também pode abrir.
+              {
+                path: 'simulador',
+                lazy: pagina(() => import('@/features/vendas'), 'SimuladorPage'),
+              },
+              {
+                path: 'desempenho',
+                lazy: pagina(() => import('@/features/vendas'), 'DesempenhoPage'),
+              },
               {
                 path: 'beneficiarios/novo',
                 lazy: pagina(() => import('@/features/funeral'), 'RegistrarBeneficiarioPage'),

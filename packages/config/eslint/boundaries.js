@@ -15,6 +15,7 @@ const FEATURES = [
   'terceiros',
   'notificacoes',
   'relatorios',
+  'vendas',
 ];
 
 const restrict = (patterns) => ({

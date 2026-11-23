@@ -6,6 +6,7 @@ import { cn } from '@ampara/ui/lib/utils';
 import {
   ArrowRight,
   Banknote,
+  Calculator,
   CalendarDays,
   Check,
   ChevronRight,
@@ -23,6 +24,7 @@ import { dataHora, numero } from '@/shared/lib/formatar';
 import { DESTINACAO, STATUS_DO_FUNERAL } from '@/features/funeral';
 import { GraficosFinanceiros } from '@/features/relatorios/components/GraficosFinanceiros';
 import { FuneraisEmAndamento } from '@/features/relatorios/components/FuneraisEmAndamento';
+import { PainelDoConsultor } from '@/features/vendas';
 
 // As prioridades do dia ainda são dados fixos do protótipo.
 
@@ -47,7 +49,7 @@ export function VisaoGeralPage() {
         descricao={
           ehEquipe
             ? 'Aqui está um resumo dos atendimentos e atividades da sua equipe.'
-            : 'Seus clientes e contratações, e os funerais em andamento na funerária.'
+            : 'Acompanhe suas vendas e mantenha cada família bem orientada.'
         }
         acoes={
           ehEquipe ? (
@@ -57,11 +59,18 @@ export function VisaoGeralPage() {
               </Link>
             </Button>
           ) : (
-            <Button asChild>
-              <Link to="/painel/clientes">
-                Atender um cliente <ArrowRight />
-              </Link>
-            </Button>
+            <span className="flex flex-wrap gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/painel/simulador">
+                  <Calculator /> Simular plano
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link to="/painel/clientes">
+                  Atender um cliente <ArrowRight />
+                </Link>
+              </Button>
+            </span>
           )
         }
       />
@@ -72,7 +81,7 @@ export function VisaoGeralPage() {
           <GraficosFinanceiros />
         </>
       ) : (
-        <AtalhosDoConsultor />
+        <PainelDoConsultor />
       )}
 
       <FuneraisEmAndamento />
@@ -87,43 +96,6 @@ export function VisaoGeralPage() {
   );
 }
 
-/** Início do consultor: os atalhos do que ele faz no dia a dia (DEC-11). */
-function AtalhosDoConsultor() {
-  const atalhos = [
-    {
-      titulo: 'Clientes',
-      descricao: 'Cadastre clientes e consulte os dados de quem você atende.',
-      para: '/painel/clientes',
-      icone: UsersRound,
-    },
-    {
-      titulo: 'Contratos',
-      descricao: 'Acompanhe as contratações e a situação de cada plano.',
-      para: '/painel/contratos',
-      icone: FileText,
-    },
-  ];
-  return (
-    <div className="grid gap-5 sm:grid-cols-2">
-      {atalhos.map(({ titulo, descricao, para, icone: Icone }) => (
-        <Link key={para} to={para} className="group">
-          <Card className="flex h-full items-center gap-4 p-6 transition-colors group-hover:bg-muted/40">
-            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-              <Icone className="size-5" strokeWidth={1.75} />
-            </span>
-            <span className="flex flex-1 flex-col">
-              <span className="text-base font-bold">{titulo}</span>
-              <span className="text-xs text-muted-foreground">{descricao}</span>
-            </span>
-            <ChevronRight className="size-4 text-subtle-foreground" />
-          </Card>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-/** Últimos funerais da funerária; cada linha abre o funeral (status, documentos, agenda). */
 function AtividadesRecentes() {
   const consulta = useListarFunerais({ pagina: 1, tamanho: 20 });
   const funerais = [...(consulta.data?.itens ?? [])]

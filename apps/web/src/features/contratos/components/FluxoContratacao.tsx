@@ -45,6 +45,8 @@ type ConsultaDependentes = {
 type FluxoContratacaoProps = {
   /** Plano já escolhido (ex.: ?plano= vindo da landing). */
   idPlanoInicial?: string | null;
+  /** Periodicidade já escolhida (ex.: vinda do simulador do consultor). */
+  periodicidadeInicial?: Periodicidade;
   /** Dependentes do titular que podem entrar no contrato. */
   dependentes: ConsultaDependentes;
   /** O cliente cadastra dependentes na hora; a equipe usa os já cadastrados. */
@@ -60,6 +62,7 @@ type FluxoContratacaoProps = {
  */
 export function FluxoContratacao({
   idPlanoInicial = null,
+  periodicidadeInicial = 'MENSAL',
   dependentes,
   permitirIncluirDependente,
   confirmar,
@@ -70,7 +73,7 @@ export function FluxoContratacao({
     idPlano: idPlanoInicial,
     cobertura: 'TITULAR',
     dependentes: [],
-    periodicidade: 'MENSAL',
+    periodicidade: periodicidadeInicial,
     diaVencimento: 10,
   });
   const atualizar = (parcial: Partial<Escolhas>) =>

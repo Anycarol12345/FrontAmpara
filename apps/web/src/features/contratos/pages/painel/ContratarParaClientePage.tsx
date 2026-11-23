@@ -5,13 +5,16 @@ import {
 } from '@ampara/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { FluxoContratacao } from '../../components/FluxoContratacao';
 
 /** A equipe contrata um plano para o cliente (FE-ADM-03, POST /gestao/contratos). */
 export function ContratarParaClientePage() {
   const { id = '' } = useParams();
+  // Plano e periodicidade escolhidos no simulador do consultor (?plano=&periodicidade=).
+  const [parametros] = useSearchParams();
+  const periodicidade = parametros.get('periodicidade');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const cliente = useObterClienteGestao(id);
@@ -32,6 +35,8 @@ export function ContratarParaClientePage() {
         descricao="Os dependentes são os já cadastrados pelo cliente."
       />
       <FluxoContratacao
+        idPlanoInicial={parametros.get('plano')}
+        periodicidadeInicial={periodicidade === 'ANUAL' ? 'ANUAL' : 'MENSAL'}
         dependentes={dependentes}
         permitirIncluirDependente={false}
         confirmar={async (dados) => {

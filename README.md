@@ -241,7 +241,7 @@ apps/web/src/
 ├── features/
 │   ├── auth/  usuarios/  tenants/  plataforma/  clientes/  planos/  catalogo/
 │   ├── contratos/  financeiro/  funeral/  translado/  documentos/  terceiros/
-│   └── notificacoes/  relatorios/
+│   └── notificacoes/  relatorios/  vendas/
 └── shared/     utilitários e hooks genéricos
 ```
 
@@ -282,6 +282,7 @@ features/contratos/
 | terceiros                     | Terceiros                                   | FE-ADM-14, FE-TER-01                                  |
 | notificacoes                  | Notificacoes                                | FE-CLI-09                                             |
 | relatorios                    | Relatorios (e Identidade, para a auditoria) | FE-ADM-01, FE-ADM-13                                  |
+| vendas                        | Contratos (indicadores do consultor)        | Painel, simulador e desempenho do consultor           |
 
 As páginas públicas com SEO (FE-PUB-01 e FE-PUB-04) ficam no `apps/landing`.
 Quem criar uma feature nova atualiza esta tabela, a do INF-01 do backend e a lista `FEATURES`

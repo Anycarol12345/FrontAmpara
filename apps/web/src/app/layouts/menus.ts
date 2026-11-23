@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Building2,
+  Calculator,
   CalendarDays,
   FilePen,
   FileText,
@@ -10,6 +11,7 @@ import {
   Package,
   Settings,
   ShieldCheck,
+  Target,
   Truck,
   UsersRound,
   type LucideIcon,
@@ -31,7 +33,9 @@ export const MENU_DO_PERFIL: Partial<Record<Perfil, ItemMenu[]>> = {
   CONSULTOR: [
     { rotulo: 'Visão geral', para: '/painel', icone: House },
     { rotulo: 'Clientes', para: '/painel/clientes', icone: UsersRound },
+    { rotulo: 'Simulador', para: '/painel/simulador', icone: Calculator },
     { rotulo: 'Contratos', para: '/painel/contratos', icone: FilePen },
+    { rotulo: 'Desempenho', para: '/painel/desempenho', icone: Target },
   ],
   // O gestor (FUNERARIA) é o "Administrador" das telas do protótipo.
   FUNERARIA: [
