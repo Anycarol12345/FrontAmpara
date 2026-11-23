@@ -1,7 +1,15 @@
 import type { ContratoResumoResponse } from '@ampara/api-client';
 import { Badge } from '@ampara/ui/components/badge';
 import { Card } from '@ampara/ui/components/card';
-import { CircleAlert, FileText, Target, TrendingUp, UsersRound, ChevronRight } from 'lucide-react';
+import {
+  CalendarClock,
+  ChevronRight,
+  CircleAlert,
+  FileText,
+  Target,
+  TrendingUp,
+  UsersRound,
+} from 'lucide-react';
 import { Link } from 'react-router';
 import { STATUS_CONTRATO } from '@/features/contratos';
 import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
@@ -12,6 +20,7 @@ import {
   contratoPorCliente,
   mesAnterior,
   mesDe,
+  renovacoesProximas,
   useMetaMensal,
   useTodosContratos,
   valorMensal,
@@ -43,6 +52,7 @@ function Conteudo({ contratos, meta }: { contratos: ContratoResumoResponse[]; me
   const status = contarPorStatus(carteira);
   const acompanhar = carteira.filter((c) => c.status === 'A_PAGAR' || c.status === 'SUSPENSO');
   const percentual = Math.round((doMes.length / meta) * 100);
+  const renovacoes = renovacoesProximas(carteira);
 
   return (
     <>
@@ -161,6 +171,48 @@ function Conteudo({ contratos, meta }: { contratos: ContratoResumoResponse[]; me
       </div>
 
       <MetaDoMes feitos={doMes.length} meta={meta} />
+
+      <Card className="p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold">Renovações próximas</h2>
+            <p className="text-[11px] text-subtle-foreground">
+              Planos anuais que renovam nos próximos 30 dias: boa hora para falar com a família
+            </p>
+          </div>
+          <CalendarClock className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+        </div>
+        {renovacoes.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Nenhum plano anual renova nos próximos 30 dias.
+          </p>
+        ) : (
+          <ul className="mt-4 flex flex-col">
+            {renovacoes.slice(0, 6).map(({ contrato: c, dias }) => (
+              <li key={c.id_contrato}>
+                <Link
+                  to={`/painel/clientes/${c.id_cliente}`}
+                  className="-mx-2 flex items-center gap-4 rounded-lg px-2 py-3 transition-colors hover:bg-muted/50"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-sm font-bold">{c.nome_titular}</span>
+                    <span className="text-xs text-muted-foreground">
+                      Plano {c.nome_plano} · {real(c.valor_total)}/ano · desde{' '}
+                      {data(c.data_contratacao)}
+                    </span>
+                  </span>
+                  <Badge variant={dias <= 7 ? 'warning' : 'info'}>
+                    {dias === 0
+                      ? 'Renova hoje'
+                      : `Renova em ${dias} ${dias === 1 ? 'dia' : 'dias'}`}
+                  </Badge>
+                  <ChevronRight className="size-4 text-subtle-foreground" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </>
   );
 }

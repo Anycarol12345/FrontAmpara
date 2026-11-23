@@ -146,20 +146,21 @@ export const router = createBrowserRouter([
                 lazy: pagina(() => import('@/features/vendas'), 'DesempenhoPage'),
               },
               {
-                path: 'beneficiarios/novo',
-                lazy: pagina(() => import('@/features/funeral'), 'RegistrarBeneficiarioPage'),
-              },
-              {
-                path: 'funerais/novo',
-                lazy: pagina(() => import('@/features/funeral'), 'RegistrarFuneralPage'),
-              },
-              {
-                path: 'funerais/:id',
-                lazy: pagina(() => import('@/features/funeral'), 'FuneralPainelPage'),
-              },
-              {
                 element: <RotaProtegida perfis={['FUNERARIA', 'FUNCIONARIO']} />,
                 children: [
+                  // Atendimento de funeral: só gestor e funcionário (o consultor cuida das vendas).
+                  {
+                    path: 'beneficiarios/novo',
+                    lazy: pagina(() => import('@/features/funeral'), 'RegistrarBeneficiarioPage'),
+                  },
+                  {
+                    path: 'funerais/novo',
+                    lazy: pagina(() => import('@/features/funeral'), 'RegistrarFuneralPage'),
+                  },
+                  {
+                    path: 'funerais/:id',
+                    lazy: pagina(() => import('@/features/funeral'), 'FuneralPainelPage'),
+                  },
                   {
                     path: 'agenda',
                     lazy: pagina(() => import('@/features/funeral'), 'AgendaPage'),

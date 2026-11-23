@@ -4,6 +4,7 @@ import {
   contarPorStatus,
   contratoPorCliente,
   mesAnterior,
+  renovacoesProximas,
   semanaDoMes,
   valorMensal,
   variacao,
@@ -54,6 +55,29 @@ describe('indicadores da carteira', () => {
     expect(semanaDoMes('2026-11-01')).toBe(1);
     expect(semanaDoMes('2026-11-08')).toBe(2);
     expect(semanaDoMes('2026-11-31')).toBe(5);
+  });
+
+  it('lista os planos anuais que renovam nos próximos 30 dias, do mais próximo', () => {
+    const hoje = new Date(2026, 10, 23);
+    const lista = [
+      contrato({ id_contrato: 'longe', periodicidade: 'ANUAL', data_contratacao: '2025-12-20' }),
+      contrato({ id_contrato: 'perto', periodicidade: 'ANUAL', data_contratacao: '2025-11-30' }),
+      contrato({ id_contrato: 'mensal', data_contratacao: '2025-11-25' }),
+      contrato({
+        id_contrato: 'cancelado',
+        periodicidade: 'ANUAL',
+        status: 'CANCELADO',
+        data_contratacao: '2025-11-26',
+      }),
+      contrato({ id_contrato: 'fora', periodicidade: 'ANUAL', data_contratacao: '2025-02-10' }),
+      contrato({ id_contrato: 'novo', periodicidade: 'ANUAL', data_contratacao: '2026-11-20' }),
+    ];
+    expect(
+      renovacoesProximas(lista, 30, hoje).map((r) => [r.contrato.id_contrato, r.dias]),
+    ).toEqual([
+      ['perto', 7],
+      ['longe', 27],
+    ]);
   });
 
   it('usa o contrato em vigor de cada cliente, mesmo que um cancelado seja mais novo', () => {

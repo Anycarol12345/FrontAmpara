@@ -84,7 +84,8 @@ export function VisaoGeralPage() {
         <PainelDoConsultor />
       )}
 
-      <FuneraisEmAndamento />
+      {/* Funerais são da equipe (gestor e funcionário); o consultor cuida das vendas. */}
+      {ehEquipe && <FuneraisEmAndamento />}
 
       {ehEquipe && (
         <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">

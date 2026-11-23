@@ -84,6 +84,37 @@ export function contratoPorCliente(contratos: ContratoResumoResponse[]) {
   return mapa;
 }
 
+/** Dias até o próximo aniversário do contrato (quando o plano anual renova). */
+export function diasParaRenovar(dataContratacao: string, hoje = new Date()) {
+  const [, m, d] = dataContratacao.slice(0, 10).split('-').map(Number);
+  const base = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  let alvo = new Date(base.getFullYear(), m! - 1, d!);
+  if (alvo < base) alvo = new Date(base.getFullYear() + 1, m! - 1, d!);
+  return Math.round((alvo.getTime() - base.getTime()) / 86_400_000);
+}
+
+/**
+ * Planos anuais em vigor que renovam nos próximos `dias` dias, do mais próximo ao mais distante:
+ * a hora de o consultor falar com a família (renovar, incluir dependente, trocar de plano).
+ */
+export function renovacoesProximas(
+  contratos: ContratoResumoResponse[],
+  dias = 30,
+  hoje = new Date(),
+) {
+  return (
+    contratos
+      .filter(
+        (c) => c.periodicidade === 'ANUAL' && (c.status === 'ATIVO' || c.status === 'SUSPENSO'),
+      )
+      // Contratado neste mês ainda não renova (o "aniversário" seria a própria contratação).
+      .filter((c) => mesDe(c.data_contratacao) !== mesDe(hoje.toISOString()))
+      .map((c) => ({ contrato: c, dias: diasParaRenovar(c.data_contratacao, hoje) }))
+      .filter((r) => r.dias <= dias)
+      .sort((a, b) => a.dias - b.dias)
+  );
+}
+
 const META_PADRAO = 25;
 
 /**
