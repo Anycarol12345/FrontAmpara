@@ -7,11 +7,19 @@
  *                             cumprida (dá para registrar o falecimento dele no painel)
  *   atrasado@demo.localhost   contrato suspenso, uma fatura paga e outra vencida há 12 dias
  *
+ * E cinco contas antigas, para a carteira, as renovações e o desempenho do consultor:
+ *
+ *   antigo@demo.localhost         plano mensal há 3 anos, em dia
+ *   renova-semana@demo.localhost  plano anual que renova em 6 dias
+ *   renova-mes@demo.localhost     plano anual que renova em 20 dias
+ *   novo@demo.localhost           contratou há 3 dias (conta em "Vendas no mês")
+ *   semana@demo.localhost         contratou há 10 dias
+ *
  * O cliente e o contrato são criados pela API, como no app. As faturas vão direto no banco,
  * porque o backend só as cria quando o Stripe avisa (sem Stripe configurado, nenhuma é gerada).
  * A data da contratação também é ajustada no banco para combinar com as faturas: a carência
  * conta a partir dela, então um contrato "em dia" criado hoje ficaria meses sem cobertura.
- * Rodar de novo apaga e recria as faturas desses três clientes.
+ * Rodar de novo apaga e recria as faturas desses clientes.
  *
  * Uso (com o backend e o Postgres do Docker no ar):
  *   node scripts/criar-clientes-de-teste.mjs
@@ -35,6 +43,45 @@ const CLIENTES = [
   { email: 'a-pagar@demo.localhost', nome: 'Bianca Teste A Pagar', situacao: 'a-pagar' },
   { email: 'em-dia@demo.localhost', nome: 'Diego Teste Em Dia', situacao: 'em-dia' },
   { email: 'atrasado@demo.localhost', nome: 'Helena Teste Atrasada', situacao: 'atrasado' },
+  // Contas antigas: `plano` é a posição na tabela (0 = mais barato), `pagas` os dias atrás de cada fatura paga.
+  {
+    email: 'antigo@demo.localhost',
+    nome: 'Paulo Teste Antigo',
+    plano: 1,
+    contratadoHaDias: 1095,
+    pagas: [64, 34, 4],
+  },
+  {
+    email: 'renova-semana@demo.localhost',
+    nome: 'Otávio Teste Renova',
+    plano: 2,
+    periodicidade: 'ANUAL',
+    contratadoHaDias: 359,
+    pagas: [359],
+  },
+  {
+    email: 'renova-mes@demo.localhost',
+    nome: 'Marta Teste Renovação',
+    plano: 1,
+    periodicidade: 'ANUAL',
+    contratadoHaDias: 345,
+    pagas: [345],
+  },
+  {
+    email: 'novo@demo.localhost',
+    nome: 'Lucas Teste Novo',
+    plano: 1,
+    contratadoHaDias: 3,
+    pagas: [3],
+  },
+  {
+    email: 'semana@demo.localhost',
+    nome: 'Carla Teste Semana',
+    plano: 0,
+    periodicidade: 'ANUAL',
+    contratadoHaDias: 10,
+    pagas: [10],
+  },
 ];
 
 /** Senha que segue a política do backend (AUT-01): maiúscula, minúscula, número e símbolo. */
@@ -148,7 +195,7 @@ async function garantirCliente(cliente, senha) {
   return entrar(cliente.email, senha);
 }
 
-async function garantirContrato(token, idPlano) {
+async function garantirContrato(token, idPlano, periodicidade = 'MENSAL') {
   const meus = await api('/api/v1/contratos', { token });
   const existente = (meus.dados?.itens ?? meus.dados ?? []).find((c) => c.status !== 'CANCELADO');
   if (existente) return existente.id_contrato;
@@ -159,7 +206,7 @@ async function garantirContrato(token, idPlano) {
       id_plano: idPlano,
       tipo_cobertura: 'TITULAR',
       dependentes: [],
-      periodicidade: 'MENSAL',
+      periodicidade,
       dia_vencimento: 10,
     },
   });
@@ -169,7 +216,22 @@ async function garantirContrato(token, idPlano) {
 }
 
 /** Faturas de cada situação e a situação do contrato e da assinatura que combinam com elas. */
-function planoDeFaturas(situacao, valor) {
+function planoDeFaturas(situacao, valor, cliente = {}) {
+  // Conta antiga: contrato ativo, com as faturas pagas nos dias indicados.
+  if (cliente.pagas)
+    return {
+      contrato: 'Ativo',
+      contratadoHaDias: cliente.contratadoHaDias,
+      assinatura: 'Ativa',
+      inadimplente: false,
+      faturas: cliente.pagas.map((d) => ({
+        vencimento: dia(-d),
+        status: 'Paga',
+        forma: 'Pix',
+        pagaEm: `${dia(-d)} 10:00:00+00`,
+        encargos: 0,
+      })),
+    };
   const paga = (meses) => ({
     vencimento: dia(-30 * meses),
     status: 'Paga',
@@ -213,11 +275,11 @@ function planoDeFaturas(situacao, valor) {
   };
 }
 
-function gravarFaturas(idContrato, situacao) {
+function gravarFaturas(idContrato, situacao, cliente) {
   const [idTenant, idCliente, valor] = sql(
     `select id_tenant, id_cliente, valor_total from contratos.contratos where id_contrato = ${literal(idContrato)};`,
   ).split('|');
-  const plano = planoDeFaturas(situacao, Number(valor));
+  const plano = planoDeFaturas(situacao, Number(valor), cliente);
   const inserts = plano.faturas
     .map(
       (
@@ -252,18 +314,21 @@ async function principal() {
   const senha = senhaDosClientes();
   const planos = await api('/api/v1/planos');
   const lista = planos.dados?.itens ?? planos.dados ?? [];
-  const plano = [...lista].sort((a, b) => Number(a.valor_mensal) - Number(b.valor_mensal))[0];
-  if (!plano) throw new Error('Nenhum plano ativo na funerária demo.');
+  const tabela = [...lista]
+    .filter((p) => p.ativo !== false)
+    .sort((a, b) => Number(a.valor_mensal) - Number(b.valor_mensal));
+  if (tabela.length === 0) throw new Error('Nenhum plano ativo na funerária demo.');
 
   for (const cliente of CLIENTES) {
+    const plano = tabela[Math.min(cliente.plano ?? 0, tabela.length - 1)];
     const token = await garantirCliente(cliente, senha);
-    const idContrato = await garantirContrato(token, plano.id_plano);
-    const { contrato, faturas } = gravarFaturas(idContrato, cliente.situacao);
+    const idContrato = await garantirContrato(token, plano.id_plano, cliente.periodicidade);
+    const { contrato, faturas } = gravarFaturas(idContrato, cliente.situacao, cliente);
     console.log(
       `${cliente.email.padEnd(26)} plano ${plano.nome}, contrato ${contrato}, faturas: ${faturas.map((f) => f.status).join(', ')}`,
     );
   }
-  console.log(`\nSenha dos três: em ${ARQUIVO_SENHA} (SENHA_CLIENTES_TESTE).`);
+  console.log(`\nSenha de todos: em ${ARQUIVO_SENHA} (SENHA_CLIENTES_TESTE).`);
 }
 
 principal().catch((erro) => {
