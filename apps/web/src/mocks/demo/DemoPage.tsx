@@ -167,6 +167,20 @@ function abrir(grupo: Grupo, rota: string) {
 }
 
 /**
+ * Link direto para uma tela da demonstração, já com o perfil:
+ * /demo?perfil=FUNERARIA&cenario=padrao&rota=/painel/agenda (perfil vazio = tela pública).
+ * Usado para importar as telas no Figma (html.to.design) uma a uma, sem clicar na lista.
+ */
+const linkDireto = new URLSearchParams(window.location.search);
+const rotaDireta = linkDireto.get('rota');
+if (rotaDireta?.startsWith('/')) {
+  const perfil = linkDireto.get('perfil') as Perfil | null;
+  const cenario = (linkDireto.get('cenario') as Cenario | null) ?? 'padrao';
+  salvarSessaoDemo(perfil ? { perfil, cenario } : null);
+  window.location.replace(rotaDireta);
+}
+
+/**
  * Atalho para todas as telas sem login (só em desenvolvimento).
  * Cada link entra com um usuário de demonstração e a API inteira é simulada (src/mocks/demo).
  */

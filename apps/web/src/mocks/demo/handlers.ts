@@ -1,4 +1,7 @@
 import type {
+  DashboardResponse,
+  TerceiroResponse,
+  OrcamentoResponse,
   AlterarStatusFunerariaRequest,
   CadastrarFunerariaRequest,
   FunerariaListaResponse,
@@ -97,6 +100,77 @@ const resumoDoPlano = ({ coberturas: _, configuracoes: __, ...plano }: PlanoResp
  * API inteira da demonstração (página /demo): sessão, área do cliente, painel da equipe.
  * Entra antes dos handlers de dados fictícios e responde sem precisar do backend.
  */
+const orcamentoDemo = (): OrcamentoResponse => ({
+  id_orcamento: 'orcamento-exemplo-1',
+  status: 'PENDENTE',
+  itens: [
+    {
+      id_funeral_item: 'item-transmissao',
+      nome: 'Transmissão online da cerimônia',
+      variacao: null,
+      quantidade: 1,
+      preco_unitario: 300,
+      subtotal: 300,
+      somente_diferenca_variacao: false,
+    },
+  ],
+  total: 300,
+  gerado_em: new Date(Date.now() - 2 * 3_600_000).toISOString(),
+  aprovado_por: null,
+  aprovado_em: null,
+  id_fatura: null,
+  link_pagamento: null,
+  fatura_pendente: false,
+});
+
+const terceirosDemo: TerceiroResponse[] = [
+  parceiroDemo(),
+  {
+    id_terceiro: 'terceiro-cartorio-centro',
+    tipo: 'CARTORIO_DESPACHANTE',
+    nome_razao_social: 'Cartório de Registro Civil - Centro',
+    cpf_cnpj: '23.456.789/0001-01',
+    telefone: '(11) 3111-2200',
+    email: 'obitos@cartoriocentro.demo',
+    area_atuacao: { ufs: ['SP'], cidades: [] },
+    categorias_atendidas: [],
+    status: 'ATIVO',
+  },
+  {
+    id_terceiro: 'terceiro-flores-ipe',
+    tipo: 'FORNECEDOR',
+    nome_razao_social: 'Floricultura Ipê Amarelo',
+    cpf_cnpj: '34.567.890/0001-12',
+    telefone: '(11) 98877-6655',
+    email: 'pedidos@floresipe.demo',
+    area_atuacao: { ufs: ['SP'], cidades: [] },
+    categorias_atendidas: ['Coroa de flores', 'Arranjos'],
+    status: 'ATIVO',
+  },
+  {
+    id_terceiro: 'terceiro-despachante-rocha',
+    tipo: 'CARTORIO_DESPACHANTE',
+    nome_razao_social: 'Rocha Despachante',
+    cpf_cnpj: '456.789.012-34',
+    telefone: null,
+    email: 'contato@rochadespachante.demo',
+    area_atuacao: { ufs: ['SP', 'MG'], cidades: [] },
+    categorias_atendidas: [],
+    status: 'CONVIDADO',
+  },
+  {
+    id_terceiro: 'terceiro-urnas-sul',
+    tipo: 'FORNECEDOR',
+    nome_razao_social: 'Urnas do Sul',
+    cpf_cnpj: '56.789.012/0001-45',
+    telefone: '(41) 3555-7788',
+    email: 'vendas@urnasdosul.demo',
+    area_atuacao: { ufs: ['PR', 'SC', 'SP'], cidades: [] },
+    categorias_atendidas: ['Urna', 'Caixão'],
+    status: 'INATIVO',
+  },
+];
+
 export function handlersDemo(sessao: SessaoDemo) {
   const banco = criarBanco(sessao.cenario);
   const configuracoes = configuracoesDemo();
@@ -585,6 +659,35 @@ export function handlersDemo(sessao: SessaoDemo) {
       f.status = ((await request.json()) as AlterarStatusFunerariaRequest).status ?? f.status;
       return semConteudo();
     }),
+
+    // Orçamento dos adicionais do funeral, aguardando a família aprovar (FUN-07).
+    http.get('*/api/v1/funerais/:id/orcamento', () => HttpResponse.json(orcamentoDemo())),
+    http.post('*/api/v1/funerais/:id/orcamento', () => HttpResponse.json(orcamentoDemo())),
+
+    // Terceiros da funerária (ADM-14): translado, cartório e fornecedores.
+    http.get('*/api/v1/gestao/terceiros', ({ request }) => {
+      const url = new URL(request.url);
+      const tipo = url.searchParams.get('tipo');
+      const status = url.searchParams.get('status');
+      const lista = terceirosDemo
+        .filter((t) => !tipo || t.tipo === tipo)
+        .filter((t) => !status || t.status === status);
+      return HttpResponse.json(paginar(lista, url));
+    }),
+
+    // Indicadores da visão geral (ADM-01): números de uma funerária de porte médio.
+    http.get('*/api/v1/gestao/dashboard', () =>
+      HttpResponse.json({
+        contratos_ativos: 248,
+        novos_contratos_no_mes: 17,
+        taxa_inadimplencia: 6.4,
+        receita_prevista_no_mes: 38_420,
+        receita_recebida_no_mes: 31_975.5,
+        funerais_em_andamento: 3,
+        translados_em_andamento: 1,
+        gerado_em: new Date().toISOString(),
+      } satisfies DashboardResponse),
+    ),
 
     // Relatórios em CSV e auditoria (ADM-13).
     http.get('*/api/v1/gestao/relatorios/:relatorio', ({ params, request }) => {
