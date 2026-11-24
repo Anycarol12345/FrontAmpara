@@ -13,7 +13,7 @@ import { Badge } from '@ampara/ui/components/badge';
 import { Button } from '@ampara/ui/components/button';
 import { Card } from '@ampara/ui/components/card';
 import { cn } from '@ampara/ui/lib/utils';
-import { ArrowDown, ArrowUp, ImageOff, Pencil, Plus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Eye, EyeOff, ImageOff, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { EstadoConsulta, Vazio } from '@/shared/components/EstadoConsulta';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -49,7 +49,7 @@ export function CatalogoPage() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
         <Card className="self-start p-4">
           <div className="flex items-center justify-between px-2 pb-3">
             <h2 className="text-sm font-bold">Categorias</h2>
@@ -153,71 +153,82 @@ function Categorias({
 
   const classe = (ativa: boolean) =>
     cn(
-      'flex-1 rounded-lg px-2 py-2 text-left text-sm transition-colors hover:bg-muted',
+      'min-w-0 flex-1 rounded-lg px-2.5 py-2 text-left text-sm leading-snug break-words transition-colors hover:bg-muted',
       ativa && 'bg-muted font-semibold',
     );
+  const icone = 'size-7 shrink-0 text-muted-foreground hover:text-foreground';
 
   return (
     <ul className="flex flex-col gap-0.5" aria-label="Categorias">
       <li>
         <button
           type="button"
-          className={classe(selecionada === null)}
+          className={cn(classe(selecionada === null), 'w-full')}
           onClick={() => aoSelecionar(null)}
         >
           Todas
         </button>
       </li>
       {categorias.map((c, i) => (
-        <li key={c.id_categoria} className="group flex items-center gap-1">
+        <li key={c.id_categoria} className="flex items-center gap-1">
           <button
             type="button"
+            title={c.nome}
             className={cn(
               classe(selecionada === c.id_categoria),
-              !c.ativo && 'text-muted-foreground',
+              !c.ativo && 'text-muted-foreground line-through decoration-1',
             )}
             onClick={() => aoSelecionar(c.id_categoria)}
           >
             {c.nome}
-            {!c.ativo && <span className="ml-1.5 text-[11px]">(inativa)</span>}
           </button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7"
-            aria-label={`Subir ${c.nome}`}
-            disabled={i === 0 || atualizar.isPending}
-            onClick={() => void mover(i, -1)}
-          >
-            <ArrowUp />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7"
-            aria-label={`Descer ${c.nome}`}
-            disabled={i === categorias.length - 1 || atualizar.isPending}
-            onClick={() => void mover(i, 1)}
-          >
-            <ArrowDown />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7"
-            aria-label={`Editar ${c.nome}`}
-            onClick={() => aoEditar(c)}
-          >
-            <Pencil />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-[11px]"
-            onClick={() => alterarStatus.mutate({ id: c.id_categoria, data: { ativo: !c.ativo } })}
-          >
-            {c.ativo ? 'Desativar' : 'Ativar'}
-          </Button>
+          {/* Ações em ícones do mesmo tamanho, numa coluna fixa: os nomes ficam alinhados. */}
+          <span className="flex shrink-0 items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={icone}
+              aria-label={`Subir ${c.nome}`}
+              title="Subir"
+              disabled={i === 0 || atualizar.isPending}
+              onClick={() => void mover(i, -1)}
+            >
+              <ArrowUp />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={icone}
+              aria-label={`Descer ${c.nome}`}
+              title="Descer"
+              disabled={i === categorias.length - 1 || atualizar.isPending}
+              onClick={() => void mover(i, 1)}
+            >
+              <ArrowDown />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={icone}
+              aria-label={`Editar ${c.nome}`}
+              title="Editar"
+              onClick={() => aoEditar(c)}
+            >
+              <Pencil />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={icone}
+              aria-label={`${c.ativo ? 'Desativar' : 'Ativar'} ${c.nome}`}
+              title={c.ativo ? 'Desativar' : 'Ativar'}
+              onClick={() =>
+                alterarStatus.mutate({ id: c.id_categoria, data: { ativo: !c.ativo } })
+              }
+            >
+              {c.ativo ? <Eye /> : <EyeOff />}
+            </Button>
+          </span>
         </li>
       ))}
     </ul>
