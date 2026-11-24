@@ -110,9 +110,16 @@ export default async function DetalheDoPlano({ params }: Props) {
                           className="flex justify-between py-2.5 text-sm"
                         >
                           <span>{item.nome}</span>
-                          <span className="text-muted-foreground">
-                            {numero(item.quantidade)} un.
-                          </span>
+                          {/* Só mostra o que acrescenta: a quantidade quando passa de 1 e os km do translado. */}
+                          {numero(item.km_translado_incluso) > 0 ? (
+                            <span className="text-muted-foreground">
+                              até {numero(item.km_translado_incluso)} km
+                            </span>
+                          ) : numero(item.quantidade) > 1 ? (
+                            <span className="text-muted-foreground">
+                              {numero(item.quantidade)} un.
+                            </span>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
