@@ -1,0 +1,82 @@
+# CI do frontend (FE-11): roda a cada push e pull request.
+# Em pull requests o Turborepo roda só o que a mudança afeta (--affected) e reaproveita o cache.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Lint, tipos, testes e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Cache do Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Formatação
+        run: pnpm format:check
+
+      - name: Lint, checagem de tipos, testes (com cobertura) e build
+        run: pnpm turbo run lint typecheck test build ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
+      - name: Client da API atualizado com o openapi.json
+        run: pnpm api:check
+
+  docker:
+    name: Imagens Docker
+    needs: verificar
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [web, landing]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: false
+          tags: ampara-${{ matrix.app }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  e2e:
+    name: Testes E2E (Playwright)
+    needs: verificar
+    # Ativa sozinho quando o pacote de testes E2E existir (FE-TST-01).
+    if: ${{ hashFiles('packages/e2e/package.json') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ampara/e2e exec playwright install --with-deps
+      - run: pnpm --filter @ampara/e2e test

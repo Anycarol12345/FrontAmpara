@@ -1,0 +1,28 @@
+{
+  "name": "ampara-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "api:generate": "pnpm --filter @ampara/api-client api:generate",
+    "api:check": "pnpm --filter @ampara/api-client api:orval && git diff --exit-code -- packages/api-client/src/gerado",
+    "clientes-de-teste": "node scripts/criar-clientes-de-teste.mjs"
+  },
+  "devDependencies": {
+    "@ampara/config": "workspace:*",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.9"
+  }
+}

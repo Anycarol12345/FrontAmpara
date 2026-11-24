@@ -1,0 +1,10 @@
+{
+  "extends": "@ampara/config/tsconfig/react",
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
