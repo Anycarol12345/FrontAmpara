@@ -85,8 +85,10 @@ com as datas de hoje.
    `powershell -ExecutionPolicy Bypass -File scripts/configurar-stripe-backend.ps1`. Recrie a API.
 3. Deixe os eventos indo para o backend enquanto testa:
    `powershell -ExecutionPolicy Bypass -File scripts/stripe-webhook.ps1`.
-4. Como gestor, em Configurações › Cobrança, clique em **Cadastrar no Stripe** e preencha a página do
-   Stripe (no modo de teste, dados fictícios servem). Sem esse cadastro, os planos não são cobrados.
+4. A funerária precisa do cadastro de recebimentos no Stripe; sem ele, os planos não são cobrados.
+   O botão "Cadastrar no Stripe" saiu das Configurações: o cadastro é iniciado pela API
+   (`POST /api/v1/gestao/pagamentos/conta/cadastro`, como gestor), que devolve o link da página do
+   Stripe (no modo de teste, dados fictícios servem).
 
 A funerária vem do subdomínio (http://demo.localhost:5173). Sem subdomínio, vale `VITE_TENANT_PADRAO`.
 O `/admin` (plataforma) é aberto sem funerária.
