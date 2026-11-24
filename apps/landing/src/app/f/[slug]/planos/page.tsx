@@ -69,57 +69,93 @@ export default async function CompararPlanos({ params }: Props) {
             Os planos estarão disponíveis aqui em breve.
           </p>
         ) : (
-          <div className="mt-14 overflow-x-auto rounded-2xl bg-white shadow-[0_20px_50px_-20px_rgba(19,41,74,0.18)]">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th
-                    scope="col"
-                    className="p-6 text-left text-xs font-semibold text-muted-foreground"
+          <>
+            {/* Celular: um card por plano, um abaixo do outro (a tabela escondia os outros planos). */}
+            <div className="mt-12 flex flex-col gap-5 md:hidden">
+              {planos.map((plano) => (
+                <article
+                  key={plano.id_plano}
+                  className="rounded-2xl bg-white p-6 shadow-[0_20px_50px_-20px_rgba(19,41,74,0.18)]"
+                >
+                  <a
+                    href={`/planos/${plano.id_plano}`}
+                    className="font-serif text-3xl text-primary hover:underline"
                   >
-                    <span className="sr-only">Característica</span>
-                  </th>
-                  {planos.map((plano) => (
-                    <th key={plano.id_plano} scope="col" className="p-6 text-center">
-                      <a
-                        href={`/planos/${plano.id_plano}`}
-                        className="font-serif text-2xl font-normal text-primary hover:underline"
+                    {plano.nome}
+                  </a>
+                  <dl className="mt-4 divide-y divide-border/60 text-sm">
+                    {LINHAS.map((linha) => (
+                      <div
+                        key={linha.rotulo}
+                        className="flex items-center justify-between gap-4 py-3"
                       >
-                        {plano.nome}
-                      </a>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {LINHAS.map((linha) => (
-                  <tr key={linha.rotulo} className="border-b border-border/60 last:border-0">
+                        <dt className="text-muted-foreground">{linha.rotulo}</dt>
+                        <dd className="text-right font-semibold">{linha.valor(plano)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <Button className="mt-5 w-full" asChild>
+                    <a href={linkDoApp(slug, `/cadastro?plano=${plano.id_plano}`)}>
+                      Contratar o {plano.nome}
+                    </a>
+                  </Button>
+                </article>
+              ))}
+            </div>
+            <div className="mt-14 hidden overflow-x-auto rounded-2xl bg-white shadow-[0_20px_50px_-20px_rgba(19,41,74,0.18)] md:block">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="border-b border-border">
                     <th
-                      scope="row"
-                      className="px-6 py-4 text-left font-normal text-muted-foreground"
+                      scope="col"
+                      className="p-6 text-left text-xs font-semibold text-muted-foreground"
                     >
-                      {linha.rotulo}
+                      <span className="sr-only">Característica</span>
                     </th>
                     {planos.map((plano) => (
-                      <td key={plano.id_plano} className="px-6 py-4 text-center font-semibold">
-                        {linha.valor(plano)}
+                      <th key={plano.id_plano} scope="col" className="p-6 text-center">
+                        <a
+                          href={`/planos/${plano.id_plano}`}
+                          className="font-serif text-2xl font-normal text-primary hover:underline"
+                        >
+                          {plano.nome}
+                        </a>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {LINHAS.map((linha) => (
+                    <tr key={linha.rotulo} className="border-b border-border/60 last:border-0">
+                      <th
+                        scope="row"
+                        className="px-6 py-4 text-left font-normal text-muted-foreground"
+                      >
+                        {linha.rotulo}
+                      </th>
+                      {planos.map((plano) => (
+                        <td key={plano.id_plano} className="px-6 py-4 text-center font-semibold">
+                          {linha.valor(plano)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                  <tr>
+                    <td />
+                    {planos.map((plano) => (
+                      <td key={plano.id_plano} className="p-6 text-center">
+                        <Button size="sm" asChild>
+                          <a href={linkDoApp(slug, `/cadastro?plano=${plano.id_plano}`)}>
+                            Contratar
+                          </a>
+                        </Button>
                       </td>
                     ))}
                   </tr>
-                ))}
-                <tr>
-                  <td />
-                  {planos.map((plano) => (
-                    <td key={plano.id_plano} className="p-6 text-center">
-                      <Button size="sm" asChild>
-                        <a href={linkDoApp(slug, `/cadastro?plano=${plano.id_plano}`)}>Contratar</a>
-                      </Button>
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Container>
     </section>

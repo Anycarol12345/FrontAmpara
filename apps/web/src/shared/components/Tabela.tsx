@@ -2,6 +2,7 @@ import { Button } from '@ampara/ui/components/button';
 import { cn } from '@ampara/ui/lib/utils';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTelaPequena } from '../hooks/useTelaPequena';
 
 export type Coluna<T> = {
   titulo: string;
@@ -21,6 +22,52 @@ export function Tabela<T>({
   chave: (linha: T) => string;
   aoClicar?: (linha: T) => void;
 }) {
+  // No celular, cada linha vira um card com os campos rotulados (a tabela ficava espremida).
+  const celular = useTelaPequena();
+  if (celular) {
+    const [principal, ...resto] = colunas;
+    return (
+      <ul className="divide-y divide-border/60">
+        {linhas.map((linha) => (
+          <li
+            key={chave(linha)}
+            onClick={aoClicar ? () => aoClicar(linha) : undefined}
+            className={cn(
+              'flex flex-col gap-2.5 px-4 py-4 text-sm',
+              aoClicar && 'cursor-pointer transition-colors active:bg-muted/40',
+            )}
+          >
+            {principal && <div className="min-w-0">{principal.celula(linha)}</div>}
+            {resto.length > 0 && (
+              <dl className="flex flex-col gap-2">
+                {resto.map((coluna, i) => (
+                  <div
+                    key={coluna.titulo || i}
+                    className="flex min-w-0 items-center justify-between gap-4"
+                  >
+                    {coluna.titulo && (
+                      <dt className="shrink-0 text-[11px] font-semibold tracking-wider text-subtle-foreground uppercase">
+                        {coluna.titulo}
+                      </dt>
+                    )}
+                    <dd
+                      className={cn(
+                        'min-w-0 text-right',
+                        !coluna.titulo && 'w-full [&>*]:justify-end',
+                      )}
+                    >
+                      {coluna.celula(linha)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-sm">

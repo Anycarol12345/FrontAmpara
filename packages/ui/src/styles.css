@@ -95,4 +95,12 @@
   body {
     @apply bg-background font-sans text-foreground antialiased;
   }
+  /*
+   * Responsividade: item de grade não cresce além da coluna por causa de um filho largo
+   * (tabela, gráfico). Sem isso, no celular a tela inteira rolava para o lado; agora quem
+   * é largo rola dentro do próprio card. Um min-w-* nas classes continua valendo.
+   */
+  .grid > * {
+    min-width: 0;
+  }
 }

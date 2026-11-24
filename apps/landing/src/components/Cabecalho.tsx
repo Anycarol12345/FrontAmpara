@@ -1,6 +1,7 @@
 import { Button } from '@ampara/ui/components/button';
 import { Logo } from '@ampara/ui/components/logo';
 import { Container } from './Container';
+import { MenuCelular } from './MenuCelular';
 
 type Link = { rotulo: string; href: string };
 
@@ -16,13 +17,17 @@ type CabecalhoProps = {
 export function Cabecalho({ nome, logoUrl, navegacao, entrar, acao }: CabecalhoProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-border/60 bg-surface/90 backdrop-blur">
-      <Container className="flex h-[88px] items-center justify-between gap-6">
-        <a href="/" aria-label={`${nome ?? 'Ampara'}, início`} className="flex items-center gap-3">
+      <Container className="flex h-[72px] items-center justify-between gap-4 md:h-[88px] md:gap-6">
+        <a
+          href="/"
+          aria-label={`${nome ?? 'Ampara'}, início`}
+          className="flex min-w-0 items-center gap-3"
+        >
           {logoUrl ? (
             <>
               {/* Logo servido pela API, com tamanho variável: <img> simples em vez do next/image. */}
               <img src={logoUrl} alt="" className="h-9 w-auto" />
-              {nome && <span className="font-serif text-xl text-primary">{nome}</span>}
+              {nome && <span className="truncate font-serif text-xl text-primary">{nome}</span>}
             </>
           ) : (
             <Logo font="serif" nome={nome} className="text-xl text-primary" />
@@ -39,7 +44,7 @@ export function Cabecalho({ nome, logoUrl, navegacao, entrar, acao }: CabecalhoP
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-6">
+        <div className="hidden items-center gap-6 md:flex">
           <a href={entrar.href} className="text-sm text-foreground hover:underline">
             {entrar.rotulo}
           </a>
@@ -47,6 +52,7 @@ export function Cabecalho({ nome, logoUrl, navegacao, entrar, acao }: CabecalhoP
             <a href={acao.href}>{acao.rotulo}</a>
           </Button>
         </div>
+        <MenuCelular navegacao={navegacao} entrar={entrar} acao={acao} />
       </Container>
     </header>
   );
