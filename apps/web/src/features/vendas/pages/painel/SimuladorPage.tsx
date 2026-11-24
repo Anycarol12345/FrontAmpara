@@ -17,7 +17,7 @@ import { PageHeader } from '@/shared/components/PageHeader';
 import { numero, real } from '@/shared/lib/formatar';
 
 const classeCampo =
-  'h-11 w-full rounded-lg border border-white/15 bg-white px-3 text-sm text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/30';
+  'h-11 w-full rounded-lg border border-white/15 bg-card px-3 text-sm text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/30';
 
 /**
  * Simulador do consultor (protótipo "Simulador"): monta o plano com a família, com os valores

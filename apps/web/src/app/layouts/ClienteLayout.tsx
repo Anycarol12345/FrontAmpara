@@ -4,6 +4,7 @@ import { cn } from '@ampara/ui/lib/utils';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { useAuth } from '@/features/auth';
 import { SinoNotificacoes } from '@/features/notificacoes';
+import { BotaoTema } from '@/shared/components/BotaoTema';
 import { urlDoSite } from '@/shared/lib/tenant';
 
 const MENU = [
@@ -33,6 +34,7 @@ export function ClienteLayout() {
             <Logo className="text-lg" />
           </Link>
           <div className="flex items-center gap-4 sm:gap-6">
+            <BotaoTema />
             <SinoNotificacoes todas="/minha-conta/notificacoes" />
             <a
               href={urlDoSite()}

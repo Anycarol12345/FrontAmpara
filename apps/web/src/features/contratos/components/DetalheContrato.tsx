@@ -35,7 +35,7 @@ export function DetalheContrato({
                 Titular: {contrato.titular.nome} · {COBERTURA[contrato.tipo_cobertura]}
               </p>
             </div>
-            <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+            <span className="rounded-full bg-card px-2.5 py-0.5 text-[11px] font-semibold text-primary">
               {status.rotulo}
             </span>
           </div>

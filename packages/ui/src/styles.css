@@ -7,6 +7,9 @@
 /* Componentes deste pacote também usam classes do Tailwind. */
 @source './';
 
+/* Modo noturno: classe .dark no <html>, ligada pelo sistema (apps/web). O site não liga. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * Tokens da Ampara (FE-02). Cores tiradas do protótipo no Figma.
  * Os nomes seguem o padrão do shadcn/ui; as cores da funerária (TEN-03)
@@ -46,6 +49,42 @@
   --info-foreground: #2b5a8f;
 
   --radius: 0.75rem;
+}
+
+/* Modo noturno: mesmas cores de marca, em fundo azul-escuro e com contraste para leitura. */
+.dark {
+  color-scheme: dark;
+  --background: #0e1524;
+  --foreground: #e4e9f2;
+  --surface: #111a2c;
+  --card: #172238;
+  --card-foreground: #e4e9f2;
+  --primary: #2d5a96;
+  --primary-foreground: #ffffff;
+  --secondary: #1c2840;
+  --secondary-foreground: #e4e9f2;
+  --muted: #1d2942;
+  --muted-foreground: #a0abc1;
+  --subtle-foreground: #75829b;
+  --accent: #d9bd80;
+  --accent-foreground: #13294a;
+  --destructive: #e0625c;
+  --border: #27344d;
+  --input: #33415e;
+  --ring: #7fa2d6;
+
+  --brand-950: #0d1d36;
+  --brand-900: #1a3a62;
+  --brand-800: #3a69a8;
+  --brand-600: #5b86c0;
+  --brand-300: #9db5d6;
+
+  --success: #173a2a;
+  --success-foreground: #86d6a8;
+  --warning: #3d3016;
+  --warning-foreground: #ebc777;
+  --info: #172f4f;
+  --info-foreground: #94bcea;
 }
 
 @theme inline {
@@ -103,4 +142,19 @@
   .grid > * {
     min-width: 0;
   }
+}
+
+/*
+ * No escuro, o azul da marca como cor de TEXTO (títulos, links, ícones) fica claro para ser
+ * legível; como fundo (botões, cards de destaque) continua azul. Fora de camada para valer
+ * sobre as classes utilitárias.
+ */
+.dark .text-primary,
+.dark .text-brand-800,
+.dark .text-brand-950 {
+  color: #b5cbef;
+}
+.dark .bg-primary .text-primary,
+.dark .text-primary.bg-primary {
+  color: var(--primary-foreground);
 }

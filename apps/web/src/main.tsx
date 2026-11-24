@@ -2,6 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@ampara/ui/styles.css';
 import { App } from '@/app/App';
+import { acompanharAparelho, aplicarTema } from '@/shared/lib/tema';
+
+aplicarTema();
+acompanharAparelho();
 
 const container = document.getElementById('root');
 if (!container) {

@@ -172,7 +172,7 @@ export function CampoBusca({
         value={valor}
         onChange={(e) => aoMudar(e.target.value)}
         placeholder={placeholder}
-        className="h-10 w-full rounded-full border border-border/70 bg-[#f4f7fb] pr-4 pl-10 text-sm outline-none placeholder:text-subtle-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15"
+        className="h-10 w-full rounded-full border border-border/70 bg-[#f4f7fb] pr-4 pl-10 dark:bg-muted text-sm outline-none placeholder:text-subtle-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15"
       />
     </label>
   );

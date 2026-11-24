@@ -13,6 +13,7 @@ import { ChevronRight, LogOut, Menu, Search } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 import { NOME_PERFIL, useAuth, type Perfil } from '@/features/auth';
+import { BotaoTema } from '@/shared/components/BotaoTema';
 import { IndicadorConexao } from '@/shared/tempo-real/IndicadorConexao';
 import { ETIQUETA_DO_PERFIL, MENU_DO_PERFIL, type ItemMenu } from './menus';
 
@@ -69,7 +70,7 @@ export function PainelLayout() {
           <input
             type="search"
             placeholder="Buscar cliente, contrato..."
-            className="h-10 w-full rounded-full border border-border/70 bg-[#f4f7fb] pr-4 pl-10 text-sm outline-none placeholder:text-subtle-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15"
+            className="h-10 w-full rounded-full border border-border/70 bg-[#f4f7fb] pr-4 dark:bg-muted pl-10 text-sm outline-none placeholder:text-subtle-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15"
           />
         </label>
 
@@ -79,13 +80,14 @@ export function PainelLayout() {
           </span>
         )}
 
-        <IndicadorConexao className={daEquipe ? undefined : 'ml-auto'} />
+        {/* A etiqueta do perfil empurra o resto para a direita; sem ela (celular, parceiro), o botão. */}
+        <BotaoTema className={daEquipe ? 'max-lg:ml-auto' : 'ml-auto'} />
+        <IndicadorConexao />
 
         <DropdownMenu>
           <DropdownMenuTrigger
             className={cn(
               'flex items-center gap-2.5 rounded-full border border-border/70 bg-card py-1.5 pr-3 pl-1.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/20',
-              !daEquipe ? 'ml-auto' : 'max-lg:ml-auto',
             )}
           >
             <span className="grid size-8 place-items-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
@@ -154,7 +156,7 @@ function Navegacao({ menu, aoEscolher }: { menu: ItemMenu[]; aoEscolher?: () => 
             cn(
               'flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors',
               isActive
-                ? 'bg-[#e8edf6] font-semibold text-foreground'
+                ? 'bg-[#e8edf6] font-semibold text-foreground dark:bg-muted'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground',
             )
           }

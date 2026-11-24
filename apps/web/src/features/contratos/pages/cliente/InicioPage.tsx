@@ -175,7 +175,7 @@ function CartaoPlano({ contrato }: { contrato: ContratoResumoResponse }) {
                 : 'O contrato fica ativo com o pagamento da primeira cobrança.'}
             </p>
           </div>
-          <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+          <span className="rounded-full bg-card px-2.5 py-0.5 text-[11px] font-semibold text-primary">
             {status.rotulo}
           </span>
         </div>
