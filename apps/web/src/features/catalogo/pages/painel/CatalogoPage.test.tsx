@@ -99,4 +99,90 @@ describe('CatalogoPage', () => {
 
     await waitFor(() => expect(status).toEqual({ ativo: false }));
   });
+
+  it('exclui um item: cria a categoria escondida, move o item e desativa', async () => {
+    const chamadas: string[] = [];
+    let movido: unknown;
+    servidor.use(
+      http.post('*/api/v1/gestao/catalogo/categorias', async ({ request }) => {
+        chamadas.push(`criar ${((await request.json()) as { nome: string }).nome}`);
+        return HttpResponse.json(
+          { id_categoria: 'lixo', nome: 'Excluídos', ordem: 3, ativo: true },
+          { status: 201 },
+        );
+      }),
+      http.patch('*/api/v1/gestao/catalogo/categorias/lixo/status', async ({ request }) => {
+        chamadas.push(`categoria ${JSON.stringify(await request.json())}`);
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.put('*/api/v1/gestao/catalogo/i1', async ({ request }) => {
+        movido = await request.json();
+        chamadas.push('mover');
+        return HttpResponse.json(ITEM);
+      }),
+      http.patch('*/api/v1/gestao/catalogo/i1/status', async ({ request }) => {
+        chamadas.push(`item ${JSON.stringify(await request.json())}`);
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const { usuario } = renderizar(rotas, { caminho: '/painel/catalogo' });
+
+    const linha = (await screen.findByText('Coroa de flores')).closest('tr')!;
+    await usuario.click(within(linha).getByRole('button', { name: 'Excluir' }));
+    const dialogo = await screen.findByRole('dialog');
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Excluir item' }));
+
+    await waitFor(() =>
+      expect(chamadas).toEqual([
+        'criar Excluídos',
+        'categoria {"ativo":false}',
+        'mover',
+        'item {"ativo":false}',
+      ]),
+    );
+    expect(movido).toMatchObject({ id_categoria: 'lixo', nome: 'Coroa de flores', preco: 350 });
+  });
+
+  it('esconde os excluídos e restaura um item', async () => {
+    let movido: unknown;
+    let status: unknown;
+    servidor.use(
+      http.get('*/api/v1/gestao/catalogo/categorias', () =>
+        HttpResponse.json([
+          ...CATEGORIAS,
+          { id_categoria: 'lixo', nome: 'Excluídos', ordem: 3, ativo: false },
+        ]),
+      ),
+      http.get('*/api/v1/gestao/catalogo', () =>
+        HttpResponse.json([
+          ITEM,
+          { ...ITEM, id_item: 'i9', nome: 'Urna antiga', id_categoria: 'lixo', ativo: false },
+        ]),
+      ),
+      http.put('*/api/v1/gestao/catalogo/i9', async ({ request }) => {
+        movido = await request.json();
+        return HttpResponse.json(ITEM);
+      }),
+      http.patch('*/api/v1/gestao/catalogo/i9/status', async ({ request }) => {
+        status = await request.json();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const { usuario } = renderizar(rotas, { caminho: '/painel/catalogo' });
+
+    expect(await screen.findByText('Coroa de flores')).toBeInTheDocument();
+    expect(screen.queryByText('Urna antiga')).not.toBeInTheDocument();
+    // A categoria escondida não aparece na lista de categorias.
+    expect(screen.queryByRole('button', { name: 'Excluídos' })).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('button', { name: /mostrar excluídos \(1\)/i }));
+    const linha = (await screen.findByText('Urna antiga')).closest('tr')!;
+    await usuario.click(within(linha).getByRole('button', { name: 'Restaurar' }));
+    const dialogo = await screen.findByRole('dialog');
+    await usuario.selectOptions(within(dialogo).getByLabelText('Categoria'), 'c1');
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Restaurar' }));
+
+    await waitFor(() => expect(status).toEqual({ ativo: true }));
+    expect(movido).toMatchObject({ id_categoria: 'c1', nome: 'Urna antiga' });
+  });
 });
